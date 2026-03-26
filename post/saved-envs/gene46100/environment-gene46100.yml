@@ -1,0 +1,8 @@
+name: gene46100
+channels:
+  - https://repo.anaconda.com/pkgs/main
+  - https://repo.anaconda.com/pkgs/r
+dependencies:
+  - python=3.12
+  - ipykernel
+prefix: /Users/haekyungim/miniconda3/envs/gene46100

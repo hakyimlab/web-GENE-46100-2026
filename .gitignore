@@ -1,0 +1,8 @@
+/.quarto/
+.Rproj.user
+.DS_Store
+.obsidian/
+__pycache__/
+*.pyc
+*.pyo
+.Rhistory

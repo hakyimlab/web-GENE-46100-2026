@@ -1,0 +1,54 @@
+---
+title: homework 6
+date: 2025-05-02
+categories:
+  - gene46100
+  - homework
+format:
+  html:
+    toc: true
+    code-fold: false
+    code-summary: "Show the code"
+    code-tools: true
+    code-overflow: wrap
+date-modified: last-modified
+draft: true
+---
+
+# Homework 6: Comparing Human and Neanderthal Epigenomes using Enformer
+
+If you run the analysis locally, make sure you clone the gene46100 conda environment and install the python packages as needed. See this [jupyter notebook](https://github.com/hakyimlab/web-GENE-46100/blob/main/post/2025-05-01-unit03/enformer-minimal-neanderthal.ipynb) for an example. Rendered [here](enformer-minimal-neanderthal.ipynb) for your convenience.
+
+**Total Points: 100**
+
+## 1. Data Setup and Basic Analysis (25 points)
+
+1. Download the Enformer model and reference genome from the provided Box links (5 points)
+2. Choose a gene of interest and find its transcription start site (TSS) (5 points)
+3. Modify the notebook code to predict human epigenome at this location (5 points)
+4. Run Enformer on the Neanderthal sequence at the same location (5 points)
+5. Create scatter plots comparing human and Neanderthal predictions. Choose relevant tracks to compare (5 points)
+
+## 2. Comparative Analysis (25 points)
+
+1. Calculate correlation coefficients between human and Neanderthal predictions for each track (10 points)
+2. Identify tracks showing the highest and lowest correlations (5 points)
+3. What might explain these differences in correlation? (10 points)
+
+## 3. Peak Analysis (30 points)
+
+1. Identify regions where peaks are present in human but absent in Neanderthal (or vice versa) (10 points)
+2. For these regions:
+   - What cell types or marks show the most differences? (5 points)
+   - Are these differences consistent across both haplotypes? (5 points)
+   - What might be the functional significance of these differences? (10 points)
+
+## 4. Technical Understanding (20 points)
+
+1. Why do we need to one-hot encode the sequences? (5 points)
+2. What is the purpose of the SEQUENCE_LENGTH parameter? (5 points)
+3. How does the model handle the two haplotypes in the Neanderthal genome? (10 points)
+
+## 5. Extra Credit (10 points)
+
+Use enformer to predict the DNA binding score from project 1. Compare the results with your original DNA binding score.

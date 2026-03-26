@@ -1,0 +1,14 @@
+---
+title: unit 03
+author: Haky Im
+date: 2025-05-01
+categories:
+  - gene46100
+eval: false
+draft: true
+---
+
+Slides for Unit 3 - Enformer, Borzoi, and PrediXcan [link](https://www.icloud.com/keynote/093HFh0Zpb2HhoDzzsikOgd2g#PrediXcan-2)
+
+In this unit, we will explore the Enformer model, learn to use it to predict gene expression from DNA sequences, and see how it can be used to understand the genetic basis of complex traits. We will compare to Borzoi, a recent model that also predicts gene expression from DNA sequences.
+

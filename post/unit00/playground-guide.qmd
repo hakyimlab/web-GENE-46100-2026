@@ -1,0 +1,67 @@
+---
+title: Neural Network Playground Guide
+author: Haky Im
+date: '2026-03-26'
+categories:
+  - gene46100
+  - how-to
+---
+
+Interactive tool: [playground.hakyimlab.org](https://playground.hakyimlab.org/#activation=tanh&batchSize=10&dataset=circle&regDataset=reg-plane&learningRate=0.03&regularizationRate=0&noise=0&networkShape=4,2&seed=0.55802&showTestData=false&discretize=false&percTrainData=50&x=true&y=true&xTimesY=false&xSquared=false&ySquared=false&cosX=false&sinX=false&cosY=false&sinY=false&collectStats=false&problem=classification&initZero=false&hideText=false)
+
+## What Is This?
+
+The Neural Network Playground is an interactive visualization that lets you build and train a neural network in your browser — no code required. You choose a dataset (a 2D scatter plot of points belonging to two classes: blue and orange), configure a network architecture (how many layers, how many neurons), and watch the model learn in real time.
+
+**How it works:** The network takes two input variables (X₁ and X₂ — the x and y coordinates of each point) and tries to learn a rule that separates the blue points from the orange points. You press play and watch the network update its weights through gradient descent, epoch by epoch.
+
+**Reading the output (right panel):** The large colored plot on the right shows the network's prediction across the entire 2D space. The background color is the model's classification:
+
+- **Blue regions** — the model predicts "blue class" here
+- **Orange regions** — the model predicts "orange class" here
+- **Color intensity** — how confident the model is. Deep blue/orange = high confidence. Pale/white = the model is uncertain (near the decision boundary)
+- **Dots** — the actual data points. A well-trained model will have blue dots in blue regions and orange dots in orange regions.
+
+**Reading the neurons (middle panel):** Each small square inside the network shows what that individual neuron has learned — its own mini decision boundary. Early-layer neurons learn simple splits (lines), while later-layer neurons combine those splits into more complex boundaries. Hover over any neuron to see its output enlarged.
+
+**Reading the weights (connecting lines):** The lines between neurons represent learned weights. Blue lines = positive weights, orange lines = negative weights, and line thickness = weight magnitude. Thick lines mean that connection matters a lot to the output.
+
+## Top Bar — Training Controls
+
+- [ ] **Epoch counter** — Number of passes through the training data. Watch the loss curve (top right) decrease as epochs increase. Click play to start training, step button to advance one epoch at a time.
+- [ ] **Learning rate** (0.03 default) — Step size for gradient descent. Too high → overshoots and diverges. Too low → learns very slowly. Try 0.001 vs 0.1 to see the difference.
+- [ ] **Activation function** (ReLU, Tanh, Sigmoid, Linear) — The nonlinearity applied after each neuron. Without it, the network is just a linear model no matter how many layers. ReLU is most common in practice; Linear shows why activation matters (network can't learn curves).
+- [ ] **Regularization** (None, L1, L2) — Penalizes large weights to prevent overfitting. L1 pushes weights to exactly zero (sparsity), L2 pushes weights to be small. Not needed for simple problems; important when the model is too powerful for the data.
+- [ ] **Regularization rate** (0 default) — Strength of the regularization penalty. Higher values = simpler model, more underfitting. Lower values = more complex model, risk of overfitting.
+- [ ] **Problem type** (Classification, Regression) — Classification predicts categories (blue vs orange), regression predicts continuous values. Changes the loss function and output visualization.
+
+## Left Panel — Data
+
+- [ ] **Dataset** (circle, XOR, Gaussian, spiral) — The pattern the network must learn. Circle is easiest (one boundary), spiral is hardest (requires multiple layers). Try spiral with 1 hidden layer vs 4 to see depth matters.
+- [ ] **Ratio of training to test data** — What fraction is used for training vs held out for evaluation. Lower ratio = less training data = harder to learn.
+- [ ] **Noise** — How much random jitter is added to the data. More noise = harder classification boundaries, tests whether the model generalizes or memorizes.
+- [ ] **Batch size** — Number of samples used per gradient update. Smaller batches = noisier gradients but faster updates. Larger batches = smoother gradients but more computation per step.
+- [ ] **Regenerate** — Resamples the data with a new random seed.
+
+## Middle Panel — Network Architecture
+
+- [ ] **Features** (X₁, X₂, X₁², X₂², X₁X₂, sin(X₁), sin(X₂)) — Input transformations. X₁ and X₂ are raw coordinates. The others are hand-engineered features. Key insight: a linear model with X₁² and X₂² can solve the circle problem without hidden layers — deep learning learns these transformations automatically.
+- [ ] **Hidden layers** (+/− buttons at top) — Number of layers between input and output. More layers = ability to learn more complex functions. But more layers also = harder to train (vanishing gradients).
+- [ ] **Neurons per layer** (+/− buttons on each layer) — Width of each layer. More neurons = more capacity. Each small square shows what that neuron has learned (its decision boundary). Hover to see it enlarged.
+- [ ] **Weights** (connecting lines) — Thickness = magnitude, color = sign (blue positive, orange negative). These are the parameters the network learns via gradient descent.
+
+## Right Panel — Output
+
+- [ ] **Test loss / Training loss** — How well the model fits held-out data vs training data. If training loss is low but test loss is high, the model is overfitting.
+- [ ] **Loss curve** (top right graph) — Loss over epochs. Should decrease and plateau. If it oscillates, learning rate may be too high.
+- [ ] **Decision boundary** (colored background) — The model's prediction across the entire input space. Blue = predict blue class, orange = predict orange class. Intensity = confidence.
+- [ ] **Show test data** (checkbox) — Overlay the held-out test points. Useful for spotting overfitting: does the boundary fit the test data as well as the training data?
+- [ ] **Discretize output** (checkbox) — Snaps predictions to hard categories instead of showing probability gradients.
+
+## Things to Try
+
+1. **Why activation matters**: Set activation to Linear, add multiple layers → still can't solve circle. Switch to ReLU → solves it immediately.
+2. **Overfitting demo**: Use spiral dataset with low noise, train a large network (6 layers, 8 neurons each) → training loss near zero, test loss much higher. Then add L2 regularization.
+3. **Learning rate extremes**: Set learning rate to 1.0 → watch loss explode. Set to 0.00001 → watch it barely move after 1000 epochs.
+4. **Feature engineering vs depth**: Solve circle with just X₁² + X₂² features and zero hidden layers. Then solve it with raw X₁, X₂ and two hidden layers. Same result, different approach — the network learned the transformation.
+5. **Universal approximation**: Use 1 hidden layer with increasing neurons (2 → 4 → 8 → 16) on the spiral dataset to see how width helps.

@@ -1,0 +1,51 @@
+---
+title: homework 3
+date: 2025-04-10
+categories:
+  - gene46100
+  - homework
+draft: true
+format:
+  html:
+    toc: true
+    code-fold: false
+    code-summary: "Show the code"
+    code-tools: true
+    code-overflow: wrap
+date-modified: last-modified
+---
+
+# Homework 3
+
+## Part 1: Hyperparameter Calibration with Weights & Biases
+- [ ] Implement hyperparameter tuning using Weights & Biases (wandb)
+- [ ] Choose one of the following problems to apply this to:
+  - TF binding prediction
+  - Simple DNA scoring
+  - Cubic function with MLP
+- [ ] Reference example: [TF Binding with wandb](https://gene46100.hakyimlab.org/post/2025-03-25-unit00/tf-binding-wandb)
+- [ ] Document the hyperparameters you tuned and their impact on model performance
+
+## Part 2: Model Deployment and Testing
+- [ ] Upload your complete Jupyter notebook containing:
+  - Model architecture
+  - Training code
+  - Evaluation metrics
+  - Prediction code
+- [ ] Include a separate, self-contained prediction script that:
+  - Loads all required packages
+  - Loads the trained model architecture and weights
+  - Makes predictions on the hold-out test set
+  - Can be run independently without executing the entire notebook
+
+## Submission Requirements
+1. Submit your Jupyter notebook with all code and documentation
+2. Include a separate prediction script as described above
+3. Document your hyperparameter tuning process and results
+4. Provide clear instructions for running the prediction script
+
+## Evaluation Criteria
+- Proper implementation of hyperparameter tuning
+- Model performance on test set
+- Code organization and documentation
+- Reproducibility of results

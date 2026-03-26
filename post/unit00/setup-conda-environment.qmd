@@ -1,0 +1,162 @@
+---
+title: preparing environment for unit 00
+author: Haky Im
+date: 2026-12-01
+description: setting up conda environment and installing packages
+categories:
+  - gene46100
+  - how-to
+eval: false
+draft: true
+---
+
+## install conda
+
+```{{bash}}
+
+## download miniconda from the command line
+
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh
+
+## or manually from https://www.anaconda.com/docs/getting-started/miniconda/main
+
+## install miniconda
+bash Miniconda3-latest-Linux-x86_64.sh
+
+```
+
+## create conda environment
+```{{bash}}
+conda create -n gene46100 python=3.12
+conda activate gene46100
+
+```
+
+## do not install packages with conda
+(I ran into lots of issues with torch version incompatibility with torchvision and torchmetrics)
+```{{bash}}
+# DONT USE CONDA TO INSTALL PYTORCH at least for now
+# conda install scikit-learn plotnine pytorch 
+
+## installing torchvision and torchmetrics forced downgrading torch to 2.3.1 which was not compatible with mps
+
+```
+
+## install all packages within jupyter notebook with %pip
+as of 2025-03-24
+
+using %pip will make sure that the packages are accessible by the kernel you are using for the jupyter notebook
+```{{bash}}
+%pip install scikit-learn plotnine tqdm pandas 
+%pip install torch
+%pip install torchvision
+%pip install torchmetrics
+```
+
+
+## install cursor or vscode to run the jupyter notebook
+
+- install the python extension for cursor or vscode.
+
+- select the python interpreter to be the one in the conda environment you created (gene46100)
+
+
+## Save the environment for reproducibility
+
+### to reproduce the environment exactly, save the environment
+```{{bash}}
+# Save conda packages with their sources
+conda env export --from-history > environment-gene46100.yml
+
+# Save pip-installed packages separately
+pip list --format=freeze > requirements-gene46100.txt
+
+# Save full environment state (for reference)
+conda env export > environment_full-gene46100.yml
+```
+
+### to clone the environment
+```{{bash}}
+# create a new environment named newenv46100 with the same packages as the original environment test46100
+conda create --name newenv46100 --clone test46100
+```
+
+### to remove the environment
+```{{bash}}
+conda env remove --name newenv46100
+```
+
+## DO NOT RUN THE FOLLOWING UNLESS NEED TO REINSTALL THE ENVIRONMENT FOR SOME REASON
+
+#### reinstall the environment
+```{{bash}}
+# Create environment from conda packages
+conda env create -f environment-gene46100.yml
+
+# Activate the environment
+conda activate gene46100
+
+# Install pip packages
+pip install -r requirements-gene46100.txt
+
+```
+
+## configuration to run python in qmd files
+
+Follow instructions in https://thedatasavvycorner.com/blogs/08-quarto-conda-en copied to /DRAFTS/2025-02-20-testin/08-quarto-conda-env.qmd
+
+Below is a shortened version of the instructions when you already have a conda environment.
+
+```{{bash}}
+conda activate gene46100
+pip install nbclient nbformat
+
+# Use conda to install the nb_conda_kernels package. This is used to manage python jupyter kernels for notebooks.
+
+conda install nb_conda_kernels jupyter_server ipykernel
+## in new install I needed conda install nb_conda_kernels jupyter_server
+
+# Copy the path returned from the below command
+jupyter --config-dir
+
+# in my case it was ~/.jupyter
+
+# Create a jupyter_config.json in the jupyter config directory:
+touch ~/.jupyter/jupyter_config.json
+echo '{
+  "CondaKernelSpecManager": {
+    "kernelspec_path": "--user"
+  }
+}' >> ~/.jupyter/jupyter_config.json
+
+# Run the below command to return a list of available kernels:
+python -m nb_conda_kernels list
+
+# Copy the name (not the path) for the environment that you created with the format `conda-env-<YOUR_ENV_NAME>-py`.
+```
+
+add the following to the yaml header in the qmd file with python blocks
+
+```{{yaml}}
+jupyter: 
+  kernelspec:
+    name: "conda-env-<YOUR_ENV_NAME>-py"
+    language: "python"
+    display_name: "<YOUR_ENV_NAME>"
+```
+
+ my environment was conda-env-gene46100-py
+ you can run quarto render and it will be rendered with the conda environment you specified
+ when running interactively, you can choose the kernel, similarly to a jupyter notebook
+
+```{{yaml}}
+jupyter: 
+  kernelspec:
+    name: "conda-env-gene46100-py"
+    language: "python"
+    display_name: "gene46100"
+freeze: true
+## you may want to choose freeze true if you don't want to run the code every time you render the qmd file
+
+```
+

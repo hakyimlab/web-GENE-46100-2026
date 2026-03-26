@@ -1,0 +1,26 @@
+---
+title: homework 1
+date: 2026-03-27
+categories:
+  - gene46100
+  - homework
+format:
+  html:
+    toc: true
+    code-fold: false
+    code-summary: "Show the code"
+    code-tools: true
+    code-overflow: wrap
+date-modified: last-modified
+draft: true
+---
+
+# Homework 1
+
+
+- [ ] run all the code in the [notebook](https://github.com/hakyimlab/web-GENE-46100/blob/main/post/2025-03-25-unit00/hands-on-introduction_to_deep_learning.ipynb). You should also be able to find the notebook in your cloned course repository. (20 points)
+- [ ] complete the exercises in the notebook (30 points)
+- [ ] submit the jupyter notebook with the results to canvas assignment
+
+
+

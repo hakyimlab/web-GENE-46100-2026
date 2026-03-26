@@ -1,0 +1,28 @@
+---
+title: "Deep Learning in Genomics Course Material"
+listing:
+  contents:
+    - "post/unit00/*.qmd"
+    - "!post/unit00/slides-*.qmd"
+  sort: "date asc"
+  type: default
+  categories: true
+  sort-ui: false
+  filter-ui: false
+page-layout: full
+title-block-banner: false
+---
+
+
+- This page contains material for the GENE46100 Deep learning in genomics course. 
+
+- Find the 2026 syllabus [here](https://docs.google.com/document/d/1OMT186tHZ8EAT-W0nJobRsCwOJ3B-A6Qb3k0e8n-AMY/edit?tab=t.0) and schedule [here](https://docs.google.com/spreadsheets/d/1V3OwF10CrkIvzUiqXWOqngSVnzFwk2VixgDRNchkQEs/edit?gid=0#gid=0)
+
+- Edit github source [here](https://github.com/hakyimlab/web-GENE-46100)
+
+## Unit 00 — Introduction
+
+- [Slides: Intro to Genetics & Genomics (Ran Blekhman, PDF)](post/unit00/Intro-to-genetics-genomics-ran-blekhman.pdf)
+- [Slides: Intro to Deep Learning](post/unit00/slides-unit00.html)
+- [Slides: Intro to CNNs](post/unit00/slides-cnn-intro.html)
+

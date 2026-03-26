@@ -1,0 +1,27 @@
+project:
+  type: website
+  output-dir: docs
+  render:
+    - "index.qmd"
+    - "index-all.qmd"
+    - "post/unit00/**/*.qmd"
+    - "!*.ipynb"
+    - "!/./.venv/"
+    - "!**/slides*.qmd"  # render slides separately: quarto render <file.qmd> --to revealjs
+
+website:
+  title: "GENE 46100"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+  body-footer: |
+      © [HakyImLab and Listed Authors](https://hakyimlab.org) - [CC BY 4.0 License](https://creativecommons.org/licenses/by/4.0/)
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+    html-math-method: katex
+
+

@@ -1,0 +1,24 @@
+---
+title: homework 4
+date: 2025-04-18
+categories:
+  - gene46100
+  - homework
+format:
+  html:
+    toc: true
+    code-fold: false
+    code-summary: "Show the code"
+    code-tools: true
+    code-overflow: wrap
+date-modified: last-modified
+draft: true
+---
+
+# Homework 4
+
+Watch Karpathy's nanoGPT tutorial on youtube [link](https://www.youtube.com/watch?v=kCc8FmEb1nY) and answer the questions in the [form](https://docs.google.com/forms/d/e/1FAIpQLSdrnyZfGgoJNn9YVDvzLJOJfMtOlQvSxJipGdgC0-36qFA2mg/viewform)
+
+
+
+list of questions in text format is [here](https://docs.google.com/document/d/1X4_tZEM4CeQUdcfxmfjBA8eNCpCf5RhBHqJvBliO0j0/edit?usp=sharing)
