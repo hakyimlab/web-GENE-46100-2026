@@ -18,9 +18,27 @@ draft: true
 # Homework 1
 
 
-- [ ] run all the code in the [notebook](https://github.com/hakyimlab/web-GENE-46100/blob/main/post/2025-03-25-unit00/hands-on-introduction_to_deep_learning.ipynb). You should also be able to find the notebook in your cloned course repository. (20 points)
+- [ ] run all the code in the [notebook hands-on-introduction_to_deep_learning-2026](https://drive.google.com/file/d/1oi4hR8Oo1pM5xx0-8wuSIeJeSSg8lkY2/view?usp=drive_link). You should also be able to find the notebook in your cloned course repository. (20 points)
 - [ ] complete the exercises in the notebook (30 points)
 - [ ] submit the jupyter notebook with the results to canvas assignment
 
+
+
+# proposed by Ran
+
+Deep Learning In Genomics - Week 1 Homework
+The goal of this homework is to adjust some of the parameters and definitions of the model in the notebook (edit the code) and see how that changes the prediction.
+A PDF with the answers to the questions 
+Share your final notebook
+
+
+1. Gradient Descent Sensitivity
+In the notebook, gradient descent used a learning rate of 0.1 for 50 steps. Re-run the gradient descent code for the linear model with three different learning rates: 0.01, 0.1, and 1.0. For each, plot the trajectory of (β₁, β₂) over 50 steps. In a short paragraph, describe what happens in each case and explain why. What would happen to a neural network with millions of parameters if the learning rate is too high?
+
+2. When the Model Is Wrong
+The notebook shows that a linear model can't fit y = x³. Pick a different nonlinear function (e.g., y = sin(x), y = x² + x, or y = |x|) and repeat the analysis: (a) fit a linear model with gradient descent, (b) fit an MLP, (c) produce parity plots (predicted vs. actual) for both. Briefly explain why the MLP succeeds. How does this relate to the Universal Approximation Theorem discussed at the end of the notebook?
+
+3. MLP Architecture Exploration
+Systematically compare MLP architectures by varying two things: (a) hidden layer size (try 8, 64, 256, and 1024 neurons) and (b) adding a second hidden layer (i.e., modify the MLP class to have fc1 → relu → fc2 → relu → fc3). For each configuration, train on the y = x³ data and record the final training loss. Present your results in a table. Which configuration gives the best performance, and which gives the best trade-off between speed and accuracy? Include your modified MLP class definition for the two-layer version.
 
 

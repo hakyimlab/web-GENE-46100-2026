@@ -18,13 +18,13 @@ quarto render
 quarto preview
 
 # Render a single file
-quarto render post/unit00/slides-unit00.qmd
+quarto render post/unit00/homework-01.qmd
 
 # Render slides specifically (excluded from default render, must be done explicitly)
 quarto render post/unit00/slides-unit00.qmd --to revealjs
 ```
 
-> **Note:** Files matching `**/slides*.qmd` are excluded from the default `quarto render` build (see `_quarto.yml`). Slides must be rendered individually with `--to revealjs`.
+> **Note:** The default render in `_quarto.yml` only includes `post/unit00/**/*.qmd`. Units 01–03 are **not rendered by default** — to include them, add their glob patterns to the `render:` list in `_quarto.yml`. Files matching `**/slides*.qmd` are also excluded; render slides individually with `--to revealjs`.
 
 ### Environment Setup
 
