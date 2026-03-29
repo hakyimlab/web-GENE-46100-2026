@@ -3,6 +3,10 @@
 
 set -e
 
+# 0. Generate stub pages for each slide deck so they appear in the site listing
+echo "=== Generating slide stub pages ==="
+python3 scripts/generate-slide-stubs.py
+
 # 1. Render the website (pages, notebooks — excludes slides via _quarto.yml)
 echo "=== Rendering site ==="
 quarto render

@@ -6,6 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="dcterms.date" content="2027-01-01">
 
 <title>Unit 00 — Introduction to Deep Learning – GENE 46100</title>
 <style>
@@ -65,8 +66,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../../">
-<script src="../../site_libs/quarto-listing/list.min.js"></script>
-<script src="../../site_libs/quarto-listing/quarto-listing.js"></script>
 <script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../../site_libs/quarto-html/popper.min.js"></script>
@@ -104,79 +103,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
-<script>
 
-  window.document.addEventListener("DOMContentLoaded", function (_event) {
-    const listingTargetEl = window.document.querySelector('#listing-listing .list');
-    if (!listingTargetEl) {
-      // No listing discovered, do not attach.
-      return; 
-    }
-
-    const options = {
-      valueNames: ['listing-date','listing-title','listing-author','listing-image','listing-description','listing-categories',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
-      
-      searchColumns: ["listing-date","listing-title","listing-author","listing-image","listing-description","listing-categories"],
-    };
-
-    window['quarto-listings'] = window['quarto-listings'] || {};
-    window['quarto-listings']['listing-listing'] = new List('listing-listing', options);
-
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  });
-
-  window.addEventListener('hashchange',() => {
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  })
-  </script>
-
-  <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
-  <script>document.addEventListener("DOMContentLoaded", function () {
- var mathElements = document.getElementsByClassName("math");
- var macros = [];
- for (var i = 0; i < mathElements.length; i++) {
-  var texText = mathElements[i].firstChild;
-  if (mathElements[i].tagName == "SPAN") {
-   katex.render(texText.data, mathElements[i], {
-    displayMode: mathElements[i].classList.contains('display'),
-    throwOnError: false,
-    macros: macros,
-    fleqn: false
-   });
-}}});
-  </script>
-  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css">
-
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN") {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
 
 <link rel="stylesheet" href="../../styles.css">
 </head>
@@ -213,18 +140,11 @@ window.Quarto = {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#slides" id="toc-slides" class="nav-link active" data-scroll-target="#slides">Slides</a></li>
-  <li><a href="#posts" id="toc-posts" class="nav-link" data-scroll-target="#posts">Posts</a></li>
-  </ul>
-</nav>
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(6)</span></div><div class="category" data-category="Z2VuZTQ2MTAw">gene46100 <span class="quarto-category-count">(6)</span></div><div class="category" data-category="aG9tZXdvcms=">homework <span class="quarto-category-count">(1)</span></div><div class="category" data-category="aG93LXRv">how-to <span class="quarto-category-count">(1)</span></div><div class="category" data-category="bm90ZWJvb2s=">notebook <span class="quarto-category-count">(4)</span></div><div class="category" data-category="cHJvamVjdA==">project <span class="quarto-category-count">(2)</span></div></div></div>
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+        
+    </div>
 <!-- main -->
-<main class="content column-page-left" id="quarto-document-content">
+<main class="content column-page" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
@@ -233,9 +153,15 @@ window.Quarto = {
 
 
 
-<div class="quarto-title-meta column-page-left">
+<div class="quarto-title-meta column-page">
 
     
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">January 1, 2027</p>
+    </div>
+  </div>
   
     
   </div>
@@ -245,221 +171,12 @@ window.Quarto = {
 </header>
 
 
-<section id="slides" class="level3">
-<h3 class="anchored" data-anchor-id="slides">Slides</h3>
-<ul>
-<li><a href="Intro-to-genetics-genomics-ran-blekhman.pdf">Intro to Genetics &amp; Genomics (Ran Blekhman, PDF)</a></li>
-<li><a href="slides-unit00.html">Slides: Intro to Deep Learning</a></li>
-<li><a href="slides-cnn-intro.html">Slides: Intro to CNNs</a></li>
-</ul>
-</section>
-<section id="posts" class="level3">
-<h3 class="anchored" data-anchor-id="posts">Posts</h3>
-
 
 
 <!-- -->
 
-</section>
 
-<div class="quarto-listing quarto-listing-container-default" id="listing-listing">
-<div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Z2VuZTQ2MTAwJTJDbm90ZWJvb2s=" data-listing-date-sort="1774414800000" data-listing-file-modified-sort="1774457948572" data-listing-date-modified-sort="1774457948000" data-listing-reading-time-sort="10" data-listing-word-count-sort="1924">
-<div class="thumbnail"><a href="../../post/unit00/hands-on-introduction_to_deep_learning-2026.html" class="no-external">
-
-<p class="card-img-top"><img src="images/gradient-descent-computed.png"  class="thumbnail-image card-img"/></p>
-
-</a></div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="../../post/unit00/hands-on-introduction_to_deep_learning-2026.html" class="no-external">Quick introduction to deep learning</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('Z2VuZTQ2MTAw'); return false;">gene46100</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('bm90ZWJvb2s='); return false;">notebook</div>
-
-</div>
-<div class="delink listing-description"><a href="../../post/unit00/hands-on-introduction_to_deep_learning-2026.html" class="no-external">
-Jupyter notebook in Colab
-</a></div>
-</div>
-<div class="metadata">
-<a href="../../post/unit00/hands-on-introduction_to_deep_learning-2026.html" class="no-external">
-<div class="listing-date">
-Mar 25, 2026
-</div>
-<div class="listing-author">
-Haky Im (based on earlier version by Boxiang Liu)
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="1" data-categories="Z2VuZTQ2MTAwJTJDaG93LXRv" data-listing-date-sort="1774501200000" data-listing-file-modified-sort="1774417079681" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1061">
-<div class="thumbnail"><a href="../../post/unit00/playground-guide.html" class="no-external">
-
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-
-</a></div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="../../post/unit00/playground-guide.html" class="no-external">Neural Network Playground Guide</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('Z2VuZTQ2MTAw'); return false;">gene46100</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('aG93LXRv'); return false;">how-to</div>
-
-</div>
-<div class="delink listing-description"><a href="../../post/unit00/playground-guide.html" class="no-external">
-Interactive tool: playground.hakyimlab.org
-</a></div>
-</div>
-<div class="metadata">
-<a href="../../post/unit00/playground-guide.html" class="no-external">
-<div class="listing-date">
-Mar 26, 2026
-</div>
-<div class="listing-author">
-Haky Im
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="2" data-categories="Z2VuZTQ2MTAwJTJDaG9tZXdvcms=" data-listing-date-sort="1774587600000" data-listing-file-modified-sort="1774417384112" data-listing-date-modified-sort="1774417384000" data-listing-reading-time-sort="1" data-listing-word-count-sort="48">
-<div class="thumbnail"><a href="../../post/unit00/homework-01.html" class="no-external">
-
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-
-</a></div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="../../post/unit00/homework-01.html" class="no-external">homework 1</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('Z2VuZTQ2MTAw'); return false;">gene46100</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('aG9tZXdvcms='); return false;">homework</div>
-
-</div>
-<div class="delink listing-description"><a href="../../post/unit00/homework-01.html" class="no-external">
-© HakyImLab and Listed Authors - CC BY 4.0 License
-</a></div>
-</div>
-<div class="metadata">
-<a href="../../post/unit00/homework-01.html" class="no-external">
-<div class="listing-date">
-Mar 27, 2026
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="3" data-categories="Z2VuZTQ2MTAwJTJDbm90ZWJvb2s=" data-listing-date-sort="1775278800000" data-listing-file-modified-sort="1774457991729" data-listing-date-modified-sort="1774457991000" data-listing-reading-time-sort="44" data-listing-word-count-sort="8722">
-<div class="thumbnail"><a href="../../post/unit00/updated-basic_DNA_tutorial.html" class="no-external">
-
-<p class="card-img-top"><img src="images/scoring.png"  class="thumbnail-image card-img"/></p>
-
-</a></div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="../../post/unit00/updated-basic_DNA_tutorial.html" class="no-external">Updated - DNA score prediction with Pytorch</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('Z2VuZTQ2MTAw'); return false;">gene46100</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('bm90ZWJvb2s='); return false;">notebook</div>
-
-</div>
-<div class="delink listing-description"><a href="../../post/unit00/updated-basic_DNA_tutorial.html" class="no-external">
-Jupyter notebook in Colab
-</a></div>
-</div>
-<div class="metadata">
-<a href="../../post/unit00/updated-basic_DNA_tutorial.html" class="no-external">
-<div class="listing-date">
-Apr 4, 2026
-</div>
-<div class="listing-author">
-Erin Wilson
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="4" data-categories="Z2VuZTQ2MTAwJTJDcHJvamVjdCUyQ25vdGVib29r" data-listing-date-sort="1775710800000" data-listing-file-modified-sort="1774417283673" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="3" data-listing-word-count-sort="523">
-<div class="thumbnail"><a href="../../post/unit00/tf-binding-prediction-starter.html" class="no-external">
-
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-
-</a></div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="../../post/unit00/tf-binding-prediction-starter.html" class="no-external">TF Binding prediction project</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('Z2VuZTQ2MTAw'); return false;">gene46100</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('cHJvamVjdA=='); return false;">project</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('bm90ZWJvb2s='); return false;">notebook</div>
-
-</div>
-<div class="delink listing-description"><a href="../../post/unit00/tf-binding-prediction-starter.html" class="no-external">
-The goal of this project is to create a neural network model that predicts TF binding strength in a DNA sequence.
-</a></div>
-</div>
-<div class="metadata">
-<a href="../../post/unit00/tf-binding-prediction-starter.html" class="no-external">
-<div class="listing-date">
-Apr 9, 2026
-</div>
-<div class="listing-author">
-Sofia Salazar
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="5" data-categories="Z2VuZTQ2MTAwJTJDcHJvamVjdCUyQ25vdGVib29r" data-listing-date-sort="1775797200000" data-listing-file-modified-sort="1774417161968" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2576">
-<div class="thumbnail"><a href="../../post/unit00/tf-binding-wandb.html" class="no-external">
-
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-
-</a></div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="../../post/unit00/tf-binding-wandb.html" class="no-external">Calibrating hyperparameters with weights and biases</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('Z2VuZTQ2MTAw'); return false;">gene46100</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('cHJvamVjdA=='); return false;">project</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('bm90ZWJvb2s='); return false;">notebook</div>
-
-</div>
-<div class="delink listing-description"><a href="../../post/unit00/tf-binding-wandb.html" class="no-external">
-Weights and biases is a platform used for AI developers to track, visualize and manage their ML models and experiments. The coolest part is that W&amp;B allows you to log…<strong></strong>
-</a></div>
-</div>
-<div class="metadata">
-<a href="../../post/unit00/tf-binding-wandb.html" class="no-external">
-<div class="listing-date">
-Apr 10, 2026
-</div>
-<div class="listing-author">
-Sofia Salazar
-</div>
-</a>
-</div>
-</div>
-</div>
-<div class="listing-no-matching d-none">No matching items</div>
-</div><p>© <a href="https://hakyimlab.org">HakyImLab and Listed Authors</a> - <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0 License</a></p></main> <!-- /main -->
+<p>© <a href="https://hakyimlab.org">HakyImLab and Listed Authors</a> - <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0 License</a></p></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";
@@ -912,27 +629,10 @@ Sofia Salazar
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Unit 00 — Introduction to Deep Learning"</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">listing:</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">  contents:</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">    - "*.qmd"</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">    - "!index.qmd"</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">    - "!slides-*.qmd"</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">  sort: "date asc"</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">  type: default</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">  categories: true</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">  sort-ui: false</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co">  filter-ui: false</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="an">page-layout:</span><span class="co"> full</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="an">title-block-banner:</span><span class="co"> false</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="fu">### Slides</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Intro to Genetics &amp; Genomics (Ran Blekhman, PDF)</span><span class="co">](Intro-to-genetics-genomics-ran-blekhman.pdf)</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Slides: Intro to Deep Learning</span><span class="co">](slides-unit00.html)</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Slides: Intro to CNNs</span><span class="co">](slides-cnn-intro.html)</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="fu">### Posts</span></span></code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">page-layout:</span><span class="co"> full</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">title-block-banner:</span><span class="co"> false</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> 2027-01-01</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span></code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

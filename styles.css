@@ -1,1 +1,11 @@
 /* css styles */
+
+/* Push footer to bottom of viewport on short pages */
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+#quarto-content {
+  flex: 1;
+}

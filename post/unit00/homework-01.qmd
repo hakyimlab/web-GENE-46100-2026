@@ -1,5 +1,5 @@
 ---
-title: homework 1
+title: homework 1 - suggestions
 date: 2026-03-27
 categories:
   - gene46100
@@ -15,6 +15,8 @@ date-modified: last-modified
 draft: true
 ---
 
+Actual homework posted on the course Canvas
+
 # Homework 1
 
 
@@ -25,6 +27,7 @@ draft: true
 
 
 # proposed by Ran
+https://docs.google.com/document/d/1QCwjBpO755ACghNdxEP54I0KQX6lbblZvmT97Uv-9h8/edit?tab=t.0#heading=h.g373mtjq4po4
 
 Deep Learning In Genomics - Week 1 Homework
 The goal of this homework is to adjust some of the parameters and definitions of the model in the notebook (edit the code) and see how that changes the prediction.

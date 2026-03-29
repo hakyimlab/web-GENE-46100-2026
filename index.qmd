@@ -22,7 +22,3 @@ title-block-banner: false
 
 ## Unit 00 — Introduction
 
-- [Slides: Intro to Genetics & Genomics (Ran Blekhman, PDF)](post/unit00/Intro-to-genetics-genomics-ran-blekhman.pdf)
-- [Slides: Intro to Deep Learning](post/unit00/slides-unit00.html)
-- [Slides: Intro to CNNs](post/unit00/slides-cnn-intro.html)
-
