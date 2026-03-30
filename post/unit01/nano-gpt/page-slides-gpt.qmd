@@ -4,6 +4,7 @@ date: '2025-03-24'
 author: "Haky Im"
 description: "Slides"
 categories: [slides]
+draft: true
 ---
 
 [Open slide deck](slides-gpt.html){.btn .btn-primary .btn-lg}

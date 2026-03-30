@@ -30,6 +30,7 @@ def process_slide(slide_path: str) -> None:
     subtitle = extract_field(fm, "subtitle")
     author = extract_field(fm, "author")
     date = extract_field(fm, "date")
+    draft = extract_field(fm, "draft")
     desc = subtitle if subtitle else "Slides"
 
     # Prefix title with lecture number extracted from filename (e.g. slides-01-foo → "01 · ")
@@ -37,12 +38,14 @@ def process_slide(slide_path: str) -> None:
     if num_match:
         title = f"{num_match.group(1)} · {title}"
 
+    draft_line = f"\ndraft: {draft}" if draft else ""
+
     content = f"""---
 title: "{title}"
 date: '{date}'
 author: "{author}"
 description: "{desc}"
-categories: [slides]
+categories: [slides]{draft_line}
 ---
 
 [Open slide deck]({base}.html){{.btn .btn-primary .btn-lg}}
