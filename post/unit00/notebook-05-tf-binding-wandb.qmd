@@ -1,5 +1,5 @@
 ---
-title: Calibrating hyperparameters with weights and biases
+title: "05 · Calibrating hyperparameters with weights and biases"
 date: '2026-04-10'
 author: Sofia Salazar
 categories:

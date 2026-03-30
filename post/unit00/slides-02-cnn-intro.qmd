@@ -57,6 +57,10 @@ Source: [MathWorks — What Are CNNs?](https://www.mathworks.com/videos/introduc
 
 ---
 
+# Part 1: How CNNs Work {background-color="#1e3a5f" style="color:white;"}
+
+---
+
 ## 1 — Local Receptive Fields
 
 :::: {.columns}
@@ -190,6 +194,10 @@ Source: [MathWorks — What Are CNNs?](https://www.mathworks.com/videos/introduc
 
 ---
 
+# Part 2: Putting It Together {background-color="#1e3a5f" style="color:white;"}
+
+---
+
 ## Putting It All Together
 
 ![](images/cnn-08-full-pipeline.png){fig-align="center" width="90%"}
@@ -217,6 +225,10 @@ Each layer learns progressively more complex features:
 ::: {.source-credit}
 Source: [MathWorks — What Are CNNs?](https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html)
 :::
+
+---
+
+# Part 3: Using CNNs in Practice {background-color="#1e3a5f" style="color:white;"}
 
 ---
 
@@ -284,6 +296,10 @@ Use a **pre-trained CNN's hidden layers** to extract features, then train a simp
 ::: {.source-credit}
 Source: [MathWorks — What Are CNNs?](https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html)
 :::
+
+---
+
+# Part 4: Summary {background-color="#1e3a5f" style="color:white;"}
 
 ---
 

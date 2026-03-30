@@ -1,0 +1,9 @@
+---
+title: "01 · Quick Introduction to Deep Learning"
+date: '2026-03-25'
+author: "Haky Im"
+description: "GENE 46100 — Unit 00"
+categories: [slides]
+---
+
+[Open slide deck](slides-01-intro-mlp.html){.btn .btn-primary .btn-lg}

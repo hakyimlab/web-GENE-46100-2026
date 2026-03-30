@@ -1,0 +1,9 @@
+---
+title: "03 · DNA Sequence Scoring with CNNs"
+date: '2026-04-03'
+author: "Haky Im, based on notebook by Erin Wilson"
+description: "GENE 46100 — Unit 00"
+categories: [slides]
+---
+
+[Open slide deck](slides-03-dna-cnn.html){.btn .btn-primary .btn-lg}

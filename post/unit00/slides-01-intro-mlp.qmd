@@ -77,6 +77,10 @@ eval: false
 
 ---
 
+# Part 1: Linear Models {background-color="#1e3a5f" style="color:white;"}
+
+---
+
 ## Let's start with a linear model
 
 $$y = X\beta + \epsilon ~~~~~ \text{where }\epsilon \sim N(0, \sigma)$$
@@ -164,6 +168,10 @@ The normal equation works for linear models...
 . . .
 
 **We need a general-purpose optimization method.**
+
+---
+
+# Part 2: Gradient Descent {background-color="#1e3a5f" style="color:white;"}
 
 ---
 
@@ -427,6 +435,10 @@ The noise actually **helps** escape bad local minima!
 
 ---
 
+# Part 3: The ML Framework {background-color="#1e3a5f" style="color:white;"}
+
+---
+
 ## Three Components of Machine Learning
 
 Every ML model needs these three ingredients:
@@ -646,6 +658,10 @@ text(2, -2, "Far from\nidentity line!", col = "blue", cex = 1.1, font = 2)
 
 ---
 
+# Part 4: Neural Networks {background-color="#1e3a5f" style="color:white;"}
+
+---
+
 ## Multi-Layer Perceptron (MLP)
 
 ::: {.columns}
@@ -850,7 +866,7 @@ Layer 1 learns basic bends → Layer 2 **combines** them into a smooth curve.
 
 :::: {.column width="50%"}
 
-**Exercise:** count parameters for this network:
+**Example:** count parameters for this network:
 
 - Input: 2 features
 - Hidden: 3 neurons
@@ -938,6 +954,10 @@ Common activations:
 - Whether it will learn efficiently
 - Whether it will generalize to new data
 :::
+
+---
+
+# Part 5: From Playground to PyTorch {background-color="#1e3a5f" style="color:white;"}
 
 ---
 
@@ -1125,6 +1145,10 @@ plot(epochs, loss, type = "l", col = "steelblue", lwd = 2,
 
 ---
 
+# Part 6: Wrap-Up {background-color="#1e3a5f" style="color:white;"}
+
+---
+
 ## Your Turn: Explore the Playground
 
 Open [playground.hakyimlab.org](https://playground.hakyimlab.org/#activation=relu&batchSize=10&dataset=circle&regDataset=reg-gauss&learningRate=0.01&regularizationRate=0&noise=0&networkShape=4,2&seed=0.55802&showTestData=false&discretize=false&percTrainData=50&x=true&y=true&xTimesY=false&xSquared=false&ySquared=false&cosX=false&sinX=false&cosY=false&sinY=false&collectStats=false&problem=regression&initZero=false&hideText=false) and try:
@@ -1141,82 +1165,13 @@ Open [playground.hakyimlab.org](https://playground.hakyimlab.org/#activation=rel
 
 ---
 
-## DNA as Data: One-Hot Encoding
+## What's Next: CNN for DNA
 
-How do we feed DNA to a neural network?
+**Next lecture:** How do we feed DNA to a neural network and scan for motifs?
 
-```
-Sequence:  A  T  G  C  G  T  A
-
-           A  T  G  C
-     1:  [ 1  0  0  0 ]  ← A
-     2:  [ 0  1  0  0 ]  ← T
-     3:  [ 0  0  1  0 ]  ← G
-     4:  [ 0  0  0  1 ]  ← C
-     5:  [ 0  0  1  0 ]  ← G
-     6:  [ 0  1  0  0 ]  ← T
-     7:  [ 1  0  0  0 ]  ← A
-```
-
-**Shape: (sequence_length, 4)**
-
-Each base → a 4-dimensional unit vector. No ordinal relationship imposed.
-
----
-
-## From DNA to Prediction
-
-```
-DNA sequence          One-hot matrix       Neural network      Prediction
-
-ATGCGTAACG...  →  ┌─────────────┐   →   ┌──────────┐   →   binding score
-                  │ 1 0 0 0     │       │  MLP or  │       expression level
-                  │ 0 1 0 0     │       │   CNN    │       variant effect
-                  │ 0 0 1 0     │       │          │       ...
-                  │ 0 0 0 1     │       └──────────┘
-                  │ ...         │
-                  └─────────────┘
-```
-
-. . .
-
-**This is the core pattern of the most of the course.**
-
-Every model we study takes DNA sequence as input and predicts a biological output.
-
----
-
-## MLP vs CNN: A Preview
-
-::: {.columns}
-
-:::: {.column width="50%"}
-
-**MLP** (this unit)
-
-- Flatten DNA → single vector
-- Every input connected to every neuron
-- No concept of "position"
-- Good for learning the basics
-
-::::
-
-:::: {.column width="50%"}
-
-**CNN** (next)
-
-- Preserve sequential structure
-- Sliding window = **motif scanner**
-- Learned filters ≈ PWMs
-- The workhorse of genomic DL
-
-::::
-
-:::
-
-. . .
-
-A CNN filter sliding over one-hot DNA is mathematically equivalent to scoring with a **Position Weight Matrix (PWM)** — but learned from data!
+- Encode DNA as a matrix (one-hot encoding)
+- Use **convolutional neural networks** to detect sequence patterns
+- Learned CNN filters turn out to resemble known motifs (PWMs)
 
 ---
 
@@ -1225,10 +1180,11 @@ A CNN filter sliding over one-hot DNA is mathematically equivalent to scoring wi
 | Session | Topic | Notebook |
 |---------|-------|----------|
 | Week 1a | Setup, intro | *(this lecture)* |
-| Week 1b | Linear → MLP in PyTorch | `hands-on-introduction_to_deep_learning.ipynb` |
-| Week 2 | CNN for DNA scoring | `updated-basic_DNA_tutorial.ipynb` |
-| Week 3a | TF binding project | `tf-binding-prediction-starter.ipynb` |
-| Week 3b | Hyperparameter tuning | `tf-binding-wandb.ipynb` |
+| Week 1b | Linear → MLP in PyTorch | `notebook-01-intro-mlp` |
+| Week 2a | CNN concepts | *(slides-02)* |
+| Week 2b | CNN for DNA scoring | `notebook-03-dna-cnn` |
+| Week 3a | TF binding project | `notebook-04-tf-binding` |
+| Week 3b | Hyperparameter tuning | `notebook-05-tf-binding-wandb` |
 
 ---
 

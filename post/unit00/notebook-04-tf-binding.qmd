@@ -1,5 +1,5 @@
 ---
-title: TF Binding prediction project
+title: "04 · TF Binding prediction project"
 date: '2026-04-09'
 author: Sofia Salazar
 categories:

@@ -12,7 +12,7 @@ format:
     code-tools: true
     code-overflow: wrap
 date-modified: last-modified
-draft: true
+draft: false
 ---
 
 Actual homework posted on the course Canvas

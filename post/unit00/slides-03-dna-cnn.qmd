@@ -26,7 +26,7 @@ freeze: true
 
 ## You Can Train a Neural Network on Numbers
 
-Last session: gradient descent → MLP → PyTorch training loop on numeric data.
+**So far:** gradient descent → MLP → CNNs on numeric data.
 
 . . .
 
@@ -682,7 +682,7 @@ view_filters(model_weights)
 
 ![](images/filter_activation.png){fig-align="center" width="85%"}
 
-Each panel: one of 32 filters. Rows = A/C/G/T, columns = positions 1–3. Brighter = higher weight.
+Each panel: one of 32 filters. Rows = A/C/G/T, columns = positions 1–6. Brighter = higher weight.
 
 ---
 
@@ -719,94 +719,6 @@ Others learned complementary 3-mer patterns that help distinguish the background
 . . .
 
 > "Visualization of the first-layer filters can provide some intuition but should not be over-interpreted." — [Koo & Eddy, 2019](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1007560)
-
----
-
-# Exercises {background-color="#1e3a5f" style="color:white;"}
-
-**Open the notebook in Colab**
-
-[Colab link](https://drive.google.com/file/d/1x1oAP584Z2mXXMwcaZDaRUYENMt_S5pa/view?usp=sharing)
-
----
-
-## Exercise 1 — Position-Dependent Scoring
-
-**Current rule:** TAT anywhere → +10, regardless of position.
-
-**Your task:** modify `score_seqs_motif()` so that a motif scores **higher** if it appears near the **start** of the sequence than near the **end**.
-
-. . .
-
-Questions to answer:
-
-::: {.incremental}
-- How does the score distribution change? (still 3 groups? more?)
-- Does the CNN still learn the pattern? Does the linear model?
-- What would you expect the learned filters to look like?
-:::
-
----
-
-## Exercise 2 — Learning Rate Sensitivity
-
-Train both models with a range of learning rates:
-
-```python
-# Try: lr = 0.001, 0.005, 0.05, 0.1
-```
-
-. . .
-
-Questions to answer:
-
-::: {.incremental}
-- How does convergence speed change for each model?
-- Which model is **more sensitive** to learning rate, and why?
-- What learning rate would you recommend for each?
-:::
-
-. . .
-
-::: {.takehome}
-Hint: recall from last session — too small → slow, too large → diverges.
-Does the CNN diverge at the same threshold as the linear model?
-:::
-
----
-
-## Exercise 3 — Improve the Model
-
-Inspect the scatter plot and find sequences where the CNN makes large errors.
-
-**Your task:** propose and implement one modification — to the architecture, loss, training process, or data representation — to reduce those errors.
-
-. . .
-
-::: {.incremental}
-- Retrain with your modification
-- Show a before/after scatter plot or error histogram
-- Discuss: what did your change fix? What trade-offs did it introduce?
-:::
-
----
-
-## Your Turn
-
-Open the notebook in Colab:
-
-**[drive.google.com/file/d/1x1oAP584Z2mXXMwcaZDaRUYENMt_S5pa](https://drive.google.com/file/d/1x1oAP584Z2mXXMwcaZDaRUYENMt_S5pa/view?usp=sharing)**
-
-. . .
-
-Work through sections 1–7 in order. The code runs end-to-end — focus on **understanding each output** before moving on.
-
-::: {.incremental}
-- Section 1–2: generate data and one-hot encode a few sequences by hand first
-- Section 5: watch the loss curves live as they train
-- Section 7: look for TAT and GCG in the filter logos
-- Exercises: pick at least one to attempt
-:::
 
 ---
 

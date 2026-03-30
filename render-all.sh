@@ -11,7 +11,16 @@ python3 scripts/generate-slide-stubs.py
 echo "=== Rendering site ==="
 quarto render
 
-# 2. Render each slide deck and copy output to docs/
+# 2. Copy CSS files not handled by quarto render
+echo "=== Copying CSS assets ==="
+for css in post/**/custom.css; do
+  dest="docs/$(dirname "$css")"
+  mkdir -p "$dest"
+  cp "$css" "$dest/"
+  echo "  → $dest/$(basename "$css")"
+done
+
+# 3. Render each slide deck and copy output to docs/
 for slide in post/**/slides-*.qmd; do
   echo "=== Rendering slide: $slide ==="
 

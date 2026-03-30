@@ -1,0 +1,9 @@
+---
+title: "Building a GPT From Scratch summary"
+date: '2025-03-24'
+author: "Haky Im"
+description: "Slides"
+categories: [slides]
+---
+
+[Open slide deck](slides-gpt.html){.btn .btn-primary .btn-lg}

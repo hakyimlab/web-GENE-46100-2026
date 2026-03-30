@@ -2,303 +2,310 @@
   {
     "objectID": "post/unit00/page-slides-02-cnn-intro.html",
     "href": "post/unit00/page-slides-02-cnn-intro.html",
-    "title": "What Are Convolutional Neural Networks?",
+    "title": "02 · What Are Convolutional Neural Networks?",
     "section": "",
     "text": "Open slide deck\n\n\n\n\n\n© HakyImLab and Listed Authors - CC BY 4.0 License"
   },
   {
     "objectID": "post/unit00/notebook-05-tf-binding-wandb.html",
     "href": "post/unit00/notebook-05-tf-binding-wandb.html",
-    "title": "Calibrating hyperparameters with weights and biases",
+    "title": "05 · Calibrating hyperparameters with weights and biases",
     "section": "",
     "text": "Goal: Learn how to use weights and biases to calibrate the hyperparameters of a DL model.\n\nWeights and biases is a platform used for AI developers to track, visualize and manage their ML models and experiments. The coolest part is that W&B allows you to log various performance metrics during training, like training and validation loss, test set correlations, etc. Additionally, it allows you to compare between different experiments or versions of your models. Making it easier to identify the best performing models and see which hyperparameter configuration is the optimal.\nIn this notebook, we will focus on using W&B as a tool to help callibrate the hyperparameters of the TF binding prediction model to find an optimal solution. However, we encourage you to explore other applications that W&B offers.\n\n\n\nFirst install w&b in your environment with the following command, it should take only a couple of seconds\n\n%pip install wandb onnx -Uq\n%pip install nbformat\n\nLoad all libraries\n\nimport torch\nfrom torch import nn\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport random\nimport os\nimport pandas as pd\nimport wandb\nfrom scipy.stats import pearsonr\n\n\n\n\nIf you don’t already have a w&b account, sign up here. Then, run the following command which will prompt you to insert your API key\n\nwandb.login()\n\n\n\n\nThen, define your functions, this will remain unchanged\n\ndef get_device():\n  \"\"\"\n  Determines the device to use for PyTorch computations.\n\n  Prioritizes Metal Performance Shaders (MPS), then CUDA, then CPU.\n\n  Returns:\n    torch.device: The selected device.\n  \"\"\"\n  if torch.backends.mps.is_available():\n    device = torch.device(\"mps\")\n    print(\"Using MPS device.\")\n  elif torch.cuda.is_available():\n    device = torch.device(\"cuda\")\n    print(\"Using CUDA device.\")\n  else:\n    device = torch.device(\"cpu\")\n    print(\"Using CPU device.\")\n  return device\n\n# Example usage:\ndevice = get_device()\n\n\ndef one_hot_encode(seq):\n    \"\"\"\n    Given a DNA sequence, return its one-hot encoding\n    \"\"\"\n    # Make sure seq has only allowed bases\n    allowed = set(\"ACTGN\")\n    if not set(seq).issubset(allowed):\n        invalid = set(seq) - allowed\n        print(seq)\n        raise ValueError(f\"Sequence contains chars not in allowed DNA alphabet (ACGTN): {invalid}\")\n\n    # Dictionary returning one-hot encoding for each nucleotide\n    nuc_d = {'A':[1.0,0.0,0.0,0.0],\n             'C':[0.0,1.0,0.0,0.0],\n             'G':[0.0,0.0,1.0,0.0],\n             'T':[0.0,0.0,0.0,1.0],\n             'N':[0.0,0.0,0.0,0.0]}\n\n    # Create array from nucleotide sequence\n    vec=np.array([nuc_d[x] for x in seq],dtype='float32')\n\n    return vec\n\n\ndef quick_split(df, split_frac=0.8, verbose=False):\n    '''\n    Given a df of samples, randomly split indices between\n    train and test at the desired fraction\n    '''\n    cols = df.columns # original columns, use to clean up reindexed cols\n    df = df.reset_index()\n\n    # shuffle indices\n    idxs = list(range(df.shape[0]))\n    random.shuffle(idxs)\n\n    # split shuffled index list by split_frac\n    split = int(len(idxs)*split_frac)\n    train_idxs = idxs[:split]\n    test_idxs = idxs[split:]\n\n    # split dfs and return\n    train_df = df[df.index.isin(train_idxs)]\n    test_df = df[df.index.isin(test_idxs)]\n\n    return train_df[cols], test_df[cols]\n\n\ndef split_sequences(sequences_df):\n    full_train_sequences, test_sequences = quick_split(sequences_df)\n    train_sequences, val_sequences = quick_split(full_train_sequences)\n    print(\"Train:\", train_sequences.shape)\n    print(\"Val:\", val_sequences.shape)\n    print(\"Test:\", test_sequences.shape)\n    return train_sequences, val_sequences, test_sequences\n\n\ndef get_data_tensors(scores_df, sequences_df):\n    # split sequences in train, validation and test sets\n    train_sequences, val_sequences, test_sequences = split_sequences(sequences_df)\n    # get scores for each set of sequences\n    train_scores = scores_df[train_sequences['window_name'].to_list()].transpose().values.astype('float32') # shape is (num_sequences, 300)\n    val_scores = scores_df[val_sequences['window_name'].to_list()].transpose().values.astype('float32')\n    test_scores = scores_df[test_sequences['window_name'].to_list()].transpose().values.astype('float32')\n\n    train_scores = torch.tensor(train_scores, dtype=torch.float32).to(device)\n    val_scores = torch.tensor(val_scores, dtype=torch.float32).to(device)\n    test_scores = torch.tensor(test_scores, dtype=torch.float32).to(device)\n\n    # get one hot encoded sequences for each set\n    train_one_hot = [one_hot_encode(seq) for seq in train_sequences['sequence'].to_list()]\n    train_sequences_tensor = torch.tensor(np.stack(train_one_hot))\n\n    val_one_hot = [one_hot_encode(seq) for seq in val_sequences['sequence'].to_list()]\n    val_sequences_tensor = torch.tensor(np.stack(val_one_hot))\n\n    test_one_hot = [one_hot_encode(seq) for seq in test_sequences['sequence'].to_list()]\n    test_sequences_tensor = torch.tensor(np.stack(test_one_hot))\n\n    return train_scores, train_sequences_tensor, val_scores, val_sequences_tensor, test_scores, test_sequences_tensor\n\n\ndef create_dataloader(predictors, targets, batch_size, is_train = True):\n    '''\n    features: one hot encoded sequences\n    targets: sequence scores\n    batch_size\n    is_train: if True, data is reshuffled at every epoch\n    '''\n\n    dataset = torch.utils.data.TensorDataset(predictors, targets)\n    return torch.utils.data.DataLoader(dataset, batch_size, shuffle = is_train)\n\n\nclass DNA_CNN(nn.Module):\n    def __init__(self,\n                 seq_len,\n                 num_filters=16,\n                 kernel_size=10,\n                 add_sigmoid=False):\n        super().__init__()\n        self.seq_len = seq_len\n        self.add_sigmoid = add_sigmoid\n        # Define layers individually\n        self.conv = nn.Conv1d(in_channels = 4, out_channels = num_filters, kernel_size=kernel_size)\n        self.relu = nn.ReLU(inplace=True)\n        self.linear = nn.Linear(num_filters*(seq_len-kernel_size+1), 300)\n        self.sigmoid = nn.Sigmoid()\n\n    def forward(self, xb):\n        # reshape view to batch_size x 4channel x seq_len\n        # permute to put channel in correct order\n        xb = xb.permute(0,2,1) # (batch_size, 300, 4) to (batch_size, 4, 300)\n\n        # Apply layers step by step\n        x = self.conv(xb)\n        x = self.relu(x)\n        x = x.flatten(1)  # flatten all dimensions except batch\n        out = self.linear(x)\n        \n        if self.add_sigmoid:\n            out = self.sigmoid(out)\n        return out\n\n\ndef process_batch(model, loss_func, x_batch, y_batch, opt=None):\n    xb_out = model(x_batch.to(torch.float32))\n\n    loss = loss_func(xb_out, y_batch)\n\n    if opt is not None: # backpropagate if train step (optimizer given)\n        loss.backward()\n        opt.step()\n        opt.zero_grad()\n\n    return loss.item(), len(x_batch)\n\n\ndef train_epoch(model, train_dl, loss_func, device, opt):\n\n    model.train()\n    tl = [] # train losses\n    ns = [] # batch sizes, n\n\n    # loop through batches\n    for x_batch, y_batch in train_dl:\n\n        x_batch, y_batch = x_batch.to(device),y_batch.to(device)\n\n        t, n = process_batch(model, loss_func, x_batch, y_batch, opt=opt)\n\n        # collect train loss and batch sizes\n        tl.append(t)\n        ns.append(n)\n\n    # average the losses over all batches\n    train_loss = np.sum(np.multiply(tl, ns)) / np.sum(ns)\n\n    return train_loss\n\n\ndef val_epoch(model, val_dl, loss_func, device):\n\n    # Set model to Evaluation mode\n    model.eval()\n    with torch.no_grad():\n        vl = [] # val losses\n        ns = [] # batch sizes, n\n\n        # loop through validation DataLoader\n        for x_batch, y_batch in val_dl:\n\n            x_batch, y_batch = x_batch.to(device),y_batch.to(device)\n\n            v, n = process_batch(model, loss_func, x_batch, y_batch)\n\n            # collect val loss and batch sizes\n            vl.append(v)\n            ns.append(n)\n\n    # average the losses over all batches\n    val_loss = np.sum(np.multiply(vl, ns)) / np.sum(ns)\n\n    return val_loss\n\n\n\n\nThe only function that we need to change is the train_loop function, because here is where we are recovering the parameters that we want to track with w&b. We will use wandb.log and create a dictionary with the parmeters that we want to track.\n\ndef train_loop(epochs, model, loss_func, opt, train_dl, val_dl, device):\n\n    # keep track of losses\n    train_losses = []\n    val_losses = []\n\n    # loop through epochs\n    for epoch in range(epochs):\n        # take a training step\n        train_loss = train_epoch(model,train_dl,loss_func,device,opt)\n        train_losses.append(train_loss)\n\n        # take a validation step\n        val_loss = val_epoch(model,val_dl,loss_func,device)\n        val_losses.append(val_loss)\n\n        print(f\"Epoch {epoch + 1} | train loss: {train_loss:.3f} | val loss: {val_loss:.3f}\")\n        wandb.log({\"epoch\": epoch + 1,\n                   \"train_loss\": train_loss,\n                   \"val_loss\": val_loss})\n\n    return train_losses, val_losses\n\nDefining the train_model function. We omit the plot_curves function since all performance metrics will be tracked on w&b.\n\ndef train_model(train_dl,val_dl,model,device, lr=0.01, epochs=50, lossf=None,opt=None):\n\n    # define optimizer\n    if opt:\n        optimizer = opt(model.parameters(), lr=lr)\n    else: # if no opt provided, just use SGD\n        optimizer = torch.optim.SGD(model.parameters(), lr=lr)\n\n    # define loss function\n    if lossf:\n        loss_func = lossf\n    else: # if no loss function provided, just use MSE\n        loss_func = torch.nn.MSELoss()\n\n    # run the training loop\n    train_losses, val_losses = train_loop(\n                                epochs,\n                                model,\n                                loss_func,\n                                optimizer,\n                                train_dl,\n                                val_dl,\n                                device)\n\n\n\n\nAs a way to evaluate each model, let’s modify the test_model() function so that wand also keeps track of the performance metrics. In this case the metrics are pearson_per_sample, test_pearson_r and best_test.\n\ndef test_model(model, test_features, test_targets):\n  model.eval()\n  predictions = model(test_features.to(torch.float32).to(device)).detach().cpu().numpy()\n  observations = test_targets.cpu().numpy()\n  pearson_per_sample = np.array([pearsonr(predictions[i], observations[i])[0] for i in range(300)])\n  test_pearsonr = pearson_per_sample.mean()\n  best_test = pearson_per_sample.max()\n  wandb.log({'test_avg_pearsonr': test_pearsonr,\n             'beast_pearsonr': best_test})\n\n\n\n\nA sweep is the training and testing of a single model with a given configuration of hyperparameters. with wandb.sweep we define the set of hyperparameters to test, which will be then combined in different configurations each sweep.\n\nsweep_config = {\n    'method': 'random',\n    'metric': {'name': 'test_avg_pearsonr', 'goal': 'maximize'},\n    'parameters': {\n        'num_filters': {'values': [4, 16]},\n        'kernel_size': {'values': [5, 10]},\n        'add_sigmoid': {'values': [True, False],},\n        'learning_rate':{'values':[0.1, 0.05]},\n        'batch_size': {'values':[16, 32, 64]},\n        'optimizer': {'values': ['SGD','Adam']}\n    }\n}\n\nCreate a project ID for your model, all your tests will be saved in this project\n\nsweep_id = wandb.sweep(sweep_config, project=\"DNA_model\")\n\n\n\n\n\nDIR = '/Users/sofiasalazar/Library/CloudStorage/Box-Box/imlab-data/Courses/AI-in-Genomics-2025/data/'\nsequences = pd.read_csv(os.path.join(DIR, 'chr22_sequences.txt.gz'), sep=\"\\t\", compression='gzip')\nscores = pd.read_csv(os.path.join(DIR, 'chr22_scores.txt.gz'), sep=\"\\t\", compression='gzip',dtype='float32')\n\n\ntrain_scores, train_sequences_tensor, val_scores, val_sequences_tensor, test_scores, test_sequences_tensor = get_data_tensors(scores, sequences)\n\n\n\n\nWith wandb.init we initialize one sweep and what we want to do in each. This consists on\n\nLoading a configuration of hyperparameters with wandb.config\nLoading the model\nTelling wandb to track the training with wandb.watch\nCreate the dataloaders\nTrain and test the model\n\n\ndef train_sweep():\n    with wandb.init(project = \"DNA_model\"):\n        config = wandb.config\n        model = DNA_CNN(seq_len=300, num_filters=config.num_filters, kernel_size=config.kernel_size, add_sigmoid=config.add_sigmoid).to(device)\n        wandb.watch(model, log=\"all\", log_freq=10) # log all: logs all gradients and parameters, every log_freq number of training steps (batches) \n        train_loader = create_dataloader(train_sequences_tensor, train_scores, batch_size=config.batch_size)\n        val_loader = create_dataloader(val_sequences_tensor, val_scores, batch_size=config.batch_size, is_train=False)\n        if config.optimizer == 'SGD':\n            opt = torch.optim.SGD\n        else: opt = torch.optim.Adam \n\n        train_model(train_loader, val_loader, model, device, epochs=30, lr = config.learning_rate, opt=opt)\n        test_model(model, test_sequences_tensor, test_scores)\n\nFinally, we train with wandb.agent, the argument count is the number of combinations of hyperparameters I want to try. The maximum in my case is 240 combinations\n\n# wandb.agent(sweep_id, train_sweep, count=240)\nwandb.agent(sweep_id, train_sweep, count=6)\n© HakyImLab and Listed Authors - CC BY 4.0 License"
   },
   {
     "objectID": "post/unit00/notebook-05-tf-binding-wandb.html#calibrating-hyperparameters-with-weights-and-biases",
     "href": "post/unit00/notebook-05-tf-binding-wandb.html#calibrating-hyperparameters-with-weights-and-biases",
-    "title": "Calibrating hyperparameters with weights and biases",
+    "title": "05 · Calibrating hyperparameters with weights and biases",
     "section": "",
     "text": "Goal: Learn how to use weights and biases to calibrate the hyperparameters of a DL model.\n\nWeights and biases is a platform used for AI developers to track, visualize and manage their ML models and experiments. The coolest part is that W&B allows you to log various performance metrics during training, like training and validation loss, test set correlations, etc. Additionally, it allows you to compare between different experiments or versions of your models. Making it easier to identify the best performing models and see which hyperparameter configuration is the optimal.\nIn this notebook, we will focus on using W&B as a tool to help callibrate the hyperparameters of the TF binding prediction model to find an optimal solution. However, we encourage you to explore other applications that W&B offers.\n\n\n\nFirst install w&b in your environment with the following command, it should take only a couple of seconds\n\n%pip install wandb onnx -Uq\n%pip install nbformat\n\nLoad all libraries\n\nimport torch\nfrom torch import nn\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport random\nimport os\nimport pandas as pd\nimport wandb\nfrom scipy.stats import pearsonr\n\n\n\n\nIf you don’t already have a w&b account, sign up here. Then, run the following command which will prompt you to insert your API key\n\nwandb.login()\n\n\n\n\nThen, define your functions, this will remain unchanged\n\ndef get_device():\n  \"\"\"\n  Determines the device to use for PyTorch computations.\n\n  Prioritizes Metal Performance Shaders (MPS), then CUDA, then CPU.\n\n  Returns:\n    torch.device: The selected device.\n  \"\"\"\n  if torch.backends.mps.is_available():\n    device = torch.device(\"mps\")\n    print(\"Using MPS device.\")\n  elif torch.cuda.is_available():\n    device = torch.device(\"cuda\")\n    print(\"Using CUDA device.\")\n  else:\n    device = torch.device(\"cpu\")\n    print(\"Using CPU device.\")\n  return device\n\n# Example usage:\ndevice = get_device()\n\n\ndef one_hot_encode(seq):\n    \"\"\"\n    Given a DNA sequence, return its one-hot encoding\n    \"\"\"\n    # Make sure seq has only allowed bases\n    allowed = set(\"ACTGN\")\n    if not set(seq).issubset(allowed):\n        invalid = set(seq) - allowed\n        print(seq)\n        raise ValueError(f\"Sequence contains chars not in allowed DNA alphabet (ACGTN): {invalid}\")\n\n    # Dictionary returning one-hot encoding for each nucleotide\n    nuc_d = {'A':[1.0,0.0,0.0,0.0],\n             'C':[0.0,1.0,0.0,0.0],\n             'G':[0.0,0.0,1.0,0.0],\n             'T':[0.0,0.0,0.0,1.0],\n             'N':[0.0,0.0,0.0,0.0]}\n\n    # Create array from nucleotide sequence\n    vec=np.array([nuc_d[x] for x in seq],dtype='float32')\n\n    return vec\n\n\ndef quick_split(df, split_frac=0.8, verbose=False):\n    '''\n    Given a df of samples, randomly split indices between\n    train and test at the desired fraction\n    '''\n    cols = df.columns # original columns, use to clean up reindexed cols\n    df = df.reset_index()\n\n    # shuffle indices\n    idxs = list(range(df.shape[0]))\n    random.shuffle(idxs)\n\n    # split shuffled index list by split_frac\n    split = int(len(idxs)*split_frac)\n    train_idxs = idxs[:split]\n    test_idxs = idxs[split:]\n\n    # split dfs and return\n    train_df = df[df.index.isin(train_idxs)]\n    test_df = df[df.index.isin(test_idxs)]\n\n    return train_df[cols], test_df[cols]\n\n\ndef split_sequences(sequences_df):\n    full_train_sequences, test_sequences = quick_split(sequences_df)\n    train_sequences, val_sequences = quick_split(full_train_sequences)\n    print(\"Train:\", train_sequences.shape)\n    print(\"Val:\", val_sequences.shape)\n    print(\"Test:\", test_sequences.shape)\n    return train_sequences, val_sequences, test_sequences\n\n\ndef get_data_tensors(scores_df, sequences_df):\n    # split sequences in train, validation and test sets\n    train_sequences, val_sequences, test_sequences = split_sequences(sequences_df)\n    # get scores for each set of sequences\n    train_scores = scores_df[train_sequences['window_name'].to_list()].transpose().values.astype('float32') # shape is (num_sequences, 300)\n    val_scores = scores_df[val_sequences['window_name'].to_list()].transpose().values.astype('float32')\n    test_scores = scores_df[test_sequences['window_name'].to_list()].transpose().values.astype('float32')\n\n    train_scores = torch.tensor(train_scores, dtype=torch.float32).to(device)\n    val_scores = torch.tensor(val_scores, dtype=torch.float32).to(device)\n    test_scores = torch.tensor(test_scores, dtype=torch.float32).to(device)\n\n    # get one hot encoded sequences for each set\n    train_one_hot = [one_hot_encode(seq) for seq in train_sequences['sequence'].to_list()]\n    train_sequences_tensor = torch.tensor(np.stack(train_one_hot))\n\n    val_one_hot = [one_hot_encode(seq) for seq in val_sequences['sequence'].to_list()]\n    val_sequences_tensor = torch.tensor(np.stack(val_one_hot))\n\n    test_one_hot = [one_hot_encode(seq) for seq in test_sequences['sequence'].to_list()]\n    test_sequences_tensor = torch.tensor(np.stack(test_one_hot))\n\n    return train_scores, train_sequences_tensor, val_scores, val_sequences_tensor, test_scores, test_sequences_tensor\n\n\ndef create_dataloader(predictors, targets, batch_size, is_train = True):\n    '''\n    features: one hot encoded sequences\n    targets: sequence scores\n    batch_size\n    is_train: if True, data is reshuffled at every epoch\n    '''\n\n    dataset = torch.utils.data.TensorDataset(predictors, targets)\n    return torch.utils.data.DataLoader(dataset, batch_size, shuffle = is_train)\n\n\nclass DNA_CNN(nn.Module):\n    def __init__(self,\n                 seq_len,\n                 num_filters=16,\n                 kernel_size=10,\n                 add_sigmoid=False):\n        super().__init__()\n        self.seq_len = seq_len\n        self.add_sigmoid = add_sigmoid\n        # Define layers individually\n        self.conv = nn.Conv1d(in_channels = 4, out_channels = num_filters, kernel_size=kernel_size)\n        self.relu = nn.ReLU(inplace=True)\n        self.linear = nn.Linear(num_filters*(seq_len-kernel_size+1), 300)\n        self.sigmoid = nn.Sigmoid()\n\n    def forward(self, xb):\n        # reshape view to batch_size x 4channel x seq_len\n        # permute to put channel in correct order\n        xb = xb.permute(0,2,1) # (batch_size, 300, 4) to (batch_size, 4, 300)\n\n        # Apply layers step by step\n        x = self.conv(xb)\n        x = self.relu(x)\n        x = x.flatten(1)  # flatten all dimensions except batch\n        out = self.linear(x)\n        \n        if self.add_sigmoid:\n            out = self.sigmoid(out)\n        return out\n\n\ndef process_batch(model, loss_func, x_batch, y_batch, opt=None):\n    xb_out = model(x_batch.to(torch.float32))\n\n    loss = loss_func(xb_out, y_batch)\n\n    if opt is not None: # backpropagate if train step (optimizer given)\n        loss.backward()\n        opt.step()\n        opt.zero_grad()\n\n    return loss.item(), len(x_batch)\n\n\ndef train_epoch(model, train_dl, loss_func, device, opt):\n\n    model.train()\n    tl = [] # train losses\n    ns = [] # batch sizes, n\n\n    # loop through batches\n    for x_batch, y_batch in train_dl:\n\n        x_batch, y_batch = x_batch.to(device),y_batch.to(device)\n\n        t, n = process_batch(model, loss_func, x_batch, y_batch, opt=opt)\n\n        # collect train loss and batch sizes\n        tl.append(t)\n        ns.append(n)\n\n    # average the losses over all batches\n    train_loss = np.sum(np.multiply(tl, ns)) / np.sum(ns)\n\n    return train_loss\n\n\ndef val_epoch(model, val_dl, loss_func, device):\n\n    # Set model to Evaluation mode\n    model.eval()\n    with torch.no_grad():\n        vl = [] # val losses\n        ns = [] # batch sizes, n\n\n        # loop through validation DataLoader\n        for x_batch, y_batch in val_dl:\n\n            x_batch, y_batch = x_batch.to(device),y_batch.to(device)\n\n            v, n = process_batch(model, loss_func, x_batch, y_batch)\n\n            # collect val loss and batch sizes\n            vl.append(v)\n            ns.append(n)\n\n    # average the losses over all batches\n    val_loss = np.sum(np.multiply(vl, ns)) / np.sum(ns)\n\n    return val_loss\n\n\n\n\nThe only function that we need to change is the train_loop function, because here is where we are recovering the parameters that we want to track with w&b. We will use wandb.log and create a dictionary with the parmeters that we want to track.\n\ndef train_loop(epochs, model, loss_func, opt, train_dl, val_dl, device):\n\n    # keep track of losses\n    train_losses = []\n    val_losses = []\n\n    # loop through epochs\n    for epoch in range(epochs):\n        # take a training step\n        train_loss = train_epoch(model,train_dl,loss_func,device,opt)\n        train_losses.append(train_loss)\n\n        # take a validation step\n        val_loss = val_epoch(model,val_dl,loss_func,device)\n        val_losses.append(val_loss)\n\n        print(f\"Epoch {epoch + 1} | train loss: {train_loss:.3f} | val loss: {val_loss:.3f}\")\n        wandb.log({\"epoch\": epoch + 1,\n                   \"train_loss\": train_loss,\n                   \"val_loss\": val_loss})\n\n    return train_losses, val_losses\n\nDefining the train_model function. We omit the plot_curves function since all performance metrics will be tracked on w&b.\n\ndef train_model(train_dl,val_dl,model,device, lr=0.01, epochs=50, lossf=None,opt=None):\n\n    # define optimizer\n    if opt:\n        optimizer = opt(model.parameters(), lr=lr)\n    else: # if no opt provided, just use SGD\n        optimizer = torch.optim.SGD(model.parameters(), lr=lr)\n\n    # define loss function\n    if lossf:\n        loss_func = lossf\n    else: # if no loss function provided, just use MSE\n        loss_func = torch.nn.MSELoss()\n\n    # run the training loop\n    train_losses, val_losses = train_loop(\n                                epochs,\n                                model,\n                                loss_func,\n                                optimizer,\n                                train_dl,\n                                val_dl,\n                                device)\n\n\n\n\nAs a way to evaluate each model, let’s modify the test_model() function so that wand also keeps track of the performance metrics. In this case the metrics are pearson_per_sample, test_pearson_r and best_test.\n\ndef test_model(model, test_features, test_targets):\n  model.eval()\n  predictions = model(test_features.to(torch.float32).to(device)).detach().cpu().numpy()\n  observations = test_targets.cpu().numpy()\n  pearson_per_sample = np.array([pearsonr(predictions[i], observations[i])[0] for i in range(300)])\n  test_pearsonr = pearson_per_sample.mean()\n  best_test = pearson_per_sample.max()\n  wandb.log({'test_avg_pearsonr': test_pearsonr,\n             'beast_pearsonr': best_test})\n\n\n\n\nA sweep is the training and testing of a single model with a given configuration of hyperparameters. with wandb.sweep we define the set of hyperparameters to test, which will be then combined in different configurations each sweep.\n\nsweep_config = {\n    'method': 'random',\n    'metric': {'name': 'test_avg_pearsonr', 'goal': 'maximize'},\n    'parameters': {\n        'num_filters': {'values': [4, 16]},\n        'kernel_size': {'values': [5, 10]},\n        'add_sigmoid': {'values': [True, False],},\n        'learning_rate':{'values':[0.1, 0.05]},\n        'batch_size': {'values':[16, 32, 64]},\n        'optimizer': {'values': ['SGD','Adam']}\n    }\n}\n\nCreate a project ID for your model, all your tests will be saved in this project\n\nsweep_id = wandb.sweep(sweep_config, project=\"DNA_model\")\n\n\n\n\n\nDIR = '/Users/sofiasalazar/Library/CloudStorage/Box-Box/imlab-data/Courses/AI-in-Genomics-2025/data/'\nsequences = pd.read_csv(os.path.join(DIR, 'chr22_sequences.txt.gz'), sep=\"\\t\", compression='gzip')\nscores = pd.read_csv(os.path.join(DIR, 'chr22_scores.txt.gz'), sep=\"\\t\", compression='gzip',dtype='float32')\n\n\ntrain_scores, train_sequences_tensor, val_scores, val_sequences_tensor, test_scores, test_sequences_tensor = get_data_tensors(scores, sequences)\n\n\n\n\nWith wandb.init we initialize one sweep and what we want to do in each. This consists on\n\nLoading a configuration of hyperparameters with wandb.config\nLoading the model\nTelling wandb to track the training with wandb.watch\nCreate the dataloaders\nTrain and test the model\n\n\ndef train_sweep():\n    with wandb.init(project = \"DNA_model\"):\n        config = wandb.config\n        model = DNA_CNN(seq_len=300, num_filters=config.num_filters, kernel_size=config.kernel_size, add_sigmoid=config.add_sigmoid).to(device)\n        wandb.watch(model, log=\"all\", log_freq=10) # log all: logs all gradients and parameters, every log_freq number of training steps (batches) \n        train_loader = create_dataloader(train_sequences_tensor, train_scores, batch_size=config.batch_size)\n        val_loader = create_dataloader(val_sequences_tensor, val_scores, batch_size=config.batch_size, is_train=False)\n        if config.optimizer == 'SGD':\n            opt = torch.optim.SGD\n        else: opt = torch.optim.Adam \n\n        train_model(train_loader, val_loader, model, device, epochs=30, lr = config.learning_rate, opt=opt)\n        test_model(model, test_sequences_tensor, test_scores)\n\nFinally, we train with wandb.agent, the argument count is the number of combinations of hyperparameters I want to try. The maximum in my case is 240 combinations\n\n# wandb.agent(sweep_id, train_sweep, count=240)\nwandb.agent(sweep_id, train_sweep, count=6)"
   },
   {
     "objectID": "post/unit00/notebook-03-dna-cnn.html",
     "href": "post/unit00/notebook-03-dna-cnn.html",
-    "title": "From Signals to DNA: Building a Sequence-to-Score CNN",
+    "title": "03 · From Signals to DNA: Building a Sequence-to-Score CNN",
     "section": "",
     "text": "Jupyter notebook in Colab\nOriginally created by Erin Wilson (source). Adapted by Haky Im and Ran Blekhman for GENE 46100.\n© HakyImLab and Listed Authors - CC BY 4.0 License"
   },
   {
     "objectID": "post/unit00/notebook-03-dna-cnn.html#building-on-notebook-02",
     "href": "post/unit00/notebook-03-dna-cnn.html#building-on-notebook-02",
-    "title": "From Signals to DNA: Building a Sequence-to-Score CNN",
+    "title": "03 · From Signals to DNA: Building a Sequence-to-Score CNN",
     "section": "Building on notebook-02",
     "text": "Building on notebook-02\nIn notebook-02 you built a CNN that detects a spike pattern in a numeric signal. This notebook applies the same architecture to DNA sequences. The key differences:\n\n\n\n\n\n\n\n\n\nNotebook-02\nThis notebook\n\n\n\n\nInput\n1-channel numeric signal\n4-channel one-hot DNA (A/C/G/T)\n\n\nTask\nClassification (spike yes/no)\nRegression (predict a score)\n\n\nPattern\nFixed spike shape\nSequence motifs (TAT, GCG)\n\n\nBatching\nFull dataset in one pass\nMini-batches via DataLoader\n\n\nFilters reveal\nSpike-shaped weight vectors\nSequence logos\n\n\n\nEverything else — Conv1d, ReLU, pooling, the training loop, filter visualization — carries over directly."
   },
   {
     "objectID": "post/unit00/notebook-03-dna-cnn.html#install-and-load-packages",
     "href": "post/unit00/notebook-03-dna-cnn.html#install-and-load-packages",
-    "title": "From Signals to DNA: Building a Sequence-to-Score CNN",
+    "title": "03 · From Signals to DNA: Building a Sequence-to-Score CNN",
     "section": "Install and load packages",
     "text": "Install and load packages\n\nif False:\n    %pip install seaborn matplotlib logomaker\n    %pip install scikit-learn plotnine tqdm pandas numpy\n    %pip install torch torchvision torchmetrics\n\n\nfrom collections import defaultdict\nfrom itertools import product\nimport matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\nimport random\nimport torch\nfrom torch import nn\nimport torch.nn.functional as F\nfrom sklearn.model_selection import train_test_split\n\nif torch.backends.mps.is_available():\n    torch.set_default_dtype(torch.float32)\n    print(\"Set default to float32 for MPS compatibility\")\n\n\ndef set_seed(seed: int = 42) -&gt; None:\n    \"\"\"Set random seeds for reproducibility across all libraries.\"\"\"\n    np.random.seed(seed)\n    random.seed(seed)\n    torch.manual_seed(seed)\n    if torch.backends.mps.is_available():\n        torch.mps.manual_seed(seed)\n    elif torch.cuda.is_available():\n        torch.cuda.manual_seed(seed)\n        torch.backends.cudnn.deterministic = True\n        torch.backends.cudnn.benchmark = False\n    print(f\"Random seed set as {seed}\")\n\nset_seed(17)\n\nChoose the best available device — GPU training is faster but the dataset here is small enough for CPU.\n\nDEVICE = torch.device('mps' if torch.backends.mps.is_available()\n                     else 'cuda' if torch.cuda.is_available()\n                     else 'cpu')\nDEVICE"
   },
   {
     "objectID": "post/unit00/notebook-03-dna-cnn.html#visualize-the-score-distribution",
     "href": "post/unit00/notebook-03-dna-cnn.html#visualize-the-score-distribution",
-    "title": "From Signals to DNA: Building a Sequence-to-Score CNN",
+    "title": "03 · From Signals to DNA: Building a Sequence-to-Score CNN",
     "section": "Visualize the score distribution",
     "text": "Visualize the score distribution\n\nDiscuss: The three-peaked histogram confirms our scoring rule: center peak (no motif), right peak (TAT bonus), left peak (GCG penalty).\n\n\nplt.hist(mer8['score'].values, bins=20)\nplt.title(\"8-mer score distribution\")\nplt.xlabel(\"Sequence score\", fontsize=14)\nplt.ylabel(\"Count\", fontsize=14)\nplt.show()"
   },
   {
     "objectID": "post/unit00/notebook-03-dna-cnn.html#question-1",
     "href": "post/unit00/notebook-03-dna-cnn.html#question-1",
-    "title": "From Signals to DNA: Building a Sequence-to-Score CNN",
+    "title": "03 · From Signals to DNA: Building a Sequence-to-Score CNN",
     "section": "Question 1",
     "text": "Question 1\nModify the scoring function to create a more complex pattern. Instead of giving fixed bonuses for “TAT” and “GCG”, implement a position-dependent scoring where a motif gets a higher bonus if it appears at the beginning of the sequence compared to the end. How does this change the distribution of scores?"
   },
   {
     "objectID": "post/unit00/notebook-03-dna-cnn.html#one-hot-encoding-turning-dna-into-numbers",
     "href": "post/unit00/notebook-03-dna-cnn.html#one-hot-encoding-turning-dna-into-numbers",
-    "title": "From Signals to DNA: Building a Sequence-to-Score CNN",
+    "title": "03 · From Signals to DNA: Building a Sequence-to-Score CNN",
     "section": "One-hot encoding: turning DNA into numbers",
     "text": "One-hot encoding: turning DNA into numbers\nIn notebook-02, our input was a 1-channel numeric signal. DNA is a string of letters, so we need to convert it. One-hot encoding maps each nucleotide to a length-4 vector:\n\nA → [1, 0, 0, 0], C → [0, 1, 0, 0], G → [0, 0, 1, 0], T → [0, 0, 0, 1]\n\nAn 8-mer becomes an (8 × 4) matrix — equivalent to a 4-channel signal of length 8. This is exactly the input shape Conv1d expects, with in_channels=4 instead of in_channels=1.\n\n\ndef one_hot_encode(seq):\n    \"\"\"One-hot encode a DNA sequence into a (seq_len, 4) numpy array.\"\"\"\n    allowed = set(\"ACTGN\")\n    if not set(seq).issubset(allowed):\n        invalid = set(seq) - allowed\n        raise ValueError(f\"Invalid characters in sequence: {invalid}\")\n\n    nuc_d = {'A': [1.0, 0.0, 0.0, 0.0],\n             'C': [0.0, 1.0, 0.0, 0.0],\n             'G': [0.0, 0.0, 1.0, 0.0],\n             'T': [0.0, 0.0, 0.0, 1.0],\n             'N': [0.0, 0.0, 0.0, 0.0]}\n\n    return np.array([nuc_d[x] for x in seq], dtype=np.float32)\n\n\nprint(\"AAAAAAAA:\\n\", one_hot_encode(\"AAAAAAAA\"))\n\n\ns = one_hot_encode(\"AGGTACCT\")\nprint(\"AGGTACCT:\\n\", s)\nprint(\"Shape:\", s.shape)"
   },
   {
     "objectID": "post/unit00/notebook-03-dna-cnn.html#train-validation-test-split",
     "href": "post/unit00/notebook-03-dna-cnn.html#train-validation-test-split",
-    "title": "From Signals to DNA: Building a Sequence-to-Score CNN",
+    "title": "03 · From Signals to DNA: Building a Sequence-to-Score CNN",
     "section": "Train / validation / test split",
     "text": "Train / validation / test split\nWe use the same train_test_split from sklearn as in notebook-02. The split ratios (64% train, 16% val, 20% test) ensure each set contains examples from all three score groups.\n\ntrain_df, test_df = train_test_split(mer8, test_size=0.2, random_state=42)\ntrain_df, val_df = train_test_split(train_df, test_size=0.2, random_state=42)\n\nprint(\"Train:\", train_df.shape)\nprint(\"Val:  \", val_df.shape)\nprint(\"Test: \", test_df.shape)\n\nVerify that train, val, and test sets cover the full score distribution:\n\ndef plot_train_test_hist(train_df, val_df, test_df, bins=20):\n    plt.hist(train_df['score'].values, bins=bins, label='train', alpha=0.5)\n    plt.hist(val_df['score'].values, bins=bins, label='val', alpha=0.75)\n    plt.hist(test_df['score'].values, bins=bins, label='test', alpha=0.4)\n    plt.legend()\n    plt.xlabel(\"Sequence score\", fontsize=14)\n    plt.ylabel(\"Count\", fontsize=14)\n    plt.show()\n\n\nplot_train_test_hist(train_df, val_df, test_df)"
   },
   {
     "objectID": "post/unit00/notebook-03-dna-cnn.html#dataset-and-dataloader",
     "href": "post/unit00/notebook-03-dna-cnn.html#dataset-and-dataloader",
-    "title": "From Signals to DNA: Building a Sequence-to-Score CNN",
+    "title": "03 · From Signals to DNA: Building a Sequence-to-Score CNN",
     "section": "Dataset and DataLoader",
     "text": "Dataset and DataLoader\nIn notebook-02 we passed the entire dataset as one tensor. With larger datasets that won’t fit in memory, so PyTorch provides Dataset (defines how to fetch one sample) and DataLoader (handles batching, shuffling, and parallel loading). This is the standard pattern you’ll see in every PyTorch project.\n\nfrom torch.utils.data import Dataset, DataLoader\n\n\nclass SeqDatasetOHE(Dataset):\n    \"\"\"Dataset that one-hot encodes DNA sequences on construction.\"\"\"\n    def __init__(self, df, seq_col='seq', target_col='score'):\n        self.seqs = list(df[seq_col].values)\n        self.seq_len = len(self.seqs[0])\n        self.ohe_seqs = torch.stack([torch.tensor(one_hot_encode(x)) for x in self.seqs])\n        self.labels = torch.tensor(list(df[target_col].values)).unsqueeze(1)\n\n    def __len__(self):\n        return len(self.seqs)\n\n    def __getitem__(self, idx):\n        return self.ohe_seqs[idx], self.labels[idx]\n\n\ndef build_dataloaders(train_df, test_df, seq_col='seq', target_col='score',\n                      batch_size=128, shuffle=True):\n    \"\"\"Create DataLoaders from train and test DataFrames.\"\"\"\n    train_ds = SeqDatasetOHE(train_df, seq_col=seq_col, target_col=target_col)\n    test_ds = SeqDatasetOHE(test_df, seq_col=seq_col, target_col=target_col)\n    train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=shuffle)\n    test_dl = DataLoader(test_ds, batch_size=batch_size)\n    return train_dl, test_dl\n\n\ntrain_dl, val_dl = build_dataloaders(train_df, val_df)"
   },
   {
     "objectID": "post/unit00/notebook-03-dna-cnn.html#linear-model",
     "href": "post/unit00/notebook-03-dna-cnn.html#linear-model",
-    "title": "From Signals to DNA: Building a Sequence-to-Score CNN",
+    "title": "03 · From Signals to DNA: Building a Sequence-to-Score CNN",
     "section": "Linear model",
     "text": "Linear model\n\nseq_len = len(train_df['seq'].values[0])\n\nmodel_lin = DNA_Linear(seq_len).type(torch.float32).to(DEVICE)\nlin_train_losses, lin_val_losses = train_model(model_lin, train_dl, val_dl, DEVICE)\n\n\ndef quick_loss_plot(data_label_list, loss_type=\"MSE Loss\"):\n    for i, (train_data, test_data, label) in enumerate(data_label_list):\n        plt.plot(train_data, linestyle='--', color=f\"C{i}\", label=f\"{label} Train\")\n        plt.plot(test_data, color=f\"C{i}\", label=f\"{label} Val\", linewidth=3.0)\n    plt.legend(bbox_to_anchor=(1, 1), loc='upper left')\n    plt.ylabel(loss_type)\n    plt.xlabel(\"Epoch\")\n    plt.show()\n\n\nlin_data_label = (lin_train_losses, lin_val_losses, \"Linear\")\nquick_loss_plot([lin_data_label])\n\n\nDiscuss: Not much learning happening — the linear model plateaus quickly."
   },
   {
     "objectID": "post/unit00/notebook-03-dna-cnn.html#cnn-model",
     "href": "post/unit00/notebook-03-dna-cnn.html#cnn-model",
-    "title": "From Signals to DNA: Building a Sequence-to-Score CNN",
+    "title": "03 · From Signals to DNA: Building a Sequence-to-Score CNN",
     "section": "CNN model",
     "text": "CNN model\n\nmodel_cnn = DNA_CNN(seq_len).to(DEVICE)\ncnn_train_losses, cnn_val_losses = train_model(model_cnn, train_dl, val_dl, DEVICE)\n\n\ncnn_data_label = (cnn_train_losses, cnn_val_losses, \"CNN\")\nquick_loss_plot([lin_data_label, cnn_data_label])\n\n\nDiscuss: The CNN loss drops much further — its sliding filters can capture the 3-mer motifs that the linear model cannot."
   },
   {
     "objectID": "post/unit00/notebook-03-dna-cnn.html#spot-check-predictions",
     "href": "post/unit00/notebook-03-dna-cnn.html#spot-check-predictions",
-    "title": "From Signals to DNA: Building a Sequence-to-Score CNN",
+    "title": "03 · From Signals to DNA: Building a Sequence-to-Score CNN",
     "section": "Spot-check predictions",
     "text": "Spot-check predictions\nLet’s compare what each model predicts for specific sequences to understand why the linear model fails:\n\noracle = dict(mer8[['seq', 'score']].values)\n\ndef quick_seq_pred(model, desc, seqs, oracle):\n    print(f\"__{desc}__\")\n    for dna in seqs:\n        s = torch.tensor(one_hot_encode(dna)).unsqueeze(0).to(DEVICE)\n        pred = model(s.float())\n        actual = oracle[dna]\n        diff = pred.item() - actual\n        print(f\"{dna}: pred:{pred.item():.3f} actual:{actual:.3f} ({diff:.3f})\")\n\ndef quick_8mer_pred(model, oracle):\n    groups = [\n        (\"poly-X seqs\",      ['AAAAAAAA', 'CCCCCCCC', 'GGGGGGGG', 'TTTTTTTT']),\n        (\"other seqs\",       ['AACCAACA', 'CCGGTGAG', 'GGGTAAGG', 'TTTCGTTT']),\n        (\"with TAT motif\",   ['TATAAAAA', 'CCTATCCC', 'GTATGGGG', 'TTTATTTT']),\n        (\"with GCG motif\",   ['AAGCGAAA', 'CGCGCCCC', 'GGGCGGGG', 'TTGCGTTT']),\n        (\"both TAT and GCG\", ['ATATGCGA', 'TGCGTATT']),\n    ]\n    for desc, seqs in groups:\n        quick_seq_pred(model, desc, seqs, oracle)\n        print()\n\n\nquick_8mer_pred(model_lin, oracle)\n\n\nDiscuss: The linear model underpredicts G-rich sequences and overpredicts T-rich ones. Why? It learned that G’s tend to appear in low-scoring sequences (because of GCG) and T’s in high-scoring ones (because of TAT). But it’s the 3-mer context that matters, not individual nucleotides — GCG is penalized while GAG is not. The linear model cannot make this distinction.\n\n\nquick_8mer_pred(model_cnn, oracle)\n\n\nDiscuss: The CNN handles both motif and non-motif sequences well, because its width-3 filters can detect the specific 3-mer patterns."
   },
   {
     "objectID": "post/unit00/notebook-03-dna-cnn.html#question-2",
     "href": "post/unit00/notebook-03-dna-cnn.html#question-2",
-    "title": "From Signals to DNA: Building a Sequence-to-Score CNN",
+    "title": "03 · From Signals to DNA: Building a Sequence-to-Score CNN",
     "section": "Question 2",
     "text": "Question 2\nCompare the performance of the Linear and CNN models by using different learning rates. First run both models with higher learning rates (0.05, 0.1) and lower learning rates (0.005, 0.001), then create loss plots showing:\n\nLinear model with these learning rates\nCNN model with these learning rates\n\nThen analyze your results by answering:\n\nHow does changing the learning rate affect convergence for each model?\nWhich model is more sensitive to learning rate changes, and why?\nBased on your analysis, what learning rate would you recommend for each model type, and why?"
   },
   {
     "objectID": "post/unit00/notebook-03-dna-cnn.html#question-3",
     "href": "post/unit00/notebook-03-dna-cnn.html#question-3",
-    "title": "From Signals to DNA: Building a Sequence-to-Score CNN",
+    "title": "03 · From Signals to DNA: Building a Sequence-to-Score CNN",
     "section": "Question 3",
     "text": "Question 3\nDesign an approach to improve the model’s prediction accuracy, particularly focusing on the sequences where the current model performs poorly:\n\nAfter identifying sequences where the CNN model has high prediction errors, propose and implement a modification to either the model architecture, the loss function, the training process, or the data representation\nRetrain the model with your modifications\nCreate comparative visualizations (such as scatter plots, error histograms, or other appropriate plots) to demonstrate the impact of your changes\nAnalyze your results by discussing how your modification addresses the specific weaknesses you identified. What are the trade-offs involved in your approach?"
   },
   {
     "objectID": "post/unit00/notebook-03-dna-cnn.html#further-reading",
     "href": "post/unit00/notebook-03-dna-cnn.html#further-reading",
-    "title": "From Signals to DNA: Building a Sequence-to-Score CNN",
+    "title": "03 · From Signals to DNA: Building a Sequence-to-Score CNN",
     "section": "Further reading",
     "text": "Further reading\nFoundational papers on CNNs applied to DNA:\n\nDeepBind: Alipanahi et al 2015\nDeepSEA: Zhou and Troyanskaya 2015\nBasset: Kelley et al 2016"
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html",
     "href": "post/unit00/notebook-01-intro-mlp.html",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "",
     "text": "Jupyter notebook in Colab\n© HakyImLab and Listed Authors - CC BY 4.0 License"
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#install-and-load-packages",
     "href": "post/unit00/notebook-01-intro-mlp.html#install-and-load-packages",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "Install and load packages",
     "text": "Install and load packages\n\n## install packages if needed (set to True on first run in Colab)\nif False:\n    %pip install scikit-learn plotnine tqdm torch\n\n\nfrom sklearn.datasets import make_regression\nimport numpy as np\nfrom numpy.linalg import inv\nfrom plotnine import qplot, ggplot, geom_point, geom_line, aes, geom_abline\nfrom plotnine.themes import theme_bw\nfrom plotnine.geoms import annotate"
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#simulate-linear-data",
     "href": "post/unit00/notebook-01-intro-mlp.html#simulate-linear-data",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "Simulate linear data",
     "text": "Simulate linear data\nWe generate 1000 samples with 2 features. We define “true” coefficients and add noise.\n\nnp.random.seed(42)\nbias = 0\nnoise = 10\nx, y, coef = make_regression(\n    n_samples=1000,\n    n_features=2,\n    n_informative=2,\n    n_targets=1,\n    bias=bias,\n    noise=noise,\n    coef=True\n    )\n\n\nprint('x.shape:', x.shape)\nprint('y.shape:', y.shape)\nprint('coef (true beta):', coef)\n\nx.shape: (1000, 2)\ny.shape: (1000,)\ncoef (true beta): [40.71064891  6.60098441]"
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#predict-y-with-ground-truth-parameters",
     "href": "post/unit00/notebook-01-intro-mlp.html#predict-y-with-ground-truth-parameters",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "Predict y with ground truth parameters",
     "text": "Predict y with ground truth parameters\nSince we know the true \\beta, we can compute \\hat{y} directly and see how noise affects the fit.\n\ny_hat = x.dot(coef) + bias\n\n\n(qplot(x=y, y=y_hat, geom=\"point\", xlab=\"y\", ylab=\"y_hat\") +\n geom_abline(intercept=0, slope=1, color='gray', linetype='dashed'))"
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#analytical-solution-the-normal-equation",
     "href": "post/unit00/notebook-01-intro-mlp.html#analytical-solution-the-normal-equation",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "Analytical solution: the normal equation",
     "text": "Analytical solution: the normal equation\nFor linear regression, there’s a closed-form solution:\n\\hat{\\beta} = (X^TX)^{-1}X^Ty\nThis gives the coefficients that minimize mean squared error exactly.\n\nExercise\nDerive the normal equation from the model y = X\\beta + \\epsilon using matrix calculus.\n\nvar = x.transpose().dot(x)\ncov = x.transpose().dot(y)\nb_hat = inv(var).dot(cov)\n\n\nprint(\"Estimated (normal equation):\", b_hat)\nprint(\"Ground truth:               \", coef)\n\nEstimated (normal equation): [41.06972678  6.79965716]\nGround truth:                [40.71064891  6.60098441]\n\n\nThe estimates are close despite noise — a good sanity check.\n\n\nExercise\nPlot predicted vs observed using the analytical estimates. How does it compare to using the true \\beta?"
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#why-not-always-use-the-normal-equation",
     "href": "post/unit00/notebook-01-intro-mlp.html#why-not-always-use-the-normal-equation",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "Why not always use the normal equation?",
     "text": "Why not always use the normal equation?\nThe normal equation works for linear models, but most interesting models don’t have closed-form solutions:\n\nNeural networks with millions of parameters\nNonlinear activation functions\nComplex architectures\n\nWe need a general-purpose optimization method: gradient descent."
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#what-is-a-gradient",
     "href": "post/unit00/notebook-01-intro-mlp.html#what-is-a-gradient",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "What is a gradient?",
     "text": "What is a gradient?\nA gradient is the derivative of a function — it tells us the slope at any point:\nf'(\\beta) = \\lim_{\\Delta\\beta \\to 0} \\frac{f(\\beta + \\Delta\\beta) - f(\\beta)}{\\Delta\\beta}\n\nPositive gradient → function is increasing → move left (decrease \\beta)\nNegative gradient → function is decreasing → move right (increase \\beta)\nZero gradient → you’re at a minimum (or maximum)"
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#what-is-gradient-descent",
     "href": "post/unit00/notebook-01-intro-mlp.html#what-is-gradient-descent",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "What is gradient descent?",
     "text": "What is gradient descent?\nAn optimization algorithm that iteratively updates parameters in the direction opposite to the gradient:\n\\beta_{t+1} = \\beta_t - \\alpha \\cdot \\nabla L(\\beta_t)\nwhere \\alpha is the learning rate (step size).\nAlgorithm:\n\nStart at a random \\beta\nCompute the gradient (slope of the loss)\nTake a step opposite to the gradient\nRepeat until convergence\n\n\n\n\ngradient descent\n\n\n\nThe learning rate \\alpha\n\nToo small: tiny steps, very slow convergence\nJust right: smooth convergence to minimum\nToo large: overshoots, may diverge!\n\nTry it in the playground: change the learning rate slider and watch what happens to the loss curve."
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#what-is-stochastic-gradient-descent-sgd",
     "href": "post/unit00/notebook-01-intro-mlp.html#what-is-stochastic-gradient-descent-sgd",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "What is stochastic gradient descent (SGD)?",
     "text": "What is stochastic gradient descent (SGD)?\nIn practice, computing gradients on all data is expensive. SGD uses a random mini-batch at each step:\n\\nabla L \\approx \\frac{1}{|B|} \\sum_{i \\in B} \\nabla L_i\nThe noise from sampling actually helps escape bad local minima!"
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#three-components-of-machine-learning",
     "href": "post/unit00/notebook-01-intro-mlp.html#three-components-of-machine-learning",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "Three Components of Machine Learning",
     "text": "Three Components of Machine Learning\nEvery ML model needs three ingredients:\n\n\n\n\n\n\n\n\n\nComponent\nWhat it does\nLinear regression\nNeural network\n\n\n\n\nModel\nDefines the hypothesis\ny = X\\beta\ny = W_2 \\sigma(W_1 x + b_1) + b_2\n\n\nLoss\nMeasures how wrong we are\nMSE\nMSE, cross-entropy, …\n\n\nOptimizer\nUpdates params to reduce loss\nNormal equation\nSGD, Adam, …"
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#the-loss-function-mean-squared-error",
     "href": "post/unit00/notebook-01-intro-mlp.html#the-loss-function-mean-squared-error",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "The loss function: Mean Squared Error",
     "text": "The loss function: Mean Squared Error\nL(\\beta) = \\frac{1}{m}\\sum_{i=1}^{m} (\\hat{y}^{(i)} - y^{(i)})^2\nIts gradient for a linear model:\n\\frac{\\partial L}{\\partial \\beta_j} = \\frac{1}{m}\\sum_{i} (\\hat{y}^{(i)} - y^{(i)}) \\cdot x_j^{(i)}\nThis is the “error \\times input” rule — the gradient is large when the error is large and the input contributed to it.\n\nExercise\nShow that the derivative of the MSE loss is as stated above. (Hint: use the chain rule and recall \\hat{y} = X\\beta.)"
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#implement-gradient-descent",
     "href": "post/unit00/notebook-01-intro-mlp.html#implement-gradient-descent",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "Implement gradient descent",
     "text": "Implement gradient descent\n\nlr = 0.1  # learning rate\nb = [0.0, 0.0]  # initialize betas to 0\nn_examples = len(y)\ntrajectory = [b]\n\nfor _ in range(50):  # 50 steps\n    diff = x.dot(b) - y\n    grad = diff.dot(x) / n_examples\n    b -= lr * grad\n    trajectory.append(b.copy())\n\ntrajectory = np.stack(trajectory, axis=1)\n\n\n(qplot(x=trajectory[0], y=trajectory[1], xlab=\"beta_1\", ylab=\"beta_2\",\n       geom=[\"point\", \"line\"]) +\n theme_bw() +\n annotate(geom=\"point\", x=coef[0], y=coef[1], size=8, color=\"blue\", shape='+', stroke=1))\n\n\n\n\n\n\n\n\nThe trajectory spirals toward the true \\beta — gradient descent converges!\n\nExercise\nAdd the normal equation estimates to the plot in green. How close are GD and the analytical solution?\n\n\nExercise\nSimulate y with larger noise. Estimate coefficients using both the normal equation and gradient descent. Plot the trajectory, ground truth, and both estimates for comparison."
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#playground-fit-a-line",
     "href": "post/unit00/notebook-01-intro-mlp.html#playground-fit-a-line",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "Playground: Fit a line",
     "text": "Playground: Fit a line\nOpen playground.hakyimlab.org and try:\n\nProblem type → Regression, Dataset → reg-plane\n1 hidden neuron, Linear activation\nHit ▶ Play and watch the loss curve drop\n\nTry changing the learning rate — see it converge faster or explode."
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#linear-models-fail-on-nonlinear-data",
     "href": "post/unit00/notebook-01-intro-mlp.html#linear-models-fail-on-nonlinear-data",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "Linear models fail on nonlinear data",
     "text": "Linear models fail on nonlinear data\nLet’s simulate data from y = x^3 and try to fit it with a linear model.\n\nx = np.random.normal(size=1000)\ny = x ** 3\n\n\nQuestion\nHow many parameters does a simple linear model y = \\beta x need?\n\nlr = 0.1\nb = 0.0\nn_examples = len(y)\n\nfor _ in range(50):\n    diff = x.dot(b) - y\n    grad = diff.dot(x) / n_examples\n    b -= lr * grad\n\n\ny_hat = x.dot(b)\n(qplot(x=y, y=y_hat, geom=\"point\", xlab=\"y\", ylab=\"y_hat\") +\n geom_abline(intercept=0, slope=1, color='gray', linetype='dashed'))\n\n\n\n\n\n\n\n\nThe predictions are far from the identity line. No amount of training can fix this — the model is wrong, not the optimizer."
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#playground-linear-model-on-cubic-data",
     "href": "post/unit00/notebook-01-intro-mlp.html#playground-linear-model-on-cubic-data",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "Playground: Linear model on cubic data",
     "text": "Playground: Linear model on cubic data\nIn the playground:\n\nSwitch dataset → Cubic\nKeep: 1 neuron, Linear activation\nHit ▶ Play — the loss stays high no matter how long you train\n\nA linear model can’t bend."
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#what-is-an-mlp",
     "href": "post/unit00/notebook-01-intro-mlp.html#what-is-an-mlp",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "What is an MLP?",
     "text": "What is an MLP?\n\n\n\nMLP in tensorflow playground\n\n\nA Multi-Layer Perceptron is a neural network with:\n\nInput layer: your features\nHidden layer(s): with nonlinear activation\nOutput layer: prediction\n\ny = W_2 \\cdot \\sigma(W_1 x + b_1) + b_2\nKey insight: the activation function \\sigma introduces “bends” that let the model fit curves."
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#what-does-a-neuron-do",
     "href": "post/unit00/notebook-01-intro-mlp.html#what-does-a-neuron-do",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "What does a neuron do?",
     "text": "What does a neuron do?\n                      activation\n  x₁ ──w₁──┐         function\n             ├──▶ Σ ──▶ σ(·) ──▶ output\n  x₂ ──w₂──┘  +b\n\nWithout activation (linear): output = w_1 x_1 + w_2 x_2 + b — just a weighted sum, still a line\nWith ReLU activation: output = \\max(0, w_1 x_1 + w_2 x_2 + b) — now it can produce a “kink”\n\nEach ReLU neuron contributes one bend. More neurons = more bends = smoother curves."
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#playground-watch-neurons-build-curves",
     "href": "post/unit00/notebook-01-intro-mlp.html#playground-watch-neurons-build-curves",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "Playground: Watch neurons build curves",
     "text": "Playground: Watch neurons build curves\nTry these experiments in the playground with Cubic data and ReLU activation:\n\n2 neurons → 2 bends, rough fit\n4 neurons → 4 bends, smoother\n2 layers (4→2) → layer 1 learns bends, layer 2 combines them\n\nStacking layers = composing simple features into complex functions."
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#why-the-activation-function-matters",
     "href": "post/unit00/notebook-01-intro-mlp.html#why-the-activation-function-matters",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "Why the activation function matters",
     "text": "Why the activation function matters\nWithout activation, stacking layers is pointless:\nW_2(W_1 x) = (W_2 W_1) x = W' x\nAny number of linear layers = one linear layer!\nTry it: set activation to “Linear” in the playground. Add as many layers as you want — the output is always a flat gradient.\n\nExercise: Count parameters\nConsider an MLP with:\n\nInput layer: 2 dimensions\nHidden layer: 3 nodes\nOutput layer: 1 dimension\n\nCalculate the total number of parameters:\n\nCount weights and biases between input and hidden layer\nCount weights and biases between hidden and output layer\nAdd them together\n\n(Hint: each connection has a weight, each non-input node has a bias. Answer: 13 parameters.)\nManually computing gradients for 13 parameters is tedious. For millions? Impossible. This is why we need PyTorch."
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#why-pytorch",
     "href": "post/unit00/notebook-01-intro-mlp.html#why-pytorch",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "Why PyTorch?",
     "text": "Why PyTorch?\nPyTorch provides:\n\nAutomatic differentiation (computes gradients automatically)\nGPU acceleration for faster training\nPre-built layers and optimizers\nDynamic computational graphs for easy debugging"
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#setup",
     "href": "post/unit00/notebook-01-intro-mlp.html#setup",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "Setup",
     "text": "Setup\n\nimport torch\nfrom torch import nn\nimport torch.nn.functional as F\n\nif torch.cuda.is_available():\n    device = torch.device('cuda')\nelif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():\n    device = torch.device('mps')\nelse:\n    device = torch.device('cpu')\n\nprint(f\"Using device: {device}\")\nprint(f\"PyTorch version: {torch.__version__}\")\n\nUsing device: mps\nPyTorch version: 2.7.0"
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#define-an-mlp",
     "href": "post/unit00/notebook-01-intro-mlp.html#define-an-mlp",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "Define an MLP",
     "text": "Define an MLP\n\nclass MLP(nn.Module):\n    def __init__(self, input_dim, hid_dim, output_dim):\n        super().__init__()\n        self.fc1 = nn.Linear(input_dim, hid_dim)\n        self.fc2 = nn.Linear(hid_dim, output_dim)\n\n    def forward(self, x):\n        x = F.relu(self.fc1(x))\n        y = self.fc2(x)\n        return y.squeeze(1)\n\nmlp = MLP(input_dim=1, hid_dim=1024, output_dim=1).to(device)\n\nThis maps directly to what the playground does behind the scenes:\n\n\n\nPyTorch code\nPlayground equivalent\n\n\n\n\nMLP(input_dim, hid_dim, output_dim)\nNetwork architecture (boxes)\n\n\nF.relu(...)\nActivation dropdown\n\n\nmodel(x)\nData flows through network\n\n\nloss_fn(y_hat, y)\nLoss number\n\n\nloss.backward()\nGradients computed (invisible in playground)\n\n\noptimizer.step()\nWeights update\n\n\nlr=0.001\nLearning rate slider"
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#train-the-mlp",
     "href": "post/unit00/notebook-01-intro-mlp.html#train-the-mlp",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "Train the MLP",
     "text": "Train the MLP\nThe training loop follows the same pattern every time:\nInput → Forward pass → Compute loss → Backward pass → Update parameters → Repeat\n\nx_tensor = torch.Tensor(x).unsqueeze(1).to(device)\ny_tensor = torch.Tensor(y).to(device)\nlearning_curve = []\n\noptimizer = torch.optim.SGD(mlp.parameters(), lr=0.001)\nloss_fn = nn.MSELoss()\n\nfor epoch in range(10000):\n    optimizer.zero_grad()\n    y_hat = mlp(x_tensor)\n    loss = loss_fn(y_hat, y_tensor)\n    learning_curve.append(loss.item())\n    loss.backward()\n    optimizer.step()"
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#the-learning-curve",
     "href": "post/unit00/notebook-01-intro-mlp.html#the-learning-curve",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "The learning curve",
     "text": "The learning curve\nPlot loss vs epoch to monitor training:\n\nDropping = model is learning\nFlat = converged (or stuck)\nIncreasing = learning rate too high!\n\n\nqplot(x=range(10000), y=learning_curve, xlab=\"epoch\", ylab=\"loss\")"
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#evaluate-the-mlp",
     "href": "post/unit00/notebook-01-intro-mlp.html#evaluate-the-mlp",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "Evaluate the MLP",
     "text": "Evaluate the MLP\n\ny_hat = mlp(x_tensor)\ny_hat = y_hat.detach().cpu().numpy()\nqplot(x=y, y=y_hat, geom=[\"point\", \"abline\"],\n      xlab=\"y\", ylab=\"y_hat\",\n      abline=dict(slope=1, intercept=0, color='red', linetype='dashed'))\n\n\n\n\n\n\n\n\nNow the predictions hug the identity line — the MLP learned y = x^3 from data alone!\n\nExercise\nCreate a more performant model to predict y = x^3. Try different:\n\nHidden layer sizes\nLearning rates\nNumber of epochs\n\nUse the playground to build intuition before changing the code."
   },
   {
     "objectID": "post/unit00/notebook-01-intro-mlp.html#whats-next",
     "href": "post/unit00/notebook-01-intro-mlp.html#whats-next",
-    "title": "Quick introduction to deep learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "What’s next",
     "text": "What’s next\n\nCNN for DNA scoring: convolutional filters slide over one-hot encoded DNA — like learned motif scanners\nDNA one-hot encoding turns sequences into matrices that neural networks can process"
+  },
+  {
+    "objectID": "post/unit00/homework-01.html",
+    "href": "post/unit00/homework-01.html",
+    "title": "homework 1 - suggestions",
+    "section": "",
+    "text": "Actual homework posted on the course Canvas\n\nHomework 1\n\nrun all the code in the notebook hands-on-introduction_to_deep_learning-2026. You should also be able to find the notebook in your cloned course repository. (20 points)\ncomplete the exercises in the notebook (30 points)\nsubmit the jupyter notebook with the results to canvas assignment\n\n\n\nproposed by Ran\nhttps://docs.google.com/document/d/1QCwjBpO755ACghNdxEP54I0KQX6lbblZvmT97Uv-9h8/edit?tab=t.0#heading=h.g373mtjq4po4\nDeep Learning In Genomics - Week 1 Homework The goal of this homework is to adjust some of the parameters and definitions of the model in the notebook (edit the code) and see how that changes the prediction. A PDF with the answers to the questions Share your final notebook\n\nGradient Descent Sensitivity In the notebook, gradient descent used a learning rate of 0.1 for 50 steps. Re-run the gradient descent code for the linear model with three different learning rates: 0.01, 0.1, and 1.0. For each, plot the trajectory of (β₁, β₂) over 50 steps. In a short paragraph, describe what happens in each case and explain why. What would happen to a neural network with millions of parameters if the learning rate is too high?\nWhen the Model Is Wrong The notebook shows that a linear model can’t fit y = x³. Pick a different nonlinear function (e.g., y = sin(x), y = x² + x, or y = |x|) and repeat the analysis: (a) fit a linear model with gradient descent, (b) fit an MLP, (c) produce parity plots (predicted vs. actual) for both. Briefly explain why the MLP succeeds. How does this relate to the Universal Approximation Theorem discussed at the end of the notebook?\nMLP Architecture Exploration Systematically compare MLP architectures by varying two things: (a) hidden layer size (try 8, 64, 256, and 1024 neurons) and (b) adding a second hidden layer (i.e., modify the MLP class to have fc1 → relu → fc2 → relu → fc3). For each configuration, train on the y = x³ data and record the final training loss. Present your results in a table. Which configuration gives the best performance, and which gives the best trade-off between speed and accuracy? Include your modified MLP class definition for the two-layer version.\n\n\n\n\n\n\n\n© HakyImLab and Listed Authors - CC BY 4.0 License"
   },
   {
     "objectID": "index.html",
@@ -373,133 +380,133 @@
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html",
     "href": "post/unit00/notebook-02-cnn-intro.html",
-    "title": "Hands-on Introduction to CNNs",
+    "title": "02 · What Are Convolutional Neural Networks?",
     "section": "",
     "text": "Jupyter notebook in Colab (link coming)\n© HakyImLab and Listed Authors - CC BY 4.0 License"
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#install-and-load-packages",
     "href": "post/unit00/notebook-02-cnn-intro.html#install-and-load-packages",
-    "title": "Hands-on Introduction to CNNs",
+    "title": "02 · What Are Convolutional Neural Networks?",
     "section": "Install and load packages",
     "text": "Install and load packages\n\nif False:\n    %pip install torch plotnine numpy scikit-learn\n\n\nimport numpy as np\nimport torch\nfrom torch import nn\nimport torch.nn.functional as F\nfrom plotnine import ggplot, aes, geom_line, geom_tile, facet_wrap, labs, theme_bw, geom_col\nimport pandas as pd\n\n# use GPU if available (cuda = NVIDIA, mps = Apple Silicon), otherwise CPU\nif torch.cuda.is_available():\n    device = torch.device('cuda')\nelif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():\n    device = torch.device('mps')\nelse:\n    device = torch.device('cpu')\n\nprint(f\"Using device: {device}\")\n\nUsing device: mps"
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#the-core-idea",
     "href": "post/unit00/notebook-02-cnn-intro.html#the-core-idea",
-    "title": "Hands-on Introduction to CNNs",
+    "title": "02 · What Are Convolutional Neural Networks?",
     "section": "The core idea",
     "text": "The core idea\nIn a fully connected layer, every input connects to every output — N \\times M weights.\nIn a convolutional layer, a small filter (also called a kernel) slides across the input, producing one output value per position using the same weights at every position.\nInput:   [x1  x2  x3  x4  x5  x6  x7  x8]\nFilter:  [w1  w2  w3]   (kernel_size = 3)\n\nStep 1:  out[0] = x1*w1 + x2*w2 + x3*w3\nStep 2:  out[1] = x2*w1 + x3*w2 + x4*w3\nStep 3:  out[2] = x3*w1 + x4*w2 + x5*w3\n...\nThe filter slides across the input. At each position it computes a weighted sum. The same weights [w_1, w_2, w_3] are used everywhere — this is weight sharing."
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#output-length-formula",
     "href": "post/unit00/notebook-02-cnn-intro.html#output-length-formula",
-    "title": "Hands-on Introduction to CNNs",
+    "title": "02 · What Are Convolutional Neural Networks?",
     "section": "Output length formula",
     "text": "Output length formula\nFor an input of length L, kernel size k, stride s=1, no padding:\n\\text{output length} = L - k + 1\nFor L=8, k=3: output length = 8 - 3 + 1 = 6."
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#convolution-by-hand",
     "href": "post/unit00/notebook-02-cnn-intro.html#convolution-by-hand",
-    "title": "Hands-on Introduction to CNNs",
+    "title": "02 · What Are Convolutional Neural Networks?",
     "section": "Convolution by hand",
     "text": "Convolution by hand\nLet’s implement this manually to see exactly what Conv1d does internally.\n\n# A tiny input signal and a filter\nsignal = np.array([0.0, 0.2, 0.8, 1.0, 0.9, 0.3, 0.1, 0.0])\nfilt   = np.array([-1.0, 0.0, 1.0])  # detects a rising edge: computes signal[i+2] - signal[i]\n\n# Manually slide the filter across the signal\noutput = []\nfor i in range(len(signal) - len(filt) + 1):\n    val = np.dot(signal[i : i + len(filt)], filt)\n    output.append(val)\n\nprint(\"Input length :\", len(signal))\nprint(\"Filter length:\", len(filt))\nprint(\"Output length:\", len(output))   # 8 - 3 + 1 = 6\nprint(\"Output values:\", np.round(output, 2))\n\nInput length : 8\nFilter length: 3\nOutput length: 6\nOutput values: [ 0.8  0.8  0.1 -0.7 -0.8 -0.3]\n\n\n\nDiscuss: The output is large and positive where the signal rises — [-1, 0, 1] computes signal[i+2] - signal[i]. Changing the filter weights detects different patterns.\n\nPlotting input and filter output side by side shows where the rising-edge filter fires.\n\n# Plot input and filter output together\noffset = (len(filt) - 1) / 2   # center the shorter output on the input axis\nplot_df = pd.DataFrame({\n    'position': list(range(len(signal))) + [i + offset for i in range(len(output))],\n    'value':    list(signal) + output,\n    'series':   ['input signal'] * len(signal) + ['filter output'] * len(output)\n})\n\n(ggplot(plot_df, aes(x='position', y='value'))\n + geom_line()\n + facet_wrap('~series', ncol=1, scales='free_y')\n + theme_bw()\n + labs(title=\"Input signal and rising-edge filter output\", x=\"Position\", y=\"Value\"))\n\n\n\n\n\n\n\n\n\nExercise\nChange filt to [1.0, 1.0, 1.0] (a smoothing/averaging filter). What does the output represent now?"
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#multiple-filters",
     "href": "post/unit00/notebook-02-cnn-intro.html#multiple-filters",
-    "title": "Hands-on Introduction to CNNs",
+    "title": "02 · What Are Convolutional Neural Networks?",
     "section": "Multiple filters",
     "text": "Multiple filters\nA conv layer typically has many filters, each learning to detect a different feature. The output has one channel per filter.\nInput:  shape (batch, 1, seq_len)\nConv1d: n_filters kernels  →  shape (batch, n_filters, out_len)\nThis gives us a feature map: at each position, how strongly did each feature appear?"
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#shapes-and-parameters",
     "href": "post/unit00/notebook-02-cnn-intro.html#shapes-and-parameters",
-    "title": "Hands-on Introduction to CNNs",
+    "title": "02 · What Are Convolutional Neural Networks?",
     "section": "Shapes and parameters",
     "text": "Shapes and parameters\n\n# in_channels=1 (one signal), out_channels=4 (four filters), kernel_size=5\nconv = nn.Conv1d(in_channels=1, out_channels=4, kernel_size=5)\n\n# Each filter has (in_channels * kernel_size) weights + 1 bias → times out_channels\nn_params = sum(p.numel() for p in conv.parameters())\nprint(f\"Parameters: {n_params}\")   # (1 * 5 + 1) * 4 = 24\n\nx = torch.randn(1, 1, 50)   # batch=1, channels=1, length=50\nout = conv(x)\nprint(f\"Input shape:  {x.shape}\")\nprint(f\"Output shape: {out.shape}\")   # (1, 4, 46)  =  50 - 5 + 1 = 46\n\nParameters: 24\nInput shape:  torch.Size([1, 1, 50])\nOutput shape: torch.Size([1, 4, 46])\n\n\n\nDiscuss: 4 filters of size 5 on a length-50 input gives output shape (1, 4, 46) with only 24 parameters total — far fewer than a fully connected layer would need.\n\n\nExercise\nChange kernel_size to 10 and out_channels to 8. Before running: (1) predict the output shape, (2) predict the number of parameters. Then verify."
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#adding-relu-and-pooling",
     "href": "post/unit00/notebook-02-cnn-intro.html#adding-relu-and-pooling",
-    "title": "Hands-on Introduction to CNNs",
+    "title": "02 · What Are Convolutional Neural Networks?",
     "section": "Adding ReLU and pooling",
     "text": "Adding ReLU and pooling\nStacking ReLU and max pooling after conv shows how each step changes the tensor shape.\n\nx    = torch.randn(1, 1, 50)\nconv = nn.Conv1d(in_channels=1, out_channels=4, kernel_size=5)\npool = nn.MaxPool1d(kernel_size=2)\n\nafter_conv = F.relu(conv(x))\nafter_pool = pool(after_conv)\nprint(f\"After conv+relu: {after_conv.shape}\")   # (1, 4, 46)\nprint(f\"After maxpool:   {after_pool.shape}\")   # (1, 4, 23)\n\nAfter conv+relu: torch.Size([1, 4, 46])\nAfter maxpool:   torch.Size([1, 4, 23])\n\n\n\nDiscuss: MaxPool1d(kernel_size=2) takes the max of every 2 values, halving the length. This reduces dimensionality and makes detection robust to small shifts — if the pattern moves by 1 position, the max value is unchanged."
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#generate-the-data",
     "href": "post/unit00/notebook-02-cnn-intro.html#generate-the-data",
-    "title": "Hands-on Introduction to CNNs",
+    "title": "02 · What Are Convolutional Neural Networks?",
     "section": "Generate the data",
     "text": "Generate the data\nWe generate 2000 sequences of length 100: half contain the spike pattern embedded at a random position, half are pure noise.\n\nnp.random.seed(42)\ntorch.manual_seed(42)\n\nSEQ_LEN   = 100\nSPIKE     = np.array([0.0, 0.3, 0.8, 1.0, 0.8, 0.3, 0.0])  # pattern to detect\nN_SAMPLES = 2000\n\ndef make_dataset(n_samples, seq_len, spike, noise_std=0.1):\n    X = np.random.normal(0, noise_std, size=(n_samples, seq_len)).astype(np.float32)  # float32 = PyTorch default\n    y = np.zeros(n_samples, dtype=np.int64)\n    for i in range(n_samples // 2):                          # first half → positive class\n        pos = np.random.randint(0, seq_len - len(spike))    # pick a random position\n        X[i, pos : pos + len(spike)] += spike                # inject the spike at that position\n        y[i] = 1\n    return X, y\n\nX, y = make_dataset(N_SAMPLES, SEQ_LEN, SPIKE)\nprint(f\"X shape: {X.shape},  class balance: {y.mean():.2f}\")\n\nX shape: (2000, 100),  class balance: 0.50"
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#visualize-a-few-examples",
     "href": "post/unit00/notebook-02-cnn-intro.html#visualize-a-few-examples",
-    "title": "Hands-on Introduction to CNNs",
+    "title": "02 · What Are Convolutional Neural Networks?",
     "section": "Visualize a few examples",
     "text": "Visualize a few examples\n\nexamples = pd.DataFrame({\n    'position': list(range(SEQ_LEN)) * 2,\n    'amplitude': list(X[0]) + list(X[N_SAMPLES // 2]),\n    'label': ['positive (spike present)'] * SEQ_LEN + ['negative (noise only)'] * SEQ_LEN\n})\n\n(ggplot(examples, aes(x='position', y='amplitude'))\n + geom_line()\n + facet_wrap('~label', ncol=1)\n + theme_bw()\n + labs(title=\"Example signals\", x=\"Position\", y=\"Amplitude\"))\n\n\n\n\n\n\n\n\n\nDiscuss: Can you spot the spike in the positive example? How hard would it be to find it visually across thousands of sequences?"
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#train-val-test-split",
     "href": "post/unit00/notebook-02-cnn-intro.html#train-val-test-split",
-    "title": "Hands-on Introduction to CNNs",
+    "title": "02 · What Are Convolutional Neural Networks?",
     "section": "Train / val / test split",
     "text": "Train / val / test split\nWe split the 2000 samples into train (72%), validation (8%), and test (20%) sets, then convert the NumPy arrays to PyTorch tensors and move them to the device.\n\nfrom sklearn.model_selection import train_test_split\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\nX_train, X_val,  y_train, y_val  = train_test_split(X_train, y_train, test_size=0.1, random_state=42)\n\ndef to_tensor(arr_X, arr_y):\n    # Conv1d expects (batch, channels, length) — unsqueeze adds the channel dim\n    return (torch.tensor(arr_X).unsqueeze(1).to(device),\n            torch.tensor(arr_y).to(device))\n\nX_train_t, y_train_t = to_tensor(X_train, y_train)\nX_val_t,   y_val_t   = to_tensor(X_val,   y_val)\nX_test_t,  y_test_t  = to_tensor(X_test,  y_test)\n\nprint(f\"Train: {X_train_t.shape},  Val: {X_val_t.shape},  Test: {X_test_t.shape}\")\n\nTrain: torch.Size([1440, 1, 100]),  Val: torch.Size([160, 1, 100]),  Test: torch.Size([400, 1, 100])"
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#define-the-model",
     "href": "post/unit00/notebook-02-cnn-intro.html#define-the-model",
-    "title": "Hands-on Introduction to CNNs",
+    "title": "02 · What Are Convolutional Neural Networks?",
     "section": "Define the model",
     "text": "Define the model\nOne conv layer (8 filters, width 7) → ReLU → max pool → linear classifier with 2 outputs (spike / no spike).\n\nclass SpikeCNN(nn.Module):\n    def __init__(self, n_filters=8, kernel_size=7):\n        super().__init__()   # required boilerplate for every PyTorch model class\n        self.conv1 = nn.Conv1d(in_channels=1, out_channels=n_filters, kernel_size=kernel_size)\n        self.pool  = nn.MaxPool1d(kernel_size=2)\n        # After conv (kernel=7): 100 - 7 + 1 = 94 → after pool: 94 // 2 = 47\n        conv_out_len = (SEQ_LEN - kernel_size + 1) // 2\n        self.fc = nn.Linear(n_filters * conv_out_len, 2)\n\n    def forward(self, x):\n        x = self.pool(F.relu(self.conv1(x)))\n        x = x.view(x.size(0), -1)   # flatten before the linear layer\n        return self.fc(x)\n\nmodel = SpikeCNN(n_filters=8, kernel_size=7).to(device)\nprint(f\"Model parameters: {sum(p.numel() for p in model.parameters())}\")\nprint(model)\n\nModel parameters: 818\nSpikeCNN(\n  (conv1): Conv1d(1, 8, kernel_size=(7,), stride=(1,))\n  (pool): MaxPool1d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)\n  (fc): Linear(in_features=376, out_features=2, bias=True)\n)\n\n\n\nExercise: count the parameters manually\n\nconv1: (1 × 7 + 1) × 8 = ?\nfc: length after pool is (100 − 7 + 1) // 2 = 47, so (8 × 47 + 1) × 2 = ?\nTotal?"
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#training-loop",
     "href": "post/unit00/notebook-02-cnn-intro.html#training-loop",
-    "title": "Hands-on Introduction to CNNs",
+    "title": "02 · What Are Convolutional Neural Networks?",
     "section": "Training loop",
     "text": "Training loop\nThe optimizer (Adam) adjusts the model’s weights to minimize the loss function (CrossEntropyLoss, which measures how far the predicted class probabilities are from the true labels). Each pass through the data is one epoch. We log training loss and validation accuracy to watch for overfitting.\n\ndef train(model, X_tr, y_tr, X_val, y_val, n_epochs=30, lr=1e-3):\n    optimizer = torch.optim.Adam(model.parameters(), lr=lr)\n    loss_fn   = nn.CrossEntropyLoss()\n    history   = {'train_loss': [], 'val_loss': [], 'val_acc': []}\n\n    for epoch in range(n_epochs):\n        model.train()          # enable training mode\n        optimizer.zero_grad()  # clear old gradients\n        loss = loss_fn(model(X_tr), y_tr)  # forward pass\n        loss.backward()        # compute gradients\n        optimizer.step()       # update weights\n        history['train_loss'].append(loss.item())\n\n        model.eval()           # disable dropout, batch norm tracking, etc.\n        with torch.no_grad():  # skip gradient tracking\n            val_logits = model(X_val)\n            val_loss   = loss_fn(val_logits, y_val).item()\n            val_acc    = (val_logits.argmax(1) == y_val).float().mean().item()\n        history['val_loss'].append(val_loss)\n        history['val_acc'].append(val_acc)\n\n        if (epoch + 1) % 5 == 0:\n            print(f\"Epoch {epoch+1:3d} | train_loss={loss.item():.4f} \"\n                  f\"| val_loss={val_loss:.4f} | val_acc={val_acc:.3f}\")\n\n    return history\n\nhistory = train(model, X_train_t, y_train_t, X_val_t, y_val_t, n_epochs=50)\n\nEpoch   5 | train_loss=0.6761 | val_loss=0.6710 | val_acc=0.744\nEpoch  10 | train_loss=0.6613 | val_loss=0.6564 | val_acc=0.869\nEpoch  15 | train_loss=0.6449 | val_loss=0.6398 | val_acc=0.938\nEpoch  20 | train_loss=0.6268 | val_loss=0.6216 | val_acc=0.938\nEpoch  25 | train_loss=0.6069 | val_loss=0.6014 | val_acc=0.962\nEpoch  30 | train_loss=0.5852 | val_loss=0.5793 | val_acc=0.975\nEpoch  35 | train_loss=0.5620 | val_loss=0.5555 | val_acc=0.975\nEpoch  40 | train_loss=0.5373 | val_loss=0.5303 | val_acc=0.981\nEpoch  45 | train_loss=0.5116 | val_loss=0.5040 | val_acc=0.981\nEpoch  50 | train_loss=0.4850 | val_loss=0.4769 | val_acc=0.981"
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#plot-the-learning-curves",
     "href": "post/unit00/notebook-02-cnn-intro.html#plot-the-learning-curves",
-    "title": "Hands-on Introduction to CNNs",
+    "title": "02 · What Are Convolutional Neural Networks?",
     "section": "Plot the learning curves",
     "text": "Plot the learning curves\n\nDiscuss: Train and validation loss should decrease together — divergence means overfitting.\n\n\nepochs = list(range(1, len(history['train_loss']) + 1))\ncurve_df = pd.DataFrame({\n    'epoch': epochs * 2,\n    'loss':  history['train_loss'] + history['val_loss'],\n    'split': ['train'] * len(epochs) + ['val'] * len(epochs)\n})\n\n(ggplot(curve_df, aes(x='epoch', y='loss', color='split'))\n + geom_line()\n + theme_bw()\n + labs(title=\"Learning curves\", x=\"Epoch\", y=\"Cross-entropy loss\"))"
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#evaluate-on-the-test-set",
     "href": "post/unit00/notebook-02-cnn-intro.html#evaluate-on-the-test-set",
-    "title": "Hands-on Introduction to CNNs",
+    "title": "02 · What Are Convolutional Neural Networks?",
     "section": "Evaluate on the test set",
     "text": "Evaluate on the test set\n\nDiscuss: Final accuracy on the held-out test set — data the model never saw during training.\n\n\nmodel.eval()\nwith torch.no_grad():\n    test_acc = (model(X_test_t).argmax(1) == y_test_t).float().mean().item()\nprint(f\"Test accuracy: {test_acc:.3f}\")\n\nTest accuracy: 0.985\n\n\n\nExercise\nTry n_filters=2 and retrain. Does accuracy drop? Why? Then try n_filters=32 — does it improve?"
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#whats-next",
     "href": "post/unit00/notebook-02-cnn-intro.html#whats-next",
-    "title": "Hands-on Introduction to CNNs",
+    "title": "02 · What Are Convolutional Neural Networks?",
     "section": "What’s next",
     "text": "What’s next\nIn notebook-03 we apply these exact mechanics to real DNA sequences. Here is what changes:\n\n\n\n\n\n\n\n\n\nThis notebook\nNotebook-03\n\n\n\n\nInput\n1-channel numeric signal\n4-channel one-hot DNA (A/C/G/T)\n\n\nTask\nClassification (spike yes/no)\nRegression (predict a score)\n\n\nPattern\nFixed spike shape\nSequence motifs (e.g. TAT, GCG)\n\n\nBatching\nFull dataset in one pass\nMini-batches via DataLoader\n\n\nFilters reveal\nSpike-shaped weight vectors\nSequence logos\n\n\n\nEverything else — Conv1d, ReLU, pooling, the training loop, filter visualization — carries over directly."
   },
   {
     "objectID": "post/unit00/notebook-04-tf-binding.html",
     "href": "post/unit00/notebook-04-tf-binding.html",
-    "title": "TF Binding prediction project",
+    "title": "04 · TF Binding prediction project",
     "section": "",
     "text": "TF binding prediction model\nThe goal of this project is to create a neural network model that predicts TF binding strength in a DNA sequence.\nTo do this, we have extracted 300 base pair-long DNA sequences that have a predicted binding site(s) from a TF, from a couple of chromosomes.\nThe training data is the following:\n\nThe sequences files: chr#_sequences.txt.gz store the 300 bp-long DNA sequences. A “window_name” in the format chr#_start_end has been assigned to each one.\nThe scores files: chr#_scores.txt.gz store a 300 bases long vector for each DNA sequence. Each position in these vectors correspond to a the sequence position. The values for each position represent the “binding score” that was predicted to that site by Homer, which is a widely used tool to discover motif binding sites for a given TF across the genome.\n\n\n1. Read-in the data\nThe data files for a couple of chromosomes are stored in the following link. Download them to your local folder.\nLet’s explore how the sequence and score data look like:\n\nimport pandas as pd\nimport matplotlib.pyplot as plt\nimport os\nimport numpy as np\n\nDefine data paths, this should be changed to your personal paths:\n\nPROJECT = '/Users/sofiasalazar/Library/CloudStorage/Box-Box/imlab-data/Courses/AI-in-Genomics-2025/'\nDATA = os.path.join(PROJECT, 'data')\n\nSequence data for chromosome 22\n\nsequences = pd.read_csv(os.path.join(DATA, 'chr22_sequences.txt.gz'), sep=\"\\t\", compression='gzip')\n\n\nsequences.head()\n\n\nsequences.shape\n\nTF binding scores for chromosome 22\nHere, each column has 300 values for each sequence, each value is the TF binding score for each position of the sequence. Most positions have ‘0’ as no motif is predicted to bind at those positions. One motif is a couple of bp-long and all of those bp will have the same score since they belong to the same motif.\n\nscores = pd.read_csv(os.path.join(DATA, 'chr22_scores.txt.gz'), sep=\"\\t\", compression='gzip')\n\n\nnp.array(scores.iloc[:, 0])\n\nTake a look at how these score vectors look like, the blue sections represent the predicted binding sites for this TF:\n\nx = np.arange(300)\nbar_width = 0.4\nplt.figure(figsize=(12, 5))\nplt.bar(x - bar_width, scores.iloc[:, 0], width=bar_width, label=\"Predicted\", alpha=0.7, color='b')\nplt.xlabel(\"Position in sequence window\")\nplt.ylabel(\"Homer score\")\nplt.grid(axis='y', linestyle='--', alpha=0.6)\nplt.show()\n\n\n\n2. Model training\nNow, the goal is to use these sequences to train a neural network model that predicts the scores vectors. Overall, the structure of the code should more or less follow these steps:\n\nOne-hot-encode the DNA sequences\nSplit sequences and their corresponding scores into training, test and validation sets\nBuild dataloaders for the training and test sets using sequences as predictor features and the scores as targets\nDefine a NN model architecture\nTrain the model\nTest the model on the test sequences\n\nThis process will be iterative as you find an optimal set of hyperparameters. Please share your best-performing model and we will test it on a set of held-out-data.\nAdditional notes\n\nNote how the scores are values greater than 1, you can try binarizing these values so they are between 0 and 1 and compare between models\nTo assess performance, you can use the following code to compute correlations between predicted scores and the ground truth\n\n\nfrom scipy.stats import pearsonr\ndef plot_comparison(pred, obs):\n  r_value = pearsonr(pred, obs)\n  x = np.arange(len(pred))\n  bar_width = 0.4\n  plt.figure(figsize=(12, 5))\n  plt.bar(x - bar_width, pred, width=bar_width, label=\"Predicted\", alpha=0.7, color='b')\n  plt.bar(x + bar_width, obs, width=bar_width, label=\"Observed\", alpha=0.7, color='r')\n  plt.xlabel(\"Position sequence window\")\n  plt.ylabel(\"Value\")\n  plt.title(\"Comparison of sequence scores\")\n  plt.legend(title=f\"Pearson R: {r_value:.2f}\")\n  plt.grid(axis='y', linestyle='--', alpha=0.6)\n  plt.show()\n\n\n\n\n\n\n\n\n© HakyImLab and Listed Authors - CC BY 4.0 License"
   },
   {
     "objectID": "post/unit00/page-slides-01-intro-mlp.html",
     "href": "post/unit00/page-slides-01-intro-mlp.html",
-    "title": "Quick Introduction to Deep Learning",
+    "title": "01 · Quick Introduction to Deep Learning",
     "section": "",
     "text": "Open slide deck\n\n\n\n\n\n© HakyImLab and Listed Authors - CC BY 4.0 License"
   },
   {
     "objectID": "post/unit00/page-slides-03-dna-cnn.html",
     "href": "post/unit00/page-slides-03-dna-cnn.html",
-    "title": "DNA Sequence Scoring with CNNs",
+    "title": "03 · DNA Sequence Scoring with CNNs",
     "section": "",
     "text": "Open slide deck\n\n\n\n\n\n© HakyImLab and Listed Authors - CC BY 4.0 License"
   }
