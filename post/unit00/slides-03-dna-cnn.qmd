@@ -47,6 +47,10 @@ Two new problems to solve:
 
 ## Today's Roadmap
 
+::: {.source-credit}
+Notebook by [Erin Wilson](https://github.com/erinhwilson/dna-pytorch-tutorial), adapted for GENE 46100 by Haky Im and Ran Blekhman
+:::
+
 | Step | What we do |
 |------|-----------|
 | 1 | Generate synthetic DNA with known scoring rules |
@@ -58,10 +62,6 @@ Two new problems to solve:
 | 7 | Visualize what the CNN learned |
 
 Notebook: [Colab link](https://drive.google.com/file/d/1x1oAP584Z2mXXMwcaZDaRUYENMt_S5pa/view?usp=sharing)
-
-::: {.source-credit}
-Notebook by [Erin Wilson](https://github.com/erinhwilson/dna-pytorch-tutorial), adapted for GENE 46100 by Haky Im and Ran Blekhman
-:::
 
 # Part 1: The Task {background-color="#1e3a5f" style="color:white;"}
 

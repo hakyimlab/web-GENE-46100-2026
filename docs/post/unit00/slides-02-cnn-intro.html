@@ -149,6 +149,9 @@ Haky Im
 </section>
 <section id="what-is-a-cnn" class="slide level2">
 <h2>What is a CNN?</h2>
+<div class="source-credit">
+<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
+</div>
 <p>A <strong>convolutional neural network (CNN)</strong> is a network architecture for deep learning that learns directly from data (images, sequences, …).</p>
 <div class="fragment">
 <p>A CNN is made up of several <strong>layers</strong> that process and transform an input to produce an output.</p>
@@ -161,9 +164,6 @@ Haky Im
 <li>Image processing</li>
 <li><strong>DNA sequence analysis</strong> (our focus!)</li>
 </ul>
-<div class="source-credit">
-<p>Based on <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks: Introduction to Deep Learning — What Are CNNs?</a></p>
-</div>
 </div>
 </section>
 <section id="three-key-concepts" class="slide level2">
@@ -184,6 +184,9 @@ Haky Im
 </section>
 <section id="local-receptive-fields" class="slide level2">
 <h2>1 — Local Receptive Fields</h2>
+<div class="source-credit">
+<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
+</div>
 <div class="columns">
 <div class="column" style="width:50%;">
 <div class="quarto-figure quarto-figure-center">
@@ -200,49 +203,49 @@ Haky Im
 </figure>
 </div>
 </div></div>
-<div class="source-credit">
-<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
-</div>
 </section>
 <section id="typical-nn-fully-connected" class="slide level2">
 <h2>Typical NN: Fully Connected</h2>
-
-<img data-src="images/cnn-03-fully-connected.png" class="quarto-figure quarto-figure-center r-stretch" style="width:85.0%"><p>Every input neuron connects to every hidden neuron — each hidden neuron has <strong>its own set of weights</strong>.</p>
 <div class="source-credit">
 <p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
 </div>
+
+<img data-src="images/cnn-03-fully-connected.png" class="quarto-figure quarto-figure-center r-stretch" style="width:85.0%"><p>Every input neuron connects to every hidden neuron — each hidden neuron has <strong>its own set of weights</strong>.</p>
 </section>
 <section id="typical-nn-weights" class="slide level2">
 <h2>Typical NN: Weights</h2>
+<div class="source-credit">
+<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
+</div>
 
 <img data-src="images/cnn-04-fully-connected-weights.png" class="quarto-figure quarto-figure-center r-stretch" style="width:85.0%"><p>Hidden neuron output: <span class="math inline">\(h_j = \sum_i I_i \cdot W_{ij} + b_j\)</span></p>
 <p>All <span class="math inline">\(N \times M\)</span> weights are <strong>independent</strong> — expensive and no spatial structure.</p>
-<div class="source-credit">
-<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
-</div>
 </section>
 <section id="cnn-local-receptive-fields" class="slide level2">
 <h2>CNN: Local Receptive Fields</h2>
-
-<img data-src="images/cnn-05-local-receptive-field.png" class="quarto-figure quarto-figure-center r-stretch" style="width:85.0%"><p>Only a <strong>small region</strong> of the input connects to each hidden neuron.</p>
-<p>The hidden neuron computes: <span class="math inline">\(h = \sum_k I_k \cdot w_k + b\)</span> using a <strong>small filter</strong>.</p>
 <div class="source-credit">
 <p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
 </div>
+
+<img data-src="images/cnn-05-local-receptive-field.png" class="quarto-figure quarto-figure-center r-stretch" style="width:85.0%"><p>Only a <strong>small region</strong> of the input connects to each hidden neuron.</p>
+<p>The hidden neuron computes: <span class="math inline">\(h = \sum_k I_k \cdot w_k + b\)</span> using a <strong>small filter</strong>.</p>
 </section>
 <section id="cnn-the-filter-slides" class="slide level2">
 <h2>CNN: The Filter Slides</h2>
+<div class="source-credit">
+<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
+</div>
 
 <img data-src="images/cnn-06-sliding-receptive-field.png" class="quarto-figure quarto-figure-center r-stretch" style="width:85.0%"><p>The <strong>same filter</strong> (same weights) slides across the input to create a <strong>feature map</strong>.</p>
 <div class="fragment">
 <p>This sliding operation is <strong>convolution</strong> — hence the name <em>convolutional</em> neural network.</p>
-<div class="source-credit">
-<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
-</div>
 </div>
 </section>
 <section id="shared-weights-and-biases" class="slide level2">
 <h2>2 — Shared Weights and Biases</h2>
+<div class="source-credit">
+<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
+</div>
 <p><strong>Key difference from a typical NN:</strong> the weights and biases are the <strong>same</strong> for all hidden neurons in a given layer.</p>
 <div class="fragment">
 <p>This means every neuron in a layer is <strong>detecting the same feature</strong> (e.g., an edge or a blob) at <strong>different locations</strong>.</p>
@@ -275,13 +278,13 @@ Haky Im
 </tr>
 </tbody>
 </table>
-<div class="source-credit">
-<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
-</div>
 </div>
 </section>
 <section id="translation-invariance" class="slide level2">
 <h2>Translation Invariance</h2>
+<div class="source-credit">
+<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
+</div>
 <p>Because weights are shared, CNNs are <strong>tolerant to translation</strong> of objects in the input.</p>
 <div class="fragment">
 <blockquote>
@@ -290,20 +293,17 @@ Haky Im
 </div>
 <div class="fragment">
 <p><strong>Genomics analogy:</strong> A CNN trained to recognize a TF binding motif will find it <strong>regardless of position</strong> in the DNA sequence.</p>
-<div class="source-credit">
-<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
-</div>
 </div>
 </section>
 <section id="activation-and-pooling" class="slide level2">
 <h2>3 — Activation and Pooling</h2>
+<div class="source-credit">
+<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
+</div>
 
 <img data-src="images/cnn-07-relu-and-pooling.png" class="quarto-figure quarto-figure-center r-stretch" style="width:85.0%"><div class="fragment">
 <p><strong>ReLU:</strong> <span class="math inline">\(f(x) = \max(0, x)\)</span> — negative values become 0, positive values pass through.</p>
 <p><strong>Max Pooling:</strong> take the <strong>maximum</strong> value in each 2×2 block — reduces dimensionality while keeping the strongest activations.</p>
-<div class="source-credit">
-<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
-</div>
 </div>
 </section></section>
 <section>
@@ -313,14 +313,17 @@ Haky Im
 </section>
 <section id="putting-it-all-together" class="slide level2">
 <h2>Putting It All Together</h2>
-
-<img data-src="images/cnn-08-full-pipeline.png" class="quarto-figure quarto-figure-center r-stretch" style="width:90.0%"><p>INPUT → CONV+RELU → POOLING → CONV+RELU → POOLING → FLATTEN → FULLY CONNECTED → SOFTMAX</p>
 <div class="source-credit">
 <p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
 </div>
+
+<img data-src="images/cnn-08-full-pipeline.png" class="quarto-figure quarto-figure-center r-stretch" style="width:90.0%"><p>INPUT → CONV+RELU → POOLING → CONV+RELU → POOLING → FLATTEN → FULLY CONNECTED → SOFTMAX</p>
 </section>
 <section id="hierarchical-feature-learning" class="slide level2">
 <h2>Hierarchical Feature Learning</h2>
+<div class="source-credit">
+<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
+</div>
 
 <img data-src="images/cnn-09-pipeline-with-filters.png" class="quarto-figure quarto-figure-center r-stretch" style="width:90.0%"><p>Each layer learns progressively more complex features:</p>
 <table class="caption-top">
@@ -354,9 +357,6 @@ Haky Im
 </tr>
 </tbody>
 </table>
-<div class="source-credit">
-<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
-</div>
 </section></section>
 <section>
 <section id="part-3-using-cnns-in-practice" class="title-slide slide level1 center" data-background-color="#1e3a5f" style="color:white;">
@@ -368,6 +368,9 @@ Haky Im
 </section>
 <section id="method-1-train-from-scratch" class="slide level2">
 <h2>Method 1 — Train from Scratch</h2>
+<div class="source-credit">
+<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
+</div>
 <p>Build and train the entire network on your own data.</p>
 <div class="fragment">
 <p><strong>Pros:</strong> Highly accurate, fully customized</p>
@@ -379,13 +382,13 @@ Haky Im
 </div>
 <div class="fragment">
 <p><em>This is what we do in the TF binding prediction homework.</em></p>
-<div class="source-credit">
-<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
-</div>
 </div>
 </section>
 <section id="method-2-transfer-learning" class="slide level2">
 <h2>Method 2 — Transfer Learning</h2>
+<div class="source-credit">
+<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
+</div>
 <p>Use a model <strong>pre-trained on one task</strong> as the starting point for a related task.</p>
 <div class="fragment">
 <blockquote>
@@ -395,13 +398,13 @@ Haky Im
 <div class="fragment">
 <p><strong>Pros:</strong> Requires less data and compute</p>
 <p><strong>Genomics example:</strong> Fine-tune a model trained on one TF’s binding data to predict binding for a related TF.</p>
-<div class="source-credit">
-<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
-</div>
 </div>
 </section>
 <section id="method-3-feature-extraction" class="slide level2">
 <h2>Method 3 — Feature Extraction</h2>
+<div class="source-credit">
+<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
+</div>
 <p>Use a <strong>pre-trained CNN’s hidden layers</strong> to extract features, then train a simpler model on top.</p>
 <div class="fragment">
 <blockquote>
@@ -411,9 +414,6 @@ Haky Im
 <div class="fragment">
 <p><strong>Pros:</strong> Requires the <strong>least</strong> data and compute</p>
 <p><strong>Genomics example:</strong> Use Enformer embeddings as features for downstream prediction tasks.</p>
-<div class="source-credit">
-<p>Source: <a href="https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html">MathWorks — What Are CNNs?</a></p>
-</div>
 </div>
 </section></section>
 <section>
