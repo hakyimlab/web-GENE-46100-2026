@@ -212,7 +212,7 @@ Haky Im, based on notebook by Erin Wilson
 </section>
 <section id="you-can-train-a-neural-network-on-numbers" class="slide level2">
 <h2>You Can Train a Neural Network on Numbers</h2>
-<p>Last session: gradient descent → MLP → PyTorch training loop on numeric data.</p>
+<p><strong>So far:</strong> gradient descent → MLP → CNNs on numeric data.</p>
 <div class="fragment">
 <p><strong>Today’s question:</strong></p>
 <blockquote>
@@ -502,43 +502,27 @@ N  →  [  0     0     0     0  ]</code></pre>
 </section>
 <section id="train-val-test-split" class="slide level2">
 <h2>Train / Val / Test Split</h2>
-<div class="columns">
-<div class="column" style="width:55%;">
 <ol type="1">
 <li class="fragment"><p><strong>Training set</strong> (64%) — model learns from this <em>Analogy: studying for an exam</em></p></li>
 <li class="fragment"><p><strong>Validation set</strong> (16%) — tune hyperparameters, catch overfitting <em>Analogy: practice problems</em></p></li>
 <li class="fragment"><p><strong>Test set</strong> (20%) — final evaluation, never seen during training <em>Analogy: the actual exam</em></p></li>
 </ol>
-</div><div class="column" style="width:45%;">
-<div class="sourceCode" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href=""></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split</span>
-<span id="cb5-2"><a href=""></a></span>
-<span id="cb5-3"><a href=""></a>train_df, test_df <span class="op">=</span> train_test_split(mer8, test_size<span class="op">=</span><span class="fl">0.2</span>)</span>
-<span id="cb5-4"><a href=""></a>train_df, val_df  <span class="op">=</span> train_test_split(train_df, test_size<span class="op">=</span><span class="fl">0.2</span>)</span>
-<span id="cb5-5"><a href=""></a></span>
-<span id="cb5-6"><a href=""></a><span class="co"># Train: ~42k sequences</span></span>
-<span id="cb5-7"><a href=""></a><span class="co"># Val:   ~10k sequences</span></span>
-<span id="cb5-8"><a href=""></a><span class="co"># Test:  ~13k sequences</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="fragment">
-<p><strong>Sanity check:</strong> all three splits should have sequences from each score group — no skewed sampling.</p>
+<div class="takehome">
+<p>All three splits should have sequences from each score group. Check this before training — skewed sampling will mislead you.</p>
 </div>
-</div></div>
+</div>
 </section>
 <section id="dataset-and-dataloader" class="slide level2">
 <h2>Dataset and DataLoader</h2>
 <p>PyTorch wraps data in two objects:</p>
 <div class="fragment">
-<p><strong><code>Dataset</code></strong> — knows how to get one sample:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href=""></a><span class="kw">class</span> SeqDatasetOHE(Dataset):</span>
-<span id="cb6-2"><a href=""></a>    <span class="kw">def</span> <span class="fu">__getitem__</span>(<span class="va">self</span>, idx):</span>
-<span id="cb6-3"><a href=""></a>        <span class="cf">return</span> <span class="va">self</span>.ohe_seqs[idx], <span class="va">self</span>.labels[idx]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div class="fragment">
-<p><strong><code>DataLoader</code></strong> — handles batching, shuffling, parallelism:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href=""></a>train_dl <span class="op">=</span> DataLoader(train_ds, batch_size<span class="op">=</span><span class="dv">128</span>, shuffle<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><strong><code>Dataset</code></strong> — defines how to retrieve one (input, label) pair. You write this.</p>
+<p><strong><code>DataLoader</code></strong> — handles batching, shuffling, and parallel loading. PyTorch provides this.</p>
 </div>
 <div class="fragment">
 <div class="takehome">
-<p>You write the <code>Dataset</code>; PyTorch handles the rest. The training loop iterates over batches from the <code>DataLoader</code>.</p>
+<p>The training loop iterates over <strong>batches</strong> from the DataLoader — not individual samples. This is the main structural change from the single-sample loop in notebook-02.</p>
 </div>
 </div>
 </section>
@@ -552,37 +536,28 @@ N  →  [  0     0     0     0  ]</code></pre>
 </section>
 <section id="model-1-linear" class="slide level2">
 <h2>Model 1: Linear</h2>
-<p>Flattens the (8, 4) matrix into a vector of length 32, then applies one linear layer:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href=""></a><span class="kw">class</span> DNA_Linear(nn.Module):</span>
-<span id="cb8-2"><a href=""></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, seq_len):</span>
-<span id="cb8-3"><a href=""></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
-<span id="cb8-4"><a href=""></a>        <span class="va">self</span>.lin <span class="op">=</span> nn.Linear(<span class="dv">4</span> <span class="op">*</span> seq_len, <span class="dv">1</span>)</span>
-<span id="cb8-5"><a href=""></a></span>
-<span id="cb8-6"><a href=""></a>    <span class="kw">def</span> forward(<span class="va">self</span>, xb):</span>
-<span id="cb8-7"><a href=""></a>        xb <span class="op">=</span> xb.view(xb.shape[<span class="dv">0</span>], <span class="va">self</span>.seq_len <span class="op">*</span> <span class="dv">4</span>)</span>
-<span id="cb8-8"><a href=""></a>        <span class="cf">return</span> <span class="va">self</span>.lin(xb)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><strong>Architecture:</strong> flatten the (8, 4) one-hot matrix → 32 numbers → one linear layer → score.</p>
 <div class="fragment">
 <p><strong>What it sees:</strong> which nucleotide is at each absolute position.</p>
 <p><strong>What it can’t see:</strong> whether a 3-mer like <code>TAT</code> appears <em>anywhere</em> in the sequence.</p>
 </div>
+<div class="fragment">
+<div class="takehome">
+<p>If <code>TAT</code> appears at position 2 vs position 5, the linear model treats these as completely different inputs. It can only learn <em>which position has which base</em> — not <em>what pattern appears</em>.</p>
+</div>
+</div>
 </section>
 <section id="model-2-cnn" class="slide level2">
 <h2>Model 2: CNN</h2>
-<p>Slides 32 filters of width 3 across the sequence, then flattens and applies a linear layer:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href=""></a><span class="kw">class</span> DNA_CNN(nn.Module):</span>
-<span id="cb9-2"><a href=""></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, seq_len, num_filters<span class="op">=</span><span class="dv">32</span>, kernel_size<span class="op">=</span><span class="dv">3</span>):</span>
-<span id="cb9-3"><a href=""></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
-<span id="cb9-4"><a href=""></a>        <span class="va">self</span>.conv   <span class="op">=</span> nn.Conv1d(<span class="dv">4</span>, num_filters, kernel_size)</span>
-<span id="cb9-5"><a href=""></a>        <span class="va">self</span>.relu   <span class="op">=</span> nn.ReLU(inplace<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb9-6"><a href=""></a>        <span class="va">self</span>.linear <span class="op">=</span> nn.Linear(</span>
-<span id="cb9-7"><a href=""></a>            num_filters <span class="op">*</span> (seq_len <span class="op">-</span> kernel_size <span class="op">+</span> <span class="dv">1</span>), <span class="dv">1</span>)</span>
-<span id="cb9-8"><a href=""></a></span>
-<span id="cb9-9"><a href=""></a>    <span class="kw">def</span> forward(<span class="va">self</span>, xb):</span>
-<span id="cb9-10"><a href=""></a>        xb <span class="op">=</span> xb.permute(<span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">1</span>)   <span class="co"># → (batch, 4, seq_len)</span></span>
-<span id="cb9-11"><a href=""></a>        x  <span class="op">=</span> <span class="va">self</span>.relu(<span class="va">self</span>.conv(xb))</span>
-<span id="cb9-12"><a href=""></a>        <span class="cf">return</span> <span class="va">self</span>.linear(x.flatten(<span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><strong>Architecture:</strong> 32 filters of width 3, sliding across the sequence → ReLU → flatten → linear layer → score.</p>
 <div class="fragment">
-<p><strong>What it sees:</strong> local 3-mer patterns at every position — just like a sliding PWM.</p>
+<p><strong>What it sees:</strong> local 3-mer patterns at every position — like a sliding PWM.</p>
+<p><strong>What it can’t see:</strong> long-range interactions (for that, you’d need deeper networks or attention).</p>
+</div>
+<div class="fragment">
+<div class="takehome">
+<p>A CNN filter sliding over one-hot DNA is mathematically equivalent to scoring with a <strong>Position Weight Matrix (PWM)</strong> — but the filters are <em>learned from data</em>, not hand-designed.</p>
+</div>
 </div>
 </section>
 <section id="linear-vs-cnn-key-differences" class="slide level2">
@@ -637,115 +612,122 @@ N  →  [  0     0     0     0  ]</code></pre>
 <h1>Part 5: Training</h1>
 
 </section>
-<section id="the-training-loop" class="slide level2">
-<h2>The Training Loop</h2>
-<p>Same structure as notebook-02 — forward pass, loss, backprop, update — but now with <strong>mini-batches</strong> from the DataLoader and <strong>MSE loss</strong> (regression instead of classification):</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href=""></a><span class="kw">def</span> train_model(model, train_dl, val_dl, device,</span>
-<span id="cb10-2"><a href=""></a>                lr<span class="op">=</span><span class="fl">0.01</span>, epochs<span class="op">=</span><span class="dv">50</span>):</span>
-<span id="cb10-3"><a href=""></a>    optimizer <span class="op">=</span> torch.optim.SGD(model.parameters(), lr<span class="op">=</span>lr)</span>
-<span id="cb10-4"><a href=""></a>    loss_fn   <span class="op">=</span> nn.MSELoss()</span>
-<span id="cb10-5"><a href=""></a></span>
-<span id="cb10-6"><a href=""></a>    <span class="cf">for</span> epoch <span class="kw">in</span> <span class="bu">range</span>(epochs):</span>
-<span id="cb10-7"><a href=""></a>        model.train()</span>
-<span id="cb10-8"><a href=""></a>        <span class="cf">for</span> xb, yb <span class="kw">in</span> train_dl:          <span class="co"># mini-batch loop</span></span>
-<span id="cb10-9"><a href=""></a>            pred <span class="op">=</span> model(xb.<span class="bu">float</span>())     <span class="co"># forward pass</span></span>
-<span id="cb10-10"><a href=""></a>            loss <span class="op">=</span> loss_fn(pred, yb)     <span class="co"># compute loss</span></span>
-<span id="cb10-11"><a href=""></a>            optimizer.zero_grad()        <span class="co"># clear gradients</span></span>
-<span id="cb10-12"><a href=""></a>            loss.backward()              <span class="co"># backprop</span></span>
-<span id="cb10-13"><a href=""></a>            optimizer.step()             <span class="co"># update weights</span></span>
-<span id="cb10-14"><a href=""></a></span>
-<span id="cb10-15"><a href=""></a>        model.<span class="bu">eval</span>()                     <span class="co"># validation (no gradients)</span></span>
-<span id="cb10-16"><a href=""></a>        ...</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="training" class="slide level2">
+<h2>Training</h2>
+<p>Same four-step loop as notebook-02 — now applied to <strong>mini-batches</strong>:</p>
 <div class="fragment">
-<p>Running it is one call:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href=""></a>cnn_train_losses, cnn_val_losses <span class="op">=</span> train_model(</span>
-<span id="cb11-2"><a href=""></a>    model_cnn, train_dl, val_dl, DEVICE</span>
-<span id="cb11-3"><a href=""></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td><strong>Forward pass</strong> — model(X) → prediction</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td><strong>Compute loss</strong> — MSELoss(prediction, y)</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td><strong>Backprop</strong> — loss.backward()</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td><strong>Update</strong> — optimizer.step()</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="fragment">
+<p>Two differences from notebook-02:</p>
+<ul>
+<li><strong>Mini-batches</strong> from the DataLoader (not the full dataset at once)</li>
+<li><strong>MSE loss</strong> — this is regression, not classification</li>
+</ul>
+</div>
+<div class="fragment">
+<div class="takehome">
+<p>Run the same loop for both the linear model and the CNN. Same optimizer, same data, same epochs. The only difference is the architecture.</p>
+</div>
 </div>
 </section>
 <section class="slide level2">
 
 </section></section>
 <section>
-<section id="part-6-results" class="title-slide slide level1 center" data-background-color="#1e3a5f" style="color:white;">
-<h1>Part 6: Results</h1>
-
+<section id="part-6-reading-results" class="title-slide slide level1 center" data-background-color="#1e3a5f" style="color:white;">
+<h1>Part 6: Reading Results</h1>
+<p><strong>What to look for when you run the notebook</strong></p>
 </section>
-<section id="loss-curves-linear-plateaus-early" class="slide level2">
-<h2>Loss Curves: Linear Plateaus Early</h2>
-<div class="sourceCode" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href=""></a>quick_loss_plot([lin_data_label])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="columns">
-<div class="column" style="width:60%;">
-<p>The linear model’s loss drops quickly at first — it learns the average nucleotide contribution — then <strong>plateaus</strong>.</p>
-</div><div class="column" style="width:40%;">
-<p>No matter how long you train, it can’t learn motifs.</p>
-<p><strong>The model is wrong, not the optimizer.</strong></p>
-</div></div>
-</section>
-<section id="loss-curves-cnn-keeps-learning" class="slide level2">
-<h2>Loss Curves: CNN Keeps Learning</h2>
-<div class="sourceCode" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href=""></a>quick_loss_plot([lin_data_label, cnn_data_label])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="reading-loss-curves" class="slide level2">
+<h2>Reading Loss Curves</h2>
+<p>After training, plot training and validation loss over epochs.</p>
 <div class="fragment">
-<div class="columns">
-<div class="column" style="width:55%;">
-<p>The CNN continues to drive loss down <strong>well past</strong> where the linear model stalls.</p>
-<p>It’s finding structure the linear model can’t represent.</p>
-</div><div class="column" style="width:45%;">
-<div class="takehome">
-<p>If your loss plateaus early, ask: <em>Is my model architecture expressive enough for this task?</em></p>
-</div>
-</div></div>
-</div>
-</section>
-<section id="why-does-linear-fail" class="slide level2">
-<h2>Why Does Linear Fail?</h2>
-<p>Ask the linear model to predict some sequences:</p>
-<pre><code>poly-X seqs:
-  GGGGGGGG: pred: 10.2   actual: 14.0   (underpredicts G!)
-  TTTTTTTT: pred: 15.8   actual: 11.0   (overpredicts T!)
-
-with GCG motif:
-  AAGCGAAA: pred:  9.1   actual: 16.4   (wrong — it's not all-G)</code></pre>
-<div class="fragment">
-<p><strong>Why?</strong> The linear model noticed that sequences with GCG tend to score low. So it learned: <em>G is bad</em>.</p>
-<p>But that’s wrong — it’s specifically <strong>GCG</strong> that’s bad, not G in general.</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 39%">
+<col style="width: 60%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Pattern</th>
+<th>What it means</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Loss drops then <strong>plateaus early</strong></td>
+<td>Wrong architecture — model can’t represent the answer</td>
+</tr>
+<tr class="even">
+<td>Loss keeps dropping</td>
+<td>Model is still finding structure</td>
+</tr>
+<tr class="odd">
+<td>Train loss drops, val loss rises</td>
+<td>Overfitting — memorizing, not generalizing</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="fragment">
 <div class="takehome">
-<p>The linear model can’t separate “G in context GCG” from “G anywhere.” It confuses <strong>correlation</strong> with <strong>local pattern</strong>.</p>
+<p>A plateau is an <strong>architecture</strong> problem, not an optimizer problem. Training longer won’t fix it — you need a more expressive model.</p>
 </div>
 </div>
 </section>
-<section id="cnn-gets-it-right" class="slide level2">
-<h2>CNN Gets It Right</h2>
-<pre><code>poly-X seqs:
-  GGGGGGGG: pred: 13.9   actual: 14.0   ✓
-  TTTTTTTT: pred: 11.1   actual: 11.0   ✓
-
-with GCG motif:
-  AAGCGAAA: pred: 16.1   actual: 16.4   ✓
-
-with TAT motif:
-  TATAAAAA: pred: 28.8   actual: 28.75  ✓</code></pre>
+<section id="why-does-linear-fail-conceptually" class="slide level2">
+<h2>Why Does Linear Fail? (Conceptually)</h2>
+<p>The linear model learns one weight per (position, base) combination — 32 parameters total.</p>
 <div class="fragment">
-<p>The CNN correctly distinguishes <strong>G-in-GCG</strong> from <strong>G-elsewhere</strong> — because its filters scan 3-mer windows and learn the full context.</p>
-</div>
-</section>
-<section id="scatter-plots-predicted-vs-actual" class="slide level2">
-<h2>Scatter Plots: Predicted vs Actual</h2>
-<div class="sourceCode" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href=""></a>scatter_pred([(<span class="st">"Linear"</span>, model_lin), (<span class="st">"CNN"</span>, model_cnn)],</span>
-<span id="cb16-2"><a href=""></a>            test_df[<span class="st">'seq'</span>].values, oracle)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="fragment">
-<div class="columns">
-<div class="column" style="width:50%;">
-<p><strong>Linear:</strong> Main diagonal is OK for “no motif” sequences, but the motif groups (high and low extremes) are badly scattered.</p>
-</div><div class="column" style="width:50%;">
-<p><strong>CNN:</strong> R² ≈ 0.95 — tight around the identity line for all three score groups.</p>
-</div></div>
+<p>It can learn: <em>“G at position 3 tends to predict a lower score.”</em></p>
+<p>It cannot learn: <em>“G is only bad when flanked by C on both sides.”</em></p>
 </div>
 <div class="fragment">
 <div class="takehome">
-<p>Look at where the model fails — it’s almost always the sequences with <strong>multiple motif occurrences</strong>. The scoring function only gave one bump; the CNN predicted they mattered more. In a sense, the CNN was right.</p>
+<p>The linear model confuses <strong>correlation</strong> (G predicts low score) with <strong>local pattern</strong> (GCG causes −10). When you run the notebook, probe this: ask the linear model to score <code>GGGGGGGG</code> vs <code>AAGCGAAA</code>.</p>
+</div>
+</div>
+</section>
+<section id="reading-scatter-plots" class="slide level2">
+<h2>Reading Scatter Plots</h2>
+<p>A scatter plot of predicted vs actual score reveals <em>where</em> the model fails.</p>
+<div class="fragment">
+<p>What to look for:</p>
+<ul>
+<li><strong>Tight diagonal across all sequences</strong> → model learned all three score groups</li>
+<li><strong>Diagonal only in the middle</strong> → model found the baseline but missed the motif groups</li>
+<li><strong>Three clusters separated</strong> → model correctly separated no-motif / TAT / GCG sequences</li>
+</ul>
+</div>
+<div class="fragment">
+<div class="takehome">
+<p>Look at the extremes — sequences with the highest and lowest scores. That’s where the motifs live, and that’s where architecture choice matters most.</p>
 </div>
 </div>
 </section>
@@ -775,21 +757,23 @@ with TAT motif:
 </section>
 <section id="raw-filter-weights" class="slide level2">
 <h2>Raw Filter Weights</h2>
-<div class="sourceCode" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href=""></a>conv_layers, model_weights, _ <span class="op">=</span> get_conv_layers_from_model(model_cnn)</span>
-<span id="cb17-2"><a href=""></a>view_filters(model_weights)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href=""></a>conv_layers, model_weights, _ <span class="op">=</span> get_conv_layers_from_model(model_cnn)</span>
+<span id="cb5-2"><a href=""></a>view_filters(model_weights)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 
-<img data-src="images/filter_activation.png" class="quarto-figure quarto-figure-center r-stretch" style="width:85.0%"><p>Each panel: one of 32 filters. Rows = A/C/G/T, columns = positions 1–3. Brighter = higher weight.</p>
+<img data-src="images/filter_activation.png" class="quarto-figure quarto-figure-center r-stretch" style="width:85.0%"><p>Each panel: one of 32 filters. Rows = A/C/G/T, columns = positions 1–6. Brighter = higher weight.</p>
 </section>
 <section id="filter-activation-logos" class="slide level2">
 <h2>Filter Activation Logos</h2>
-<div class="sourceCode" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href=""></a>filter_activations <span class="op">=</span> get_filter_activations(some_seqs, conv_layers[<span class="dv">0</span>])</span>
-<span id="cb18-2"><a href=""></a>view_filters_and_logos(model_weights, filter_activations)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="fragment">
 <p>For each filter: the raw weight heatmap (top) + the sequence logo of what actually activated it (bottom).</p>
+<div class="fragment">
+<p>The question to ask when you run this in the notebook:</p>
+<blockquote>
+<p>Did any filters recover <strong>TAT</strong> or <strong>GCG</strong> — the motifs we designed in?</p>
+</blockquote>
 </div>
 <div class="fragment">
 <div class="takehome">
-<p>Some filters clearly recover <strong>TAT</strong> and <strong>GCG</strong> — the motifs we designed into the scoring function. Others learned complementary 3-mer patterns that help distinguish the background.</p>
+<p>If yes, the model didn’t just fit numbers — it found the actual biological signal. That’s the test: synthetic data lets us verify the model learned the <em>right</em> thing.</p>
 </div>
 </div>
 </section>
@@ -804,72 +788,6 @@ with TAT motif:
 <blockquote>
 <p>“Visualization of the first-layer filters can provide some intuition but should not be over-interpreted.” — <a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1007560">Koo &amp; Eddy, 2019</a></p>
 </blockquote>
-</div>
-</section>
-<section class="slide level2">
-
-</section></section>
-<section>
-<section id="exercises" class="title-slide slide level1 center" data-background-color="#1e3a5f" style="color:white;">
-<h1>Exercises</h1>
-<p><strong>Open the notebook in Colab</strong></p>
-<p><a href="https://drive.google.com/file/d/1x1oAP584Z2mXXMwcaZDaRUYENMt_S5pa/view?usp=sharing">Colab link</a></p>
-</section>
-<section id="exercise-1-position-dependent-scoring" class="slide level2">
-<h2>Exercise 1 — Position-Dependent Scoring</h2>
-<p><strong>Current rule:</strong> TAT anywhere → +10, regardless of position.</p>
-<p><strong>Your task:</strong> modify <code>score_seqs_motif()</code> so that a motif scores <strong>higher</strong> if it appears near the <strong>start</strong> of the sequence than near the <strong>end</strong>.</p>
-<div class="fragment">
-<p>Questions to answer:</p>
-<ul>
-<li class="fragment">How does the score distribution change? (still 3 groups? more?)</li>
-<li class="fragment">Does the CNN still learn the pattern? Does the linear model?</li>
-<li class="fragment">What would you expect the learned filters to look like?</li>
-</ul>
-</div>
-</section>
-<section id="exercise-2-learning-rate-sensitivity" class="slide level2">
-<h2>Exercise 2 — Learning Rate Sensitivity</h2>
-<p>Train both models with a range of learning rates:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href=""></a><span class="co"># Try: lr = 0.001, 0.005, 0.05, 0.1</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="fragment">
-<p>Questions to answer:</p>
-<ul>
-<li class="fragment">How does convergence speed change for each model?</li>
-<li class="fragment">Which model is <strong>more sensitive</strong> to learning rate, and why?</li>
-<li class="fragment">What learning rate would you recommend for each?</li>
-</ul>
-</div>
-<div class="fragment">
-<div class="takehome">
-<p>Hint: recall from last session — too small → slow, too large → diverges. Does the CNN diverge at the same threshold as the linear model?</p>
-</div>
-</div>
-</section>
-<section id="exercise-3-improve-the-model" class="slide level2">
-<h2>Exercise 3 — Improve the Model</h2>
-<p>Inspect the scatter plot and find sequences where the CNN makes large errors.</p>
-<p><strong>Your task:</strong> propose and implement one modification — to the architecture, loss, training process, or data representation — to reduce those errors.</p>
-<div class="fragment">
-<ul>
-<li class="fragment">Retrain with your modification</li>
-<li class="fragment">Show a before/after scatter plot or error histogram</li>
-<li class="fragment">Discuss: what did your change fix? What trade-offs did it introduce?</li>
-</ul>
-</div>
-</section>
-<section id="your-turn" class="slide level2">
-<h2>Your Turn</h2>
-<p>Open the notebook in Colab:</p>
-<p><strong><a href="https://drive.google.com/file/d/1x1oAP584Z2mXXMwcaZDaRUYENMt_S5pa/view?usp=sharing">drive.google.com/file/d/1x1oAP584Z2mXXMwcaZDaRUYENMt_S5pa</a></strong></p>
-<div class="fragment">
-<p>Work through sections 1–7 in order. The code runs end-to-end — focus on <strong>understanding each output</strong> before moving on.</p>
-<ul>
-<li class="fragment">Section 1–2: generate data and one-hot encode a few sequences by hand first</li>
-<li class="fragment">Section 5: watch the loss curves live as they train</li>
-<li class="fragment">Section 7: look for TAT and GCG in the filter logos</li>
-<li class="fragment">Exercises: pick at least one to attempt</li>
-</ul>
 </div>
 </section>
 <section id="takeaways" class="slide level2">

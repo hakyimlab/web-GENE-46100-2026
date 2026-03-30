@@ -317,10 +317,6 @@ Shape: `(seq_len, 4)` — one row per base, one column per nucleotide.
 
 ## Train / Val / Test Split
 
-::: {.columns}
-
-:::: {.column width="55%"}
-
 ::: {.incremental}
 
 1. **Training set** (64%) — model learns from this
@@ -334,27 +330,11 @@ Shape: `(seq_len, 4)` — one row per base, one column per nucleotide.
 
 :::
 
-::::
+. . .
 
-:::: {.column width="45%"}
-
-```python
-from sklearn.model_selection import train_test_split
-
-train_df, test_df = train_test_split(mer8, test_size=0.2)
-train_df, val_df  = train_test_split(train_df, test_size=0.2)
-
-# Train: ~42k sequences
-# Val:   ~10k sequences
-# Test:  ~13k sequences
-```
-
-::: {.fragment}
-**Sanity check:** all three splits should have sequences from each score group — no skewed sampling.
-:::
-
-::::
-
+::: {.takehome}
+All three splits should have sequences from each score group.
+Check this before training — skewed sampling will mislead you.
 :::
 
 ---
@@ -365,27 +345,17 @@ PyTorch wraps data in two objects:
 
 . . .
 
-**`Dataset`** — knows how to get one sample:
+**`Dataset`** — defines how to retrieve one (input, label) pair.
+You write this.
 
-```python
-class SeqDatasetOHE(Dataset):
-    def __getitem__(self, idx):
-        return self.ohe_seqs[idx], self.labels[idx]
-```
-
-. . .
-
-**`DataLoader`** — handles batching, shuffling, parallelism:
-
-```python
-train_dl = DataLoader(train_ds, batch_size=128, shuffle=True)
-```
+**`DataLoader`** — handles batching, shuffling, and parallel loading.
+PyTorch provides this.
 
 . . .
 
 ::: {.takehome}
-You write the `Dataset`; PyTorch handles the rest.
-The training loop iterates over batches from the `DataLoader`.
+The training loop iterates over **batches** from the DataLoader — not individual samples.
+This is the main structural change from the single-sample loop in notebook-02.
 :::
 
 ---
@@ -398,18 +368,7 @@ The training loop iterates over batches from the `DataLoader`.
 
 ## Model 1: Linear
 
-Flattens the (8, 4) matrix into a vector of length 32, then applies one linear layer:
-
-```python
-class DNA_Linear(nn.Module):
-    def __init__(self, seq_len):
-        super().__init__()
-        self.lin = nn.Linear(4 * seq_len, 1)
-
-    def forward(self, xb):
-        xb = xb.view(xb.shape[0], self.seq_len * 4)
-        return self.lin(xb)
-```
+**Architecture:** flatten the (8, 4) one-hot matrix → 32 numbers → one linear layer → score.
 
 . . .
 
@@ -417,30 +376,30 @@ class DNA_Linear(nn.Module):
 
 **What it can't see:** whether a 3-mer like `TAT` appears *anywhere* in the sequence.
 
+. . .
+
+::: {.takehome}
+If `TAT` appears at position 2 vs position 5, the linear model treats these as completely different inputs.
+It can only learn *which position has which base* — not *what pattern appears*.
+:::
+
 ---
 
 ## Model 2: CNN
 
-Slides 32 filters of width 3 across the sequence, then flattens and applies a linear layer:
-
-```python
-class DNA_CNN(nn.Module):
-    def __init__(self, seq_len, num_filters=32, kernel_size=3):
-        super().__init__()
-        self.conv   = nn.Conv1d(4, num_filters, kernel_size)
-        self.relu   = nn.ReLU(inplace=True)
-        self.linear = nn.Linear(
-            num_filters * (seq_len - kernel_size + 1), 1)
-
-    def forward(self, xb):
-        xb = xb.permute(0, 2, 1)   # → (batch, 4, seq_len)
-        x  = self.relu(self.conv(xb))
-        return self.linear(x.flatten(1))
-```
+**Architecture:** 32 filters of width 3, sliding across the sequence → ReLU → flatten → linear layer → score.
 
 . . .
 
-**What it sees:** local 3-mer patterns at every position — just like a sliding PWM.
+**What it sees:** local 3-mer patterns at every position — like a sliding PWM.
+
+**What it can't see:** long-range interactions (for that, you'd need deeper networks or attention).
+
+. . .
+
+::: {.takehome}
+A CNN filter sliding over one-hot DNA is mathematically equivalent to scoring with a **Position Weight Matrix (PWM)** — but the filters are *learned from data*, not hand-designed.
+:::
 
 ---
 
@@ -466,183 +425,98 @@ A CNN filter sliding over one-hot DNA is mathematically equivalent to scoring wi
 
 ---
 
-## The Training Loop
+## Training
 
-Same structure as notebook-02 — forward pass, loss, backprop, update — but now with **mini-batches** from the DataLoader and **MSE loss** (regression instead of classification):
-
-```python
-def train_model(model, train_dl, val_dl, device,
-                lr=0.01, epochs=50):
-    optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-    loss_fn   = nn.MSELoss()
-
-    for epoch in range(epochs):
-        model.train()
-        for xb, yb in train_dl:          # mini-batch loop
-            pred = model(xb.float())     # forward pass
-            loss = loss_fn(pred, yb)     # compute loss
-            optimizer.zero_grad()        # clear gradients
-            loss.backward()              # backprop
-            optimizer.step()             # update weights
-
-        model.eval()                     # validation (no gradients)
-        ...
-```
+Same four-step loop as notebook-02 — now applied to **mini-batches**:
 
 . . .
 
-Running it is one call:
-
-```python
-cnn_train_losses, cnn_val_losses = train_model(
-    model_cnn, train_dl, val_dl, DEVICE
-)
-```
-
----
-
-# Part 6: Results {background-color="#1e3a5f" style="color:white;"}
-
----
-
-## Loss Curves: Linear Plateaus Early
-
-```python
-quick_loss_plot([lin_data_label])
-```
-
-::: {.columns}
-
-:::: {.column width="60%"}
-
-The linear model's loss drops quickly at first — it learns the average nucleotide contribution — then **plateaus**.
-
-::::
-
-:::: {.column width="40%"}
-
-No matter how long you train, it can't learn motifs.
-
-**The model is wrong, not the optimizer.**
-
-::::
-
-:::
-
----
-
-## Loss Curves: CNN Keeps Learning
-
-```python
-quick_loss_plot([lin_data_label, cnn_data_label])
-```
+| Step | Action |
+|------|--------|
+| 1 | **Forward pass** — model(X) → prediction |
+| 2 | **Compute loss** — MSELoss(prediction, y) |
+| 3 | **Backprop** — loss.backward() |
+| 4 | **Update** — optimizer.step() |
 
 . . .
 
-::: {.columns}
+Two differences from notebook-02:
 
-:::: {.column width="55%"}
-
-The CNN continues to drive loss down **well past** where the linear model stalls.
-
-It's finding structure the linear model can't represent.
-
-::::
-
-:::: {.column width="45%"}
-
-::: {.takehome}
-If your loss plateaus early, ask:
-*Is my model architecture expressive enough for this task?*
-:::
-
-::::
-
-:::
-
----
-
-## Why Does Linear Fail?
-
-Ask the linear model to predict some sequences:
-
-```
-poly-X seqs:
-  GGGGGGGG: pred: 10.2   actual: 14.0   (underpredicts G!)
-  TTTTTTTT: pred: 15.8   actual: 11.0   (overpredicts T!)
-
-with GCG motif:
-  AAGCGAAA: pred:  9.1   actual: 16.4   (wrong — it's not all-G)
-```
-
-. . .
-
-**Why?** The linear model noticed that sequences with GCG tend to score low. So it learned: *G is bad*.
-
-But that's wrong — it's specifically **GCG** that's bad, not G in general.
+- **Mini-batches** from the DataLoader (not the full dataset at once)
+- **MSE loss** — this is regression, not classification
 
 . . .
 
 ::: {.takehome}
-The linear model can't separate "G in context GCG" from "G anywhere."
-It confuses **correlation** with **local pattern**.
+Run the same loop for both the linear model and the CNN.
+Same optimizer, same data, same epochs. The only difference is the architecture.
 :::
 
 ---
 
-## CNN Gets It Right
+# Part 6: Reading Results {background-color="#1e3a5f" style="color:white;"}
 
-```
-poly-X seqs:
-  GGGGGGGG: pred: 13.9   actual: 14.0   ✓
-  TTTTTTTT: pred: 11.1   actual: 11.0   ✓
-
-with GCG motif:
-  AAGCGAAA: pred: 16.1   actual: 16.4   ✓
-
-with TAT motif:
-  TATAAAAA: pred: 28.8   actual: 28.75  ✓
-```
-
-. . .
-
-The CNN correctly distinguishes **G-in-GCG** from **G-elsewhere** — because its filters scan 3-mer windows and learn the full context.
+**What to look for when you run the notebook**
 
 ---
 
-## Scatter Plots: Predicted vs Actual
+## Reading Loss Curves
 
-```python
-scatter_pred([("Linear", model_lin), ("CNN", model_cnn)],
-            test_df['seq'].values, oracle)
-```
+After training, plot training and validation loss over epochs.
 
 . . .
 
-::: {.columns}
-
-:::: {.column width="50%"}
-
-**Linear:**
-Main diagonal is OK for "no motif" sequences, but the motif groups (high and low extremes) are badly scattered.
-
-::::
-
-:::: {.column width="50%"}
-
-**CNN:**
-R² ≈ 0.95 — tight around the identity line for all three score groups.
-
-::::
-
-:::
+| Pattern | What it means |
+|---------|--------------|
+| Loss drops then **plateaus early** | Wrong architecture — model can't represent the answer |
+| Loss keeps dropping | Model is still finding structure |
+| Train loss drops, val loss rises | Overfitting — memorizing, not generalizing |
 
 . . .
 
 ::: {.takehome}
-Look at where the model fails — it's almost always the sequences with **multiple motif occurrences**.
-The scoring function only gave one bump; the CNN predicted they mattered more.
-In a sense, the CNN was right.
+A plateau is an **architecture** problem, not an optimizer problem.
+Training longer won't fix it — you need a more expressive model.
+:::
+
+---
+
+## Why Does Linear Fail? (Conceptually)
+
+The linear model learns one weight per (position, base) combination — 32 parameters total.
+
+. . .
+
+It can learn: *"G at position 3 tends to predict a lower score."*
+
+It cannot learn: *"G is only bad when flanked by C on both sides."*
+
+. . .
+
+::: {.takehome}
+The linear model confuses **correlation** (G predicts low score) with **local pattern** (GCG causes −10).
+When you run the notebook, probe this: ask the linear model to score `GGGGGGGG` vs `AAGCGAAA`.
+:::
+
+---
+
+## Reading Scatter Plots
+
+A scatter plot of predicted vs actual score reveals *where* the model fails.
+
+. . .
+
+What to look for:
+
+- **Tight diagonal across all sequences** → model learned all three score groups
+- **Diagonal only in the middle** → model found the baseline but missed the motif groups
+- **Three clusters separated** → model correctly separated no-motif / TAT / GCG sequences
+
+. . .
+
+::: {.takehome}
+Look at the extremes — sequences with the highest and lowest scores.
+That's where the motifs live, and that's where architecture choice matters most.
 :::
 
 ---
@@ -688,20 +562,19 @@ Each panel: one of 32 filters. Rows = A/C/G/T, columns = positions 1–6. Bright
 
 ## Filter Activation Logos
 
-```python
-filter_activations = get_filter_activations(some_seqs, conv_layers[0])
-view_filters_and_logos(model_weights, filter_activations)
-```
-
-. . .
-
 For each filter: the raw weight heatmap (top) + the sequence logo of what actually activated it (bottom).
 
 . . .
 
+The question to ask when you run this in the notebook:
+
+> Did any filters recover **TAT** or **GCG** — the motifs we designed in?
+
+. . .
+
 ::: {.takehome}
-Some filters clearly recover **TAT** and **GCG** — the motifs we designed into the scoring function.
-Others learned complementary 3-mer patterns that help distinguish the background.
+If yes, the model didn't just fit numbers — it found the actual biological signal.
+That's the test: synthetic data lets us verify the model learned the *right* thing.
 :::
 
 ---
