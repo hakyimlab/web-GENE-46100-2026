@@ -7,13 +7,17 @@ categories:
   - gene46100
   - notebook
 execute:
-  eval: false
+  eval: true
 draft: false
 image: false
-jupyter: python3
+jupyter:
+  kernelspec:
+    name: "conda-env-gene46100-dna-cnn-py"
+    language: "python"
+    display_name: "gene46100-dna-cnn"
 ---
 
-[Jupyter notebook in Colab](https://drive.google.com/file/d/1x1oAP584Z2mXXMwcaZDaRUYENMt_S5pa/view?usp=sharing)
+[Jupyter notebook in Colab](https://drive.google.com/file/d/1x1oAP584Z2mXXMwcaZDaRUYENMt_S5pa/view?usp=sharing) 
 
 Originally created by Erin Wilson ([source](https://github.com/erinhwilson/dna-pytorch-tutorial)). Adapted by Haky Im and Ran Blekhman for GENE 46100.
 
@@ -155,7 +159,7 @@ Modify the scoring function to create a more complex pattern. Instead of giving 
 
 ## One-hot encoding: turning DNA into numbers
 
-In notebook-02, our input was a 1-channel numeric signal. DNA is a string of letters, so we need to convert it. **One-hot encoding** maps each nucleotide to a length-4 vector:
+In notebook-02, our input was a 1-channel numeric signal. DNA is a string of letters, so we need to convert it. A naive approach — encoding A=0, C=1, G=2, T=3 — would imply a false ordering (A < C < G < T). No base is "more than" another. **One-hot encoding** avoids this by mapping each nucleotide to a unit vector in 4D space, making all bases equidistant:
 
 - A → [1, 0, 0, 0], C → [0, 1, 0, 0], G → [0, 0, 1, 0], T → [0, 0, 0, 1]
 
@@ -264,7 +268,7 @@ train_dl, val_dl = build_dataloaders(train_df, val_df)
 We compare two architectures to see why convolution matters for motif detection:
 
 - **Linear model** — learns a weight for each nucleotide at each position. It can capture single-nucleotide effects (e.g. "A contributes +20") but **cannot detect motifs**, because it has no way to recognize that specific adjacent nucleotides matter.
-- **CNN model** — uses sliding filters of width 3, exactly the length of our motifs (TAT, GCG). Each filter can learn a local pattern regardless of where it appears — the same **translation invariance** from notebook-02.
+- **CNN model** — uses sliding filters of width 3, exactly the length of our motifs (TAT, GCG). Each filter can learn a local pattern regardless of where it appears — the same **translation invariance** from notebook-02. In fact, a CNN filter sliding over one-hot DNA is mathematically equivalent to scoring with a **Position Weight Matrix (PWM)** — but the weights are *learned from data*, not hand-designed.
 
 ```{python}
 class DNA_Linear(nn.Module):
@@ -366,7 +370,7 @@ lin_data_label = (lin_train_losses, lin_val_losses, "Linear")
 quick_loss_plot([lin_data_label])
 ```
 
-> **Discuss:** Not much learning happening — the linear model plateaus quickly.
+> **Discuss:** The linear model plateaus quickly. This is an **architecture** problem, not an optimizer problem — no amount of tuning the learning rate will help. The model simply cannot represent motif-level patterns.
 
 ## CNN model
 

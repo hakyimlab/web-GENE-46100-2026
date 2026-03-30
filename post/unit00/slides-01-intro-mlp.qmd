@@ -75,8 +75,6 @@ eval: false
 
 :::
 
----
-
 # Part 1: Linear Models {background-color="#1e3a5f" style="color:white;"}
 
 ---
@@ -168,8 +166,6 @@ The normal equation works for linear models...
 . . .
 
 **We need a general-purpose optimization method.**
-
----
 
 # Part 2: Gradient Descent {background-color="#1e3a5f" style="color:white;"}
 
@@ -433,8 +429,6 @@ $$\nabla L \approx \frac{1}{|B|} \sum_{i \in B} \nabla L_i$$
 The noise actually **helps** escape bad local minima!
 :::
 
----
-
 # Part 3: The ML Framework {background-color="#1e3a5f" style="color:white;"}
 
 ---
@@ -655,8 +649,6 @@ text(2, -2, "Far from\nidentity line!", col = "blue", cex = 1.1, font = 2)
 :::{.takehome}
 **Solution:** add nonlinearity → build a neural network.
 :::
-
----
 
 # Part 4: Neural Networks {background-color="#1e3a5f" style="color:white;"}
 
@@ -955,8 +947,6 @@ Common activations:
 - Whether it will generalize to new data
 :::
 
----
-
 # Part 5: From Playground to PyTorch {background-color="#1e3a5f" style="color:white;"}
 
 ---
@@ -1142,8 +1132,6 @@ plot(epochs, loss, type = "l", col = "steelblue", lwd = 2,
 <!-- :::: -->
 
 <!-- ::: -->
-
----
 
 # Part 6: Wrap-Up {background-color="#1e3a5f" style="color:white;"}
 

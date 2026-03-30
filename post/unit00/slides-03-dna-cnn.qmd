@@ -3,7 +3,7 @@ title: "DNA Sequence Scoring with CNNs"
 subtitle: "GENE 46100 — Unit 00"
 author: "Haky Im, based on notebook by Erin Wilson"
 date: 2026-04-03
-draft: false
+draft: true
 engine: knitr
 format:
   revealjs:
@@ -16,7 +16,7 @@ format:
     css: custom.css
     footer: "GENE 46100 · Deep Learning in Genomics"
 eval: true
-jupyter: 
+jupyter:
   kernelspec:
     name: "conda-env-gene46100-dna-cnn-tutorial-py"
     language: "python"
@@ -45,20 +45,6 @@ Two new problems to solve:
 
 ---
 
-## Learning Objectives
-
-::: {.incremental}
-
-1. Represent DNA as numbers using **one-hot encoding**
-2. Build and train a **linear model** on DNA — understand why it fails
-3. Build a **CNN** — understand why it succeeds
-4. Read **loss curves** and **scatter plots** to compare models
-5. **Visualize CNN filters** as sequence logos
-
-:::
-
----
-
 ## Today's Roadmap
 
 | Step | What we do |
@@ -77,8 +63,6 @@ Notebook: [Colab link](https://drive.google.com/file/d/1x1oAP584Z2mXXMwcaZDaRUYE
 Notebook by [Erin Wilson](https://github.com/erinhwilson/dna-pytorch-tutorial), adapted for GENE 46100 by Haky Im and Ran Blekhman
 :::
 
----
-
 # Part 1: The Task {background-color="#1e3a5f" style="color:white;"}
 
 **Can a model learn to detect a short pattern in DNA?**
@@ -89,7 +73,9 @@ Notebook by [Erin Wilson](https://github.com/erinhwilson/dna-pytorch-tutorial), 
 
 We want a task where **we** know the right answer — so we can verify the model found it.
 
-. . .
+::: {.columns}
+
+:::: {.column width="40%"}
 
 Score each 8-mer by **average nucleotide value**:
 
@@ -100,11 +86,26 @@ Score each 8-mer by **average nucleotide value**:
 | G    | 14     |
 | T    | 11     |
 
-. . .
+::::
+
+:::: {.column width="10%"}
+::::
+
+:::: {.column width="50%"}
+
+::: {.fragment}
 
 `AAAAAAAA` → mean(20×8) = **20.0**
 
-`ACAAAAAA` → mean(20+17+20+20+20+20+20+20) = **19.625**
+<br>
+
+`ACAAAAAA` → mean(20+17+…+20) = **19.625**
+
+:::
+
+::::
+
+:::
 
 ---
 
@@ -116,7 +117,7 @@ To simulate regulatory elements, two motifs modify the score:
 
 ::: {.columns}
 
-:::: {.column width="50%"}
+:::: {.column width="40%"}
 
 **TAT** anywhere in the 8-mer → **+10**
 
@@ -124,9 +125,9 @@ To simulate regulatory elements, two motifs modify the score:
 
 ::::
 
-:::: {.column width="50%"}
+:::: {.column width="60%"}
 
-![](images/scoring.png){fig-align="center" width="90%"}
+![](images/scoring.png){fig-align="center" width="100%"}
 
 ::::
 
@@ -135,54 +136,9 @@ To simulate regulatory elements, two motifs modify the score:
 . . .
 
 ::: {.takehome}
-These motifs are **arbitrary** — there's no real biology here.
-The point: can the model find them without being told where to look?
+These motifs are **arbitrary** — we designed them so we can verify the model finds the right pattern.
+This is our ground truth check before applying CNNs to real biology.
 :::
-
----
-
-## Score Distribution: Three Groups
-
-```python
-plt.hist(mer8['score'].values, bins=20)
-plt.title("8-mer with Motifs score distribution")
-```
-
-. . .
-
-The distribution has three peaks:
-
-| Group | Score range | Cause |
-|-------|------------|-------|
-| No motif | ~15 | Baseline nucleotide average |
-| Contains TAT | ~25 | +10 bump |
-| Contains GCG | ~5 | −10 bump |
-
-. . .
-
-::: {.takehome}
-A perfect model would predict all three groups correctly — including which specific 3-mer caused the bump.
-:::
-
----
-
-## Why Synthetic Data?
-
-Real TF binding data is noisier, higher-dimensional, and harder to debug.
-
-. . .
-
-Synthetic data lets us ask:
-
-> Did the model learn the **right** thing — or did it get lucky?
-
-. . .
-
-If the CNN recovers TAT and GCG in its learned filters, we know it found the correct pattern.
-
-**This is our ground truth check before applying CNNs to real biology.**
-
----
 
 # Part 2: DNA → Numbers {background-color="#1e3a5f" style="color:white;"}
 
@@ -281,88 +237,9 @@ CNNs were designed for images.
 
 :::
 
----
+# Part 3: Linear vs CNN {background-color="#1e3a5f" style="color:white;"}
 
-## The Code
-
-```python
-def one_hot_encode(seq):
-    nuc_d = {'A': [1,0,0,0],
-             'C': [0,1,0,0],
-             'G': [0,0,1,0],
-             'T': [0,0,0,1],
-             'N': [0,0,0,0]}
-    vec = np.array([nuc_d[x] for x in seq],
-                   dtype=np.float32)
-    return vec
-
-one_hot_encode("ATGC")
-# [[1,0,0,0],
-#  [0,0,0,1],
-#  [0,0,1,0],
-#  [0,1,0,0]]
-```
-
-. . .
-
-::: {.takehome}
-Shape: `(seq_len, 4)` — one row per base, one column per nucleotide.
-:::
-
----
-
-# Part 3: Preparing Data {background-color="#1e3a5f" style="color:white;"}
-
----
-
-## Train / Val / Test Split
-
-::: {.incremental}
-
-1. **Training set** (64%) — model learns from this
-   *Analogy: studying for an exam*
-
-2. **Validation set** (16%) — tune hyperparameters, catch overfitting
-   *Analogy: practice problems*
-
-3. **Test set** (20%) — final evaluation, never seen during training
-   *Analogy: the actual exam*
-
-:::
-
-. . .
-
-::: {.takehome}
-All three splits should have sequences from each score group.
-Check this before training — skewed sampling will mislead you.
-:::
-
----
-
-## Dataset and DataLoader
-
-PyTorch wraps data in two objects:
-
-. . .
-
-**`Dataset`** — defines how to retrieve one (input, label) pair.
-You write this.
-
-**`DataLoader`** — handles batching, shuffling, and parallel loading.
-PyTorch provides this.
-
-. . .
-
-::: {.takehome}
-The training loop iterates over **batches** from the DataLoader — not individual samples.
-This is the main structural change from the single-sample loop in notebook-02.
-:::
-
----
-
-# Part 4: Two Models {background-color="#1e3a5f" style="color:white;"}
-
-**Linear vs CNN**
+**Why architecture matters**
 
 ---
 
@@ -380,7 +257,7 @@ This is the main structural change from the single-sample loop in notebook-02.
 
 ::: {.takehome}
 If `TAT` appears at position 2 vs position 5, the linear model treats these as completely different inputs.
-It can only learn *which position has which base* — not *what pattern appears*.
+It confuses **correlation** (G predicts low score) with **local pattern** (GCG causes −10).
 :::
 
 ---
@@ -394,12 +271,6 @@ It can only learn *which position has which base* — not *what pattern appears*
 **What it sees:** local 3-mer patterns at every position — like a sliding PWM.
 
 **What it can't see:** long-range interactions (for that, you'd need deeper networks or attention).
-
-. . .
-
-::: {.takehome}
-A CNN filter sliding over one-hot DNA is mathematically equivalent to scoring with a **Position Weight Matrix (PWM)** — but the filters are *learned from data*, not hand-designed.
-:::
 
 ---
 
@@ -421,177 +292,25 @@ A CNN filter sliding over one-hot DNA is mathematically equivalent to scoring wi
 
 ---
 
-# Part 5: Training {background-color="#1e3a5f" style="color:white;"}
+## What to Look For in the Notebook
 
----
-
-## Training
-
-Same four-step loop as notebook-02 — now applied to **mini-batches**:
+When you run both models on the same data:
 
 . . .
-
-| Step | Action |
-|------|--------|
-| 1 | **Forward pass** — model(X) → prediction |
-| 2 | **Compute loss** — MSELoss(prediction, y) |
-| 3 | **Backprop** — loss.backward() |
-| 4 | **Update** — optimizer.step() |
-
-. . .
-
-Two differences from notebook-02:
-
-- **Mini-batches** from the DataLoader (not the full dataset at once)
-- **MSE loss** — this is regression, not classification
-
-. . .
-
-::: {.takehome}
-Run the same loop for both the linear model and the CNN.
-Same optimizer, same data, same epochs. The only difference is the architecture.
-:::
-
----
-
-# Part 6: Reading Results {background-color="#1e3a5f" style="color:white;"}
-
-**What to look for when you run the notebook**
-
----
-
-## Reading Loss Curves
-
-After training, plot training and validation loss over epochs.
-
-. . .
-
-| Pattern | What it means |
-|---------|--------------|
-| Loss drops then **plateaus early** | Wrong architecture — model can't represent the answer |
-| Loss keeps dropping | Model is still finding structure |
-| Train loss drops, val loss rises | Overfitting — memorizing, not generalizing |
-
-. . .
-
-::: {.takehome}
-A plateau is an **architecture** problem, not an optimizer problem.
-Training longer won't fix it — you need a more expressive model.
-:::
-
----
-
-## Why Does Linear Fail? (Conceptually)
-
-The linear model learns one weight per (position, base) combination — 32 parameters total.
-
-. . .
-
-It can learn: *"G at position 3 tends to predict a lower score."*
-
-It cannot learn: *"G is only bad when flanked by C on both sides."*
-
-. . .
-
-::: {.takehome}
-The linear model confuses **correlation** (G predicts low score) with **local pattern** (GCG causes −10).
-When you run the notebook, probe this: ask the linear model to score `GGGGGGGG` vs `AAGCGAAA`.
-:::
-
----
-
-## Reading Scatter Plots
-
-A scatter plot of predicted vs actual score reveals *where* the model fails.
-
-. . .
-
-What to look for:
-
-- **Tight diagonal across all sequences** → model learned all three score groups
-- **Diagonal only in the middle** → model found the baseline but missed the motif groups
-- **Three clusters separated** → model correctly separated no-motif / TAT / GCG sequences
-
-. . .
-
-::: {.takehome}
-Look at the extremes — sequences with the highest and lowest scores.
-That's where the motifs live, and that's where architecture choice matters most.
-:::
-
----
-
-# Part 7: What Did the CNN Learn? {background-color="#1e3a5f" style="color:white;"}
-
-**Filter visualization**
-
----
-
-## CNN Filters ≈ Motif Detectors
-
-Recall from the CNN intro: early-layer filters detect **simple local patterns**.
-
-. . .
-
-For image data: edges, colors, textures.
-
-For DNA: **k-mer patterns** — learned analogues of Position Weight Matrices.
-
-. . .
-
-We can visualize what each filter responds to by:
-
-1. Running sequences through the trained conv layer
-2. Recording which 3-mers caused strong activations
-3. Building a count matrix → sequence logo
-
----
-
-## Raw Filter Weights
-
-```python
-conv_layers, model_weights, _ = get_conv_layers_from_model(model_cnn)
-view_filters(model_weights)
-```
-
-![](images/filter_activation.png){fig-align="center" width="85%"}
-
-Each panel: one of 32 filters. Rows = A/C/G/T, columns = positions 1–6. Brighter = higher weight.
-
----
-
-## Filter Activation Logos
-
-For each filter: the raw weight heatmap (top) + the sequence logo of what actually activated it (bottom).
-
-. . .
-
-The question to ask when you run this in the notebook:
-
-> Did any filters recover **TAT** or **GCG** — the motifs we designed in?
-
-. . .
-
-::: {.takehome}
-If yes, the model didn't just fit numbers — it found the actual biological signal.
-That's the test: synthetic data lets us verify the model learned the *right* thing.
-:::
-
----
-
-## Limits of Filter Visualization
 
 ::: {.incremental}
 
-- Not all filters are interpretable — some capture redundant or overlapping patterns
-- In **deep** networks with multiple conv layers, filters recombine in complex ways — first-layer filters alone are insufficient
-- The field has largely moved toward **attention-based** interpretability methods (e.g., gradient ×input, DeepLIFT, ISM)
+- **Loss curves:** the linear model will plateau early — that's an architecture problem, not an optimizer problem
+- **Scatter plots:** look at the extremes — sequences with TAT or GCG motifs are where the linear model fails
+- **CNN filters:** visualize the learned filters as sequence logos — did any of them recover TAT or GCG?
 
 :::
 
 . . .
 
-> "Visualization of the first-layer filters can provide some intuition but should not be over-interpreted." — [Koo & Eddy, 2019](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1007560)
+::: {.takehome}
+If the CNN's filters match the motifs we designed, the model didn't just fit numbers — it found the actual signal.
+:::
 
 ---
 
@@ -600,49 +319,11 @@ That's the test: synthetic data lets us verify the model learned the *right* thi
 | Concept | Key idea |
 |---------|---------|
 | One-hot encoding | DNA → equidistant 4D vectors, shape (L, 4) |
-| Linear model | Learns per-position nucleotide weights — no local context |
+| Linear model | Learns per-position weights — no local context |
 | CNN | Sliding filters detect k-mer patterns regardless of position |
 | Filter = PWM | Learned from data, not hand-designed |
-| Loss plateau | The model can't represent the answer — not an optimizer problem |
+| Loss plateau | Wrong architecture, not wrong optimizer |
 | Filter visualization | Useful first look; don't over-interpret |
-
----
-
-## What's Next: Real TF Binding Data
-
-So far: synthetic scoring rules we designed ourselves.
-
-**Next session:** the same CNN framework applied to real experimental data — predicting whether a TF binds a DNA sequence from ChIP-seq.
-
-. . .
-
-Notebook: `tf-binding-prediction-starter.ipynb`
-
-. . .
-
-::: {.columns}
-
-:::: {.column width="50%"}
-
-**Same pipeline:**
-
-- One-hot encode real sequences
-- CNN with Conv1d filters
-- Train/val/test split
-
-::::
-
-:::: {.column width="50%"}
-
-**New challenges:**
-
-- Noisy labels (biology ≠ clean rules)
-- Hyperparameter search with Weights & Biases
-- Evaluating with AUROC, not R²
-
-::::
-
-:::
 
 ---
 

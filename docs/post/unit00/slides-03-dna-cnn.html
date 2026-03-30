@@ -29,72 +29,6 @@
       margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
       vertical-align: middle;
     }
-    /* CSS for syntax highlighting */
-    html { -webkit-text-size-adjust: 100%; }
-    pre > code.sourceCode { white-space: pre; position: relative; }
-    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-    pre > code.sourceCode > span:empty { height: 1.2em; }
-    .sourceCode { overflow: visible; }
-    code.sourceCode > span { color: inherit; text-decoration: inherit; }
-    div.sourceCode { margin: 1em 0; }
-    pre.sourceCode { margin: 0; }
-    @media screen {
-    div.sourceCode { overflow: auto; }
-    }
-    @media print {
-    pre > code.sourceCode { white-space: pre-wrap; }
-    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-    }
-    pre.numberSource code
-      { counter-reset: source-line 0; }
-    pre.numberSource code > span
-      { position: relative; left: -4em; counter-increment: source-line; }
-    pre.numberSource code > span > a:first-child::before
-      { content: counter(source-line);
-        position: relative; left: -1em; text-align: right; vertical-align: baseline;
-        border: none; display: inline-block;
-        -webkit-touch-callout: none; -webkit-user-select: none;
-        -khtml-user-select: none; -moz-user-select: none;
-        -ms-user-select: none; user-select: none;
-        padding: 0 4px; width: 4em;
-        color: #aaaaaa;
-      }
-    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-    div.sourceCode
-      { color: #003b4f; background-color: #f1f3f5; }
-    @media screen {
-    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-    }
-    code span { color: #003b4f; } /* Normal */
-    code span.al { color: #ad0000; } /* Alert */
-    code span.an { color: #5e5e5e; } /* Annotation */
-    code span.at { color: #657422; } /* Attribute */
-    code span.bn { color: #ad0000; } /* BaseN */
-    code span.bu { } /* BuiltIn */
-    code span.cf { color: #003b4f; font-weight: bold; } /* ControlFlow */
-    code span.ch { color: #20794d; } /* Char */
-    code span.cn { color: #8f5902; } /* Constant */
-    code span.co { color: #5e5e5e; } /* Comment */
-    code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
-    code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
-    code span.dt { color: #ad0000; } /* DataType */
-    code span.dv { color: #ad0000; } /* DecVal */
-    code span.er { color: #ad0000; } /* Error */
-    code span.ex { } /* Extension */
-    code span.fl { color: #ad0000; } /* Float */
-    code span.fu { color: #4758ab; } /* Function */
-    code span.im { color: #00769e; } /* Import */
-    code span.in { color: #5e5e5e; } /* Information */
-    code span.kw { color: #003b4f; font-weight: bold; } /* Keyword */
-    code span.op { color: #5e5e5e; } /* Operator */
-    code span.ot { color: #003b4f; } /* Other */
-    code span.pp { color: #ad0000; } /* Preprocessor */
-    code span.sc { color: #5e5e5e; } /* SpecialChar */
-    code span.ss { color: #20794d; } /* SpecialString */
-    code span.st { color: #20794d; } /* String */
-    code span.va { color: #111111; } /* Variable */
-    code span.vs { color: #20794d; } /* VerbatimString */
-    code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
   <link rel="stylesheet" href="slides-03-dna-cnn_files/libs/revealjs/dist/theme/quarto-f563837468303362081e247dddd440d0.css">
   <link rel="stylesheet" href="custom.css">
@@ -227,16 +161,6 @@ Haky Im, based on notebook by Erin Wilson
 </ul>
 </div>
 </section>
-<section id="learning-objectives" class="slide level2">
-<h2>Learning Objectives</h2>
-<ol type="1">
-<li class="fragment">Represent DNA as numbers using <strong>one-hot encoding</strong></li>
-<li class="fragment">Build and train a <strong>linear model</strong> on DNA — understand why it fails</li>
-<li class="fragment">Build a <strong>CNN</strong> — understand why it succeeds</li>
-<li class="fragment">Read <strong>loss curves</strong> and <strong>scatter plots</strong> to compare models</li>
-<li class="fragment"><strong>Visualize CNN filters</strong> as sequence logos</li>
-</ol>
-</section>
 <section id="todays-roadmap" class="slide level2">
 <h2>Today’s Roadmap</h2>
 <table class="caption-top">
@@ -282,9 +206,6 @@ Haky Im, based on notebook by Erin Wilson
 <p>Notebook by <a href="https://github.com/erinhwilson/dna-pytorch-tutorial">Erin Wilson</a>, adapted for GENE 46100 by Haky Im and Ran Blekhman</p>
 </div>
 </section>
-<section class="slide level2">
-
-</section>
 <section>
 <section id="part-1-the-task" class="title-slide slide level1 center" data-background-color="#1e3a5f" style="color:white;">
 <h1>Part 1: The Task</h1>
@@ -293,7 +214,8 @@ Haky Im, based on notebook by Erin Wilson
 <section id="a-scoring-rule-for-8-mers" class="slide level2">
 <h2>A Scoring Rule for 8-mers</h2>
 <p>We want a task where <strong>we</strong> know the right answer — so we can verify the model found it.</p>
-<div class="fragment">
+<div class="columns">
+<div class="column" style="width:40%;">
 <p>Score each 8-mer by <strong>average nucleotide value</strong>:</p>
 <table class="caption-top">
 <thead>
@@ -321,89 +243,37 @@ Haky Im, based on notebook by Erin Wilson
 </tr>
 </tbody>
 </table>
-</div>
+</div><div class="column" style="width:10%;">
+
+</div><div class="column" style="width:50%;">
 <div class="fragment">
 <p><code>AAAAAAAA</code> → mean(20×8) = <strong>20.0</strong></p>
-<p><code>ACAAAAAA</code> → mean(20+17+20+20+20+20+20+20) = <strong>19.625</strong></p>
+<p><br></p>
+<p><code>ACAAAAAA</code> → mean(20+17+…+20) = <strong>19.625</strong></p>
 </div>
+</div></div>
 </section>
 <section id="adding-motifs" class="slide level2">
 <h2>Adding Motifs</h2>
 <p>To simulate regulatory elements, two motifs modify the score:</p>
 <div class="fragment">
 <div class="columns">
-<div class="column" style="width:50%;">
+<div class="column" style="width:40%;">
 <p><strong>TAT</strong> anywhere in the 8-mer → <strong>+10</strong></p>
 <p><strong>GCG</strong> anywhere in the 8-mer → <strong>−10</strong></p>
-</div><div class="column" style="width:50%;">
+</div><div class="column" style="width:60%;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="images/scoring.png" class="quarto-figure quarto-figure-center" style="width:90.0%"></p>
+<p><img data-src="images/scoring.png" class="quarto-figure quarto-figure-center" style="width:100.0%"></p>
 </figure>
 </div>
 </div></div>
 </div>
 <div class="fragment">
 <div class="takehome">
-<p>These motifs are <strong>arbitrary</strong> — there’s no real biology here. The point: can the model find them without being told where to look?</p>
+<p>These motifs are <strong>arbitrary</strong> — we designed them so we can verify the model finds the right pattern. This is our ground truth check before applying CNNs to real biology.</p>
 </div>
 </div>
-</section>
-<section id="score-distribution-three-groups" class="slide level2">
-<h2>Score Distribution: Three Groups</h2>
-<div class="sourceCode" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href=""></a>plt.hist(mer8[<span class="st">'score'</span>].values, bins<span class="op">=</span><span class="dv">20</span>)</span>
-<span id="cb1-2"><a href=""></a>plt.title(<span class="st">"8-mer with Motifs score distribution"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="fragment">
-<p>The distribution has three peaks:</p>
-<table class="caption-top">
-<thead>
-<tr class="header">
-<th>Group</th>
-<th>Score range</th>
-<th>Cause</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>No motif</td>
-<td>~15</td>
-<td>Baseline nucleotide average</td>
-</tr>
-<tr class="even">
-<td>Contains TAT</td>
-<td>~25</td>
-<td>+10 bump</td>
-</tr>
-<tr class="odd">
-<td>Contains GCG</td>
-<td>~5</td>
-<td>−10 bump</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="fragment">
-<div class="takehome">
-<p>A perfect model would predict all three groups correctly — including which specific 3-mer caused the bump.</p>
-</div>
-</div>
-</section>
-<section id="why-synthetic-data" class="slide level2">
-<h2>Why Synthetic Data?</h2>
-<p>Real TF binding data is noisier, higher-dimensional, and harder to debug.</p>
-<div class="fragment">
-<p>Synthetic data lets us ask:</p>
-<blockquote>
-<p>Did the model learn the <strong>right</strong> thing — or did it get lucky?</p>
-</blockquote>
-</div>
-<div class="fragment">
-<p>If the CNN recovers TAT and GCG in its learned filters, we know it found the correct pattern.</p>
-<p><strong>This is our ground truth check before applying CNNs to real biology.</strong></p>
-</div>
-</section>
-<section class="slide level2">
-
 </section></section>
 <section>
 <section id="part-2-dna-numbers" class="title-slide slide level1 center" data-background-color="#1e3a5f" style="color:white;">
@@ -468,71 +338,11 @@ N  →  [  0     0     0     0  ]</code></pre>
 <p>CNNs were designed for images. <strong>We can use them directly on DNA.</strong></p>
 </div>
 </div></div>
-</section>
-<section id="the-code" class="slide level2">
-<h2>The Code</h2>
-<div class="sourceCode" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href=""></a><span class="kw">def</span> one_hot_encode(seq):</span>
-<span id="cb4-2"><a href=""></a>    nuc_d <span class="op">=</span> {<span class="st">'A'</span>: [<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>],</span>
-<span id="cb4-3"><a href=""></a>             <span class="st">'C'</span>: [<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">0</span>],</span>
-<span id="cb4-4"><a href=""></a>             <span class="st">'G'</span>: [<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">0</span>],</span>
-<span id="cb4-5"><a href=""></a>             <span class="st">'T'</span>: [<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">1</span>],</span>
-<span id="cb4-6"><a href=""></a>             <span class="st">'N'</span>: [<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>]}</span>
-<span id="cb4-7"><a href=""></a>    vec <span class="op">=</span> np.array([nuc_d[x] <span class="cf">for</span> x <span class="kw">in</span> seq],</span>
-<span id="cb4-8"><a href=""></a>                   dtype<span class="op">=</span>np.float32)</span>
-<span id="cb4-9"><a href=""></a>    <span class="cf">return</span> vec</span>
-<span id="cb4-10"><a href=""></a></span>
-<span id="cb4-11"><a href=""></a>one_hot_encode(<span class="st">"ATGC"</span>)</span>
-<span id="cb4-12"><a href=""></a><span class="co"># [[1,0,0,0],</span></span>
-<span id="cb4-13"><a href=""></a><span class="co">#  [0,0,0,1],</span></span>
-<span id="cb4-14"><a href=""></a><span class="co">#  [0,0,1,0],</span></span>
-<span id="cb4-15"><a href=""></a><span class="co">#  [0,1,0,0]]</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="fragment">
-<div class="takehome">
-<p>Shape: <code>(seq_len, 4)</code> — one row per base, one column per nucleotide.</p>
-</div>
-</div>
-</section>
-<section class="slide level2">
-
 </section></section>
 <section>
-<section id="part-3-preparing-data" class="title-slide slide level1 center" data-background-color="#1e3a5f" style="color:white;">
-<h1>Part 3: Preparing Data</h1>
-
-</section>
-<section id="train-val-test-split" class="slide level2">
-<h2>Train / Val / Test Split</h2>
-<ol type="1">
-<li class="fragment"><p><strong>Training set</strong> (64%) — model learns from this <em>Analogy: studying for an exam</em></p></li>
-<li class="fragment"><p><strong>Validation set</strong> (16%) — tune hyperparameters, catch overfitting <em>Analogy: practice problems</em></p></li>
-<li class="fragment"><p><strong>Test set</strong> (20%) — final evaluation, never seen during training <em>Analogy: the actual exam</em></p></li>
-</ol>
-<div class="fragment">
-<div class="takehome">
-<p>All three splits should have sequences from each score group. Check this before training — skewed sampling will mislead you.</p>
-</div>
-</div>
-</section>
-<section id="dataset-and-dataloader" class="slide level2">
-<h2>Dataset and DataLoader</h2>
-<p>PyTorch wraps data in two objects:</p>
-<div class="fragment">
-<p><strong><code>Dataset</code></strong> — defines how to retrieve one (input, label) pair. You write this.</p>
-<p><strong><code>DataLoader</code></strong> — handles batching, shuffling, and parallel loading. PyTorch provides this.</p>
-</div>
-<div class="fragment">
-<div class="takehome">
-<p>The training loop iterates over <strong>batches</strong> from the DataLoader — not individual samples. This is the main structural change from the single-sample loop in notebook-02.</p>
-</div>
-</div>
-</section>
-<section class="slide level2">
-
-</section></section>
-<section>
-<section id="part-4-two-models" class="title-slide slide level1 center" data-background-color="#1e3a5f" style="color:white;">
-<h1>Part 4: Two Models</h1>
-<p><strong>Linear vs CNN</strong></p>
+<section id="part-3-linear-vs-cnn" class="title-slide slide level1 center" data-background-color="#1e3a5f" style="color:white;">
+<h1>Part 3: Linear vs CNN</h1>
+<p><strong>Why architecture matters</strong></p>
 </section>
 <section id="model-1-linear" class="slide level2">
 <h2>Model 1: Linear</h2>
@@ -543,7 +353,7 @@ N  →  [  0     0     0     0  ]</code></pre>
 </div>
 <div class="fragment">
 <div class="takehome">
-<p>If <code>TAT</code> appears at position 2 vs position 5, the linear model treats these as completely different inputs. It can only learn <em>which position has which base</em> — not <em>what pattern appears</em>.</p>
+<p>If <code>TAT</code> appears at position 2 vs position 5, the linear model treats these as completely different inputs. It confuses <strong>correlation</strong> (G predicts low score) with <strong>local pattern</strong> (GCG causes −10).</p>
 </div>
 </div>
 </section>
@@ -553,11 +363,6 @@ N  →  [  0     0     0     0  ]</code></pre>
 <div class="fragment">
 <p><strong>What it sees:</strong> local 3-mer patterns at every position — like a sliding PWM.</p>
 <p><strong>What it can’t see:</strong> long-range interactions (for that, you’d need deeper networks or attention).</p>
-</div>
-<div class="fragment">
-<div class="takehome">
-<p>A CNN filter sliding over one-hot DNA is mathematically equivalent to scoring with a <strong>Position Weight Matrix (PWM)</strong> — but the filters are <em>learned from data</em>, not hand-designed.</p>
-</div>
 </div>
 </section>
 <section id="linear-vs-cnn-key-differences" class="slide level2">
@@ -604,199 +409,25 @@ N  →  [  0     0     0     0  ]</code></pre>
 </div>
 </div>
 </section>
-<section class="slide level2">
-
-</section></section>
-<section>
-<section id="part-5-training" class="title-slide slide level1 center" data-background-color="#1e3a5f" style="color:white;">
-<h1>Part 5: Training</h1>
-
-</section>
-<section id="training" class="slide level2">
-<h2>Training</h2>
-<p>Same four-step loop as notebook-02 — now applied to <strong>mini-batches</strong>:</p>
+<section id="what-to-look-for-in-the-notebook" class="slide level2">
+<h2>What to Look For in the Notebook</h2>
+<p>When you run both models on the same data:</p>
 <div class="fragment">
-<table class="caption-top">
-<thead>
-<tr class="header">
-<th>Step</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>1</td>
-<td><strong>Forward pass</strong> — model(X) → prediction</td>
-</tr>
-<tr class="even">
-<td>2</td>
-<td><strong>Compute loss</strong> — MSELoss(prediction, y)</td>
-</tr>
-<tr class="odd">
-<td>3</td>
-<td><strong>Backprop</strong> — loss.backward()</td>
-</tr>
-<tr class="even">
-<td>4</td>
-<td><strong>Update</strong> — optimizer.step()</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="fragment">
-<p>Two differences from notebook-02:</p>
 <ul>
-<li><strong>Mini-batches</strong> from the DataLoader (not the full dataset at once)</li>
-<li><strong>MSE loss</strong> — this is regression, not classification</li>
+<li class="fragment"><strong>Loss curves:</strong> the linear model will plateau early — that’s an architecture problem, not an optimizer problem</li>
+<li class="fragment"><strong>Scatter plots:</strong> look at the extremes — sequences with TAT or GCG motifs are where the linear model fails</li>
+<li class="fragment"><strong>CNN filters:</strong> visualize the learned filters as sequence logos — did any of them recover TAT or GCG?</li>
 </ul>
 </div>
 <div class="fragment">
 <div class="takehome">
-<p>Run the same loop for both the linear model and the CNN. Same optimizer, same data, same epochs. The only difference is the architecture.</p>
+<p>If the CNN’s filters match the motifs we designed, the model didn’t just fit numbers — it found the actual signal.</p>
 </div>
-</div>
-</section>
-<section class="slide level2">
-
-</section></section>
-<section>
-<section id="part-6-reading-results" class="title-slide slide level1 center" data-background-color="#1e3a5f" style="color:white;">
-<h1>Part 6: Reading Results</h1>
-<p><strong>What to look for when you run the notebook</strong></p>
-</section>
-<section id="reading-loss-curves" class="slide level2">
-<h2>Reading Loss Curves</h2>
-<p>After training, plot training and validation loss over epochs.</p>
-<div class="fragment">
-<table class="caption-top">
-<colgroup>
-<col style="width: 39%">
-<col style="width: 60%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Pattern</th>
-<th>What it means</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Loss drops then <strong>plateaus early</strong></td>
-<td>Wrong architecture — model can’t represent the answer</td>
-</tr>
-<tr class="even">
-<td>Loss keeps dropping</td>
-<td>Model is still finding structure</td>
-</tr>
-<tr class="odd">
-<td>Train loss drops, val loss rises</td>
-<td>Overfitting — memorizing, not generalizing</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="fragment">
-<div class="takehome">
-<p>A plateau is an <strong>architecture</strong> problem, not an optimizer problem. Training longer won’t fix it — you need a more expressive model.</p>
-</div>
-</div>
-</section>
-<section id="why-does-linear-fail-conceptually" class="slide level2">
-<h2>Why Does Linear Fail? (Conceptually)</h2>
-<p>The linear model learns one weight per (position, base) combination — 32 parameters total.</p>
-<div class="fragment">
-<p>It can learn: <em>“G at position 3 tends to predict a lower score.”</em></p>
-<p>It cannot learn: <em>“G is only bad when flanked by C on both sides.”</em></p>
-</div>
-<div class="fragment">
-<div class="takehome">
-<p>The linear model confuses <strong>correlation</strong> (G predicts low score) with <strong>local pattern</strong> (GCG causes −10). When you run the notebook, probe this: ask the linear model to score <code>GGGGGGGG</code> vs <code>AAGCGAAA</code>.</p>
-</div>
-</div>
-</section>
-<section id="reading-scatter-plots" class="slide level2">
-<h2>Reading Scatter Plots</h2>
-<p>A scatter plot of predicted vs actual score reveals <em>where</em> the model fails.</p>
-<div class="fragment">
-<p>What to look for:</p>
-<ul>
-<li><strong>Tight diagonal across all sequences</strong> → model learned all three score groups</li>
-<li><strong>Diagonal only in the middle</strong> → model found the baseline but missed the motif groups</li>
-<li><strong>Three clusters separated</strong> → model correctly separated no-motif / TAT / GCG sequences</li>
-</ul>
-</div>
-<div class="fragment">
-<div class="takehome">
-<p>Look at the extremes — sequences with the highest and lowest scores. That’s where the motifs live, and that’s where architecture choice matters most.</p>
-</div>
-</div>
-</section>
-<section class="slide level2">
-
-</section></section>
-<section>
-<section id="part-7-what-did-the-cnn-learn" class="title-slide slide level1 center" data-background-color="#1e3a5f" style="color:white;">
-<h1>Part 7: What Did the CNN Learn?</h1>
-<p><strong>Filter visualization</strong></p>
-</section>
-<section id="cnn-filters-motif-detectors" class="slide level2">
-<h2>CNN Filters ≈ Motif Detectors</h2>
-<p>Recall from the CNN intro: early-layer filters detect <strong>simple local patterns</strong>.</p>
-<div class="fragment">
-<p>For image data: edges, colors, textures.</p>
-<p>For DNA: <strong>k-mer patterns</strong> — learned analogues of Position Weight Matrices.</p>
-</div>
-<div class="fragment">
-<p>We can visualize what each filter responds to by:</p>
-<ol type="1">
-<li>Running sequences through the trained conv layer</li>
-<li>Recording which 3-mers caused strong activations</li>
-<li>Building a count matrix → sequence logo</li>
-</ol>
-</div>
-</section>
-<section id="raw-filter-weights" class="slide level2">
-<h2>Raw Filter Weights</h2>
-<div class="sourceCode" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href=""></a>conv_layers, model_weights, _ <span class="op">=</span> get_conv_layers_from_model(model_cnn)</span>
-<span id="cb5-2"><a href=""></a>view_filters(model_weights)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-
-<img data-src="images/filter_activation.png" class="quarto-figure quarto-figure-center r-stretch" style="width:85.0%"><p>Each panel: one of 32 filters. Rows = A/C/G/T, columns = positions 1–6. Brighter = higher weight.</p>
-</section>
-<section id="filter-activation-logos" class="slide level2">
-<h2>Filter Activation Logos</h2>
-<p>For each filter: the raw weight heatmap (top) + the sequence logo of what actually activated it (bottom).</p>
-<div class="fragment">
-<p>The question to ask when you run this in the notebook:</p>
-<blockquote>
-<p>Did any filters recover <strong>TAT</strong> or <strong>GCG</strong> — the motifs we designed in?</p>
-</blockquote>
-</div>
-<div class="fragment">
-<div class="takehome">
-<p>If yes, the model didn’t just fit numbers — it found the actual biological signal. That’s the test: synthetic data lets us verify the model learned the <em>right</em> thing.</p>
-</div>
-</div>
-</section>
-<section id="limits-of-filter-visualization" class="slide level2">
-<h2>Limits of Filter Visualization</h2>
-<ul>
-<li class="fragment">Not all filters are interpretable — some capture redundant or overlapping patterns</li>
-<li class="fragment">In <strong>deep</strong> networks with multiple conv layers, filters recombine in complex ways — first-layer filters alone are insufficient</li>
-<li class="fragment">The field has largely moved toward <strong>attention-based</strong> interpretability methods (e.g., gradient ×input, DeepLIFT, ISM)</li>
-</ul>
-<div class="fragment">
-<blockquote>
-<p>“Visualization of the first-layer filters can provide some intuition but should not be over-interpreted.” — <a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1007560">Koo &amp; Eddy, 2019</a></p>
-</blockquote>
 </div>
 </section>
 <section id="takeaways" class="slide level2">
 <h2>Takeaways</h2>
 <table class="caption-top">
-<colgroup>
-<col style="width: 50%">
-<col style="width: 50%">
-</colgroup>
 <thead>
 <tr class="header">
 <th>Concept</th>
@@ -810,7 +441,7 @@ N  →  [  0     0     0     0  ]</code></pre>
 </tr>
 <tr class="even">
 <td>Linear model</td>
-<td>Learns per-position nucleotide weights — no local context</td>
+<td>Learns per-position weights — no local context</td>
 </tr>
 <tr class="odd">
 <td>CNN</td>
@@ -822,7 +453,7 @@ N  →  [  0     0     0     0  ]</code></pre>
 </tr>
 <tr class="odd">
 <td>Loss plateau</td>
-<td>The model can’t represent the answer — not an optimizer problem</td>
+<td>Wrong architecture, not wrong optimizer</td>
 </tr>
 <tr class="even">
 <td>Filter visualization</td>
@@ -830,32 +461,6 @@ N  →  [  0     0     0     0  ]</code></pre>
 </tr>
 </tbody>
 </table>
-</section>
-<section id="whats-next-real-tf-binding-data" class="slide level2">
-<h2>What’s Next: Real TF Binding Data</h2>
-<p>So far: synthetic scoring rules we designed ourselves.</p>
-<p><strong>Next session:</strong> the same CNN framework applied to real experimental data — predicting whether a TF binds a DNA sequence from ChIP-seq.</p>
-<div class="fragment">
-<p>Notebook: <code>tf-binding-prediction-starter.ipynb</code></p>
-</div>
-<div class="fragment">
-<div class="columns">
-<div class="column" style="width:50%;">
-<p><strong>Same pipeline:</strong></p>
-<ul>
-<li>One-hot encode real sequences</li>
-<li>CNN with Conv1d filters</li>
-<li>Train/val/test split</li>
-</ul>
-</div><div class="column" style="width:50%;">
-<p><strong>New challenges:</strong></p>
-<ul>
-<li>Noisy labels (biology ≠ clean rules)</li>
-<li>Hyperparameter search with Weights &amp; Biases</li>
-<li>Evaluating with AUROC, not R²</li>
-</ul>
-</div></div>
-</div>
 </section>
 <section id="foundational-papers" class="slide level2">
 <h2>Foundational Papers</h2>

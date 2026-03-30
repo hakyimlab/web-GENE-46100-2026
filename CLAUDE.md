@@ -122,7 +122,7 @@ Use dark-background section divider slides to chunk long decks into named parts:
 Current section structure:
 - **slides-01**: Parts 1–6 (Linear Models, Gradient Descent, The ML Framework, Neural Networks, From Playground to PyTorch, Wrap-Up)
 - **slides-02**: Parts 1–4 (How CNNs Work, Putting It Together, Using CNNs in Practice, Summary)
-- **slides-03**: Parts 1–7 (The Task, DNA → Numbers, Preparing Data, Two Models, Training, Reading Results, What Did the CNN Learn?)
+- **slides-03**: Parts 1–3 (The Task, DNA → Numbers, Linear vs CNN)
 
 ### Exercises belong in notebooks, not slides
 
