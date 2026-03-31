@@ -16,7 +16,9 @@ jupyter:
     display_name: "gene46100"
 ---
 
-[Jupyter notebook in Colab](https://drive.google.com/file/d/1oi4hR8Oo1pM5xx0-8wuSIeJeSSg8lkY2/view?usp=sharing)
+[Jupyter notebook in Colab](https://drive.google.com/file/d/1dbaPGgmCtp57hUxPhA3nur4AptsL6Nxf/view?usp=sharing)
+
+> **Note:** If the notebook doesn't render correctly, click **Open with → Google Colaboratory** in the top-right of the Google Drive preview.
 
 # Learning Objectives
 

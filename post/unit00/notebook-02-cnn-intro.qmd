@@ -16,7 +16,9 @@ jupyter:
     display_name: "gene46100-dna-cnn"
 ---
 
-[Jupyter notebook in Colab](#) *(link coming)*
+[Jupyter notebook in Colab](https://drive.google.com/file/d/1IyGrYHr9Y-q5POUmK3kxDHAZygY6fzOo/view?usp=sharing)
+
+> **Note:** If the notebook doesn't render correctly, click **Open with → Google Colaboratory** in the top-right of the Google Drive preview.
 
 # Learning Objectives
 
@@ -235,7 +237,21 @@ examples = pd.DataFrame({
 
 ## Train / val / test split
 
-We split the 2000 samples into train (72%), validation (8%), and test (20%) sets, then convert the NumPy arrays to PyTorch tensors and move them to the device.
+We need to know whether our model has truly learned biological patterns or just memorized the training data. Splitting the data lets us monitor learning during training and reserve a completely untouched set for a final, honest evaluation.
+
+Think of it like studying for an exam:
+
+| Split      | %   | Analogy          | Purpose                                       |
+|------------|-----|------------------|-----------------------------------------------|
+| Train      | 72% | Homework problems | Model learns from this data                  |
+| Validation | 8%  | Practice tests    | Monitor for overfitting; tune hyperparameters |
+| Test       | 20% | Final exam        | One-shot, unbiased performance estimate       |
+
+::: {.callout-warning}
+Just like you shouldn't see the final exam before test day, the test set is never touched until the very end.
+:::
+
+We achieve this in two steps: first reserve 20% for test, then split the remainder 90/10 into train and val. The code below does exactly that and converts the arrays to PyTorch tensors.
 
 ```{python}
 from sklearn.model_selection import train_test_split
@@ -323,7 +339,7 @@ history = train(model, X_train_t, y_train_t, X_val_t, y_val_t, n_epochs=50)
 
 ## Plot the learning curves
 
-> **Discuss:** Train and validation loss should decrease together — divergence means overfitting.
+> **Discuss:** Do train and val loss track each other? If val loss starts rising while train loss keeps falling, that is the signature of overfitting.
 
 ```{python}
 epochs = list(range(1, len(history['train_loss']) + 1))
@@ -341,7 +357,7 @@ curve_df = pd.DataFrame({
 
 ## Evaluate on the test set
 
-> **Discuss:** Final accuracy on the held-out test set — data the model never saw during training.
+> **Discuss:** How does test accuracy compare to validation accuracy? A large gap suggests the model overfit even to the validation set.
 
 ```{python}
 model.eval()
@@ -377,7 +393,8 @@ filter_df = pd.DataFrame({
  + labs(title="Learned filter weights", x="Position within kernel", y="Weight"))
 ```
 
-### Question
+## Question
+
 The spike pattern was `[0, 0.3, 0.8, 1.0, 0.8, 0.3, 0]`. Can you identify which filter(s) learned a shape similar to it? Which learned an inverted version, and why might that also be useful?
 
 # Summary

@@ -17,7 +17,9 @@ jupyter:
     display_name: "gene46100-dna-cnn"
 ---
 
-[Jupyter notebook in Colab](https://drive.google.com/file/d/1x1oAP584Z2mXXMwcaZDaRUYENMt_S5pa/view?usp=sharing) 
+[Jupyter notebook in Colab](https://drive.google.com/file/d/1PMpVZ4h4cpQyyYMmnIDQg7HeGfKxgpHV/view?usp=sharing)
+
+> **Note:** If the notebook doesn't render correctly, click **Open with → Google Colaboratory** in the top-right of the Google Drive preview. 
 
 Originally created by Erin Wilson ([source](https://github.com/erinhwilson/dna-pytorch-tutorial)). Adapted by Haky Im and Ran Blekhman for GENE 46100.
 

@@ -382,7 +382,7 @@
     "href": "post/unit00/notebook-02-cnn-intro.html",
     "title": "02 · What Are Convolutional Neural Networks?",
     "section": "",
-    "text": "Jupyter notebook in Colab (link coming)\n© HakyImLab and Listed Authors - CC BY 4.0 License"
+    "text": "Jupyter notebook in Colab\n© HakyImLab and Listed Authors - CC BY 4.0 License"
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#install-and-load-packages",
@@ -452,7 +452,7 @@
     "href": "post/unit00/notebook-02-cnn-intro.html#train-val-test-split",
     "title": "02 · What Are Convolutional Neural Networks?",
     "section": "Train / val / test split",
-    "text": "Train / val / test split\nWe split the 2000 samples into train (72%), validation (8%), and test (20%) sets, then convert the NumPy arrays to PyTorch tensors and move them to the device.\n\nfrom sklearn.model_selection import train_test_split\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\nX_train, X_val,  y_train, y_val  = train_test_split(X_train, y_train, test_size=0.1, random_state=42)\n\ndef to_tensor(arr_X, arr_y):\n    # Conv1d expects (batch, channels, length) — unsqueeze adds the channel dim\n    return (torch.tensor(arr_X).unsqueeze(1).to(device),\n            torch.tensor(arr_y).to(device))\n\nX_train_t, y_train_t = to_tensor(X_train, y_train)\nX_val_t,   y_val_t   = to_tensor(X_val,   y_val)\nX_test_t,  y_test_t  = to_tensor(X_test,  y_test)\n\nprint(f\"Train: {X_train_t.shape},  Val: {X_val_t.shape},  Test: {X_test_t.shape}\")\n\nTrain: torch.Size([1440, 1, 100]),  Val: torch.Size([160, 1, 100]),  Test: torch.Size([400, 1, 100])"
+    "text": "Train / val / test split\nWe need to know whether our model has truly learned biological patterns or just memorized the training data. Splitting the data lets us monitor learning during training and reserve a completely untouched set for a final, honest evaluation.\nThink of it like studying for an exam:\n\n\n\n\n\n\n\n\n\nSplit\n%\nAnalogy\nPurpose\n\n\n\n\nTrain\n72%\nHomework problems\nModel learns from this data\n\n\nValidation\n8%\nPractice tests\nMonitor for overfitting; tune hyperparameters\n\n\nTest\n20%\nFinal exam\nOne-shot, unbiased performance estimate\n\n\n\n\n\n\n\n\n\nWarning\n\n\n\nJust like you shouldn’t see the final exam before test day, the test set is never touched until the very end.\n\n\nWe achieve this in two steps: first reserve 20% for test, then split the remainder 90/10 into train and val. The code below does exactly that and converts the arrays to PyTorch tensors.\n\nfrom sklearn.model_selection import train_test_split\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\nX_train, X_val,  y_train, y_val  = train_test_split(X_train, y_train, test_size=0.1, random_state=42)\n\ndef to_tensor(arr_X, arr_y):\n    # Conv1d expects (batch, channels, length) — unsqueeze adds the channel dim\n    return (torch.tensor(arr_X).unsqueeze(1).to(device),\n            torch.tensor(arr_y).to(device))\n\nX_train_t, y_train_t = to_tensor(X_train, y_train)\nX_val_t,   y_val_t   = to_tensor(X_val,   y_val)\nX_test_t,  y_test_t  = to_tensor(X_test,  y_test)\n\nprint(f\"Train: {X_train_t.shape},  Val: {X_val_t.shape},  Test: {X_test_t.shape}\")\n\nTrain: torch.Size([1440, 1, 100]),  Val: torch.Size([160, 1, 100]),  Test: torch.Size([400, 1, 100])"
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#define-the-model",
@@ -473,14 +473,21 @@
     "href": "post/unit00/notebook-02-cnn-intro.html#plot-the-learning-curves",
     "title": "02 · What Are Convolutional Neural Networks?",
     "section": "Plot the learning curves",
-    "text": "Plot the learning curves\n\nDiscuss: Train and validation loss should decrease together — divergence means overfitting.\n\n\nepochs = list(range(1, len(history['train_loss']) + 1))\ncurve_df = pd.DataFrame({\n    'epoch': epochs * 2,\n    'loss':  history['train_loss'] + history['val_loss'],\n    'split': ['train'] * len(epochs) + ['val'] * len(epochs)\n})\n\n(ggplot(curve_df, aes(x='epoch', y='loss', color='split'))\n + geom_line()\n + theme_bw()\n + labs(title=\"Learning curves\", x=\"Epoch\", y=\"Cross-entropy loss\"))"
+    "text": "Plot the learning curves\n\nDiscuss: Do train and val loss track each other? If val loss starts rising while train loss keeps falling, that is the signature of overfitting.\n\n\nepochs = list(range(1, len(history['train_loss']) + 1))\ncurve_df = pd.DataFrame({\n    'epoch': epochs * 2,\n    'loss':  history['train_loss'] + history['val_loss'],\n    'split': ['train'] * len(epochs) + ['val'] * len(epochs)\n})\n\n(ggplot(curve_df, aes(x='epoch', y='loss', color='split'))\n + geom_line()\n + theme_bw()\n + labs(title=\"Learning curves\", x=\"Epoch\", y=\"Cross-entropy loss\"))"
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#evaluate-on-the-test-set",
     "href": "post/unit00/notebook-02-cnn-intro.html#evaluate-on-the-test-set",
     "title": "02 · What Are Convolutional Neural Networks?",
     "section": "Evaluate on the test set",
-    "text": "Evaluate on the test set\n\nDiscuss: Final accuracy on the held-out test set — data the model never saw during training.\n\n\nmodel.eval()\nwith torch.no_grad():\n    test_acc = (model(X_test_t).argmax(1) == y_test_t).float().mean().item()\nprint(f\"Test accuracy: {test_acc:.3f}\")\n\nTest accuracy: 0.985\n\n\n\nExercise\nTry n_filters=2 and retrain. Does accuracy drop? Why? Then try n_filters=32 — does it improve?"
+    "text": "Evaluate on the test set\n\nDiscuss: How does test accuracy compare to validation accuracy? A large gap suggests the model overfit even to the validation set.\n\n\nmodel.eval()\nwith torch.no_grad():\n    test_acc = (model(X_test_t).argmax(1) == y_test_t).float().mean().item()\nprint(f\"Test accuracy: {test_acc:.3f}\")\n\nTest accuracy: 0.985\n\n\n\nExercise\nTry n_filters=2 and retrain. Does accuracy drop? Why? Then try n_filters=32 — does it improve?"
+  },
+  {
+    "objectID": "post/unit00/notebook-02-cnn-intro.html#question",
+    "href": "post/unit00/notebook-02-cnn-intro.html#question",
+    "title": "02 · What Are Convolutional Neural Networks?",
+    "section": "Question",
+    "text": "Question\nThe spike pattern was [0, 0.3, 0.8, 1.0, 0.8, 0.3, 0]. Can you identify which filter(s) learned a shape similar to it? Which learned an inverted version, and why might that also be useful?"
   },
   {
     "objectID": "post/unit00/notebook-02-cnn-intro.html#whats-next",
