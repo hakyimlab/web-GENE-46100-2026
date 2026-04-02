@@ -1,0 +1,158 @@
+---
+title: "Reference: 3Blue1Brown — What is a GPT?"
+subtitle: "Notes from https://www.3blue1brown.com/lessons/gpt"
+author: "3Blue1Brown (Grant Sanderson)"
+date: 2026-04-02
+draft: true
+description: "Lesson notes from 3Blue1Brown's GPT explainer — tokens, embeddings, attention, softmax."
+---
+
+*Source: <https://www.3blue1brown.com/lessons/gpt>*
+
+---
+
+## Narrative Arc
+
+This lesson is the **first in a series** on transformers. It does not yet cover attention — that comes in a follow-up. The arc is deliberately bottom-up: establish the vocabulary (tokens, vectors, dot products, softmax) before tackling the mechanism that makes transformers distinctive.
+
+| Section | What it builds |
+|---------|---------------|
+| What is a GPT? | Top-down orientation: GPT = generative + pre-trained + transformer; autoregressive generation as sequential sampling |
+| Deep learning premise | Why neural nets are just large matrices of tunable numbers; what backprop requires (tensor inputs, weighted sums, non-linearities) |
+| Embedding (W_E) | How tokens become vectors; semantic geometry — similar words cluster, directions encode gender/plurality; dot product as similarity measure |
+| Unembedding (W_U) | How the final vector becomes a probability distribution over the vocabulary |
+| Softmax | Converting raw logits to probabilities; temperature as a control knob on confidence |
+| Foundation | Closes by naming attention as the next topic — this lesson is the prerequisite |
+
+**Key throughline:** everything in a transformer is matrix multiplication. The lesson repeatedly returns to this to demystify the "black box." By the end, the reader has the geometric intuition (vectors in high-dimensional space, dot products measuring alignment) needed to understand why attention works.
+
+---
+
+## What is a GPT Model?
+
+A GPT is a "Generative Pre-Trained Transformer." The generative aspect means the model creates new text, while pre-trained indicates training on vast datasets. The focus here is the transformer architecture, which has driven recent AI advances.
+
+A transformer is a specialized neural network enabling voice-to-text, text-to-voice, text-to-image, and machine translation. The variant underlying ChatGPT predicts what text comes next as a probability distribution.
+
+The prediction process: start with initial text → predict the next word → sample from the resulting distribution → repeat. This sequential word generation is what users experience with ChatGPT.
+
+---
+
+## High-Level Transformer Overview
+
+### Tokens
+
+Input text breaks into small chunks called **tokens**.
+
+Example: `"To date, the cleverest thinker of all time was..."` tokenizes as:
+`"To| date|,| the| cle|ve|rest| thinker| of| all| time| was..."`
+
+Each token maps to a **vector** — a list of numbers. These vector coordinates encode token meaning, with similar meanings clustering together in high-dimensional space.
+
+### Attention Block
+
+Vectors pass through an **Attention Block** where they communicate and update based on context. For instance, "model" has different meanings in "machine learning model" versus "fashion model." This block determines which context words matter for updating other words' meanings.
+
+### Feed-Forward Layer (MLP)
+
+Following the Attention Block, vectors undergo a **Multilayer Perceptron / Feed-Forward Layer**. Unlike the Attention Block, vectors don't interact here — each undergoes parallel processing independently.
+
+The vectors cycle through alternating Attention and Feed-Forward blocks repeatedly — this layering creates "deep" learning. All operations involve matrix multiplications.
+
+After many iterations, the final vector encodes information for next-word prediction, producing a probability distribution over possible following tokens.
+
+---
+
+## Premise of Deep Learning
+
+Machine learning uses data to determine program behavior, contrasting with explicitly coded rules. Engineers tune flexible parameters based on data examples.
+
+Deep learning focuses on neural networks. GPT-3 contains **175 billion parameters**.
+
+For backpropagation training to work at scale, models must follow specific formats:
+
+- **Input**: data must be arrays of real numbers (tensors), transforming through layers while remaining as number arrays
+- **Weights**: parameters organized into matrices; matrix-vector products replace explicit weighted sums
+- **Non-linearity**: nonlinear functions (like softmax) between matrix-vector products prevent the model from collapsing to a single linear transformation
+
+GPT-3's 175 billion weights organize into nearly 28,000 matrices falling into 8 categories.
+
+---
+
+## Embedding
+
+### Embedding Matrix W_E
+
+The transformer's first matrix is the **embedding matrix** W_E. For a 50,000-word vocabulary, it has one column per word, determining each word's vector representation. GPT-3 uses **12,288 dimensions**.
+
+Word embeddings in high-dimensional space reveal meaningful directions:
+
+- Words with similar meaning cluster together
+- Directions encode semantic properties like gender or plurality
+- The difference between "woman" and "man" vectors resembles the difference between "king" and "queen" (a gender direction)
+- Subtracting "Germany" from "Italy" and adding it to "Hitler" yields something close to "Mussolini"
+
+### Dot Product
+
+The **dot product** measures how well two vectors align:
+
+- Positive for similar-direction vectors
+- Zero for perpendicular ones
+- Negative for opposite directions
+
+Testing a "plurality direction": taking dot products with singular/plural nouns shows plurals consistently score higher.
+
+**GPT-3 embedding stats:** vocabulary = 50,257 tokens; embedding dim = 12,288 → **617,558,016 weights** in the embedding layer.
+
+### Beyond Individual Words
+
+Initial vectors only encode individual word meaning (lookup table). As vectors flow through the network, they "soak up" richer, context-specific meanings.
+
+GPT-3 context window = **2,048 tokens** — this limit caused early ChatGPT to lose conversation threads in long exchanges.
+
+---
+
+## Unembedding
+
+The transformer's output must be a probability distribution over possible next tokens.
+
+### Unembedding Matrix W_U
+
+W_U maps the final vector to ~50,000 vocabulary values. Softmax then normalizes these into probabilities.
+
+Only the **last vector** makes the prediction — though thousands of context-rich vectors exist in the final layer. Training efficiency improves by having each final-layer vector predict its immediate successor.
+
+W_U dimensions: 50,257 rows × 12,288 columns → ~617 million parameters.
+
+---
+
+## Softmax
+
+Probability distributions require values between 0 and 1 that sum to 1. Matrix-vector products produce values outside this range.
+
+**Softmax** transforms arbitrary number lists into valid distributions:
+
+1. Raise $e$ to each number's power (yields positive values)
+2. Sum these terms
+3. Divide each term by that sum
+
+**Temperature modification:** dividing logits by temperature $T$ adjusts shape:
+
+- Larger $T$ → more uniform distribution
+- Smaller $T$ → sharper (more confident)
+- $T \to 0$ → argmax (greedy)
+
+**Logits**: the raw, unnormalized output before softmax.
+
+---
+
+## Chapter Foundation
+
+This lesson establishes foundations for understanding attention:
+
+- Word embeddings encode semantic meaning geometrically
+- Dot products measure vector similarity
+- Softmax converts logits to probabilities
+- Matrix multiplication is the core operation throughout
+
+These tools make the attention mechanism — fundamental to modern AI advances — more accessible.
