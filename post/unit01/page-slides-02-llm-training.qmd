@@ -1,0 +1,10 @@
+---
+title: "02 · Training a Language Model"
+date: 2026-04-01
+author: "Haky Im"
+description: "Slides"
+categories: [slides, gene46100]
+draft: true
+---
+
+[Open slide deck](slides-02-llm-training.html){.btn .btn-primary .btn-lg}

@@ -1,0 +1,10 @@
+---
+title: "01 · Transformers: From Attention to GPT"
+date: 2026-04-01
+author: "Haky Im"
+description: "Slides"
+categories: [slides, gene46100]
+draft: true
+---
+
+[Open slide deck](slides-01-transformers.html){.btn .btn-primary .btn-lg}
