@@ -36,6 +36,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import numpy as np
+from sklearn.model_selection import train_test_split
 ```
 
 Define data paths, this should be changed to your personal paths:
@@ -120,7 +121,7 @@ def plot_comparison(pred, obs):
   plt.xlabel("Position sequence window")
   plt.ylabel("Value")
   plt.title("Comparison of sequence scores")
-  plt.legend(title=f"Pearson R: {r_value:.2f}")
+  plt.legend(title=f"Pearson R: {r_value[0]:.2f}")
   plt.grid(axis='y', linestyle='--', alpha=0.6)
   plt.show()
 ```
