@@ -1,6 +1,6 @@
 ---
 title: "02 · 02 · Transformers: From Attention to GPT"
-date: '2026-04-01'
+date: '2026-04-21'
 author: "Haky Im"
 description: "GENE 46100 — Unit 01"
 categories: [slides]

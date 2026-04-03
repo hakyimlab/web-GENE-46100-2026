@@ -1,6 +1,6 @@
 ---
 title: "00 · 00 · What Is a Large Language Model?"
-date: '2026-04-02'
+date: '2026-04-14'
 author: "Haky Im"
 description: "GENE 46100 — Unit 01"
 categories: [slides]

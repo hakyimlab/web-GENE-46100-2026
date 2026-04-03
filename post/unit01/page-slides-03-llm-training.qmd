@@ -1,6 +1,6 @@
 ---
 title: "03 · 03 · Training a Language Model"
-date: '2026-04-01'
+date: '2026-04-23'
 author: "Haky Im"
 description: "GENE 46100 — Unit 01"
 categories: [slides]

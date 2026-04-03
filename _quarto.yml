@@ -5,6 +5,7 @@ project:
     - "index.qmd"
     - "index-all.qmd"
     - "post/unit00/**/*.qmd"
+    - "post/unit01/**/*.qmd"
     - "!*.ipynb"
     - "!/./.venv/"
     - "!**/slides*.qmd"  # render slides separately: quarto render <file.qmd> --to revealjs

@@ -2,7 +2,7 @@
 title: "00 · What Is a Large Language Model?"
 subtitle: "GENE 46100 — Unit 01"
 author: "Haky Im"
-date: 2026-04-02
+date: 2026-04-14
 draft: true
 engine: knitr
 format:
