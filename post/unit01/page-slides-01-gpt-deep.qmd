@@ -1,0 +1,10 @@
+---
+title: "01 · 01 · Tokens, Embeddings & Softmax"
+date: '2026-04-02'
+author: "Haky Im, based on 3Blue1Brown's What is a GPT"
+description: "GENE 46100 — Unit 01"
+categories: [slides]
+draft: true
+---
+
+[Open slide deck](slides-01-gpt-deep.html){.btn .btn-primary .btn-lg}

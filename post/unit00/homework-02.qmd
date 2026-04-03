@@ -12,14 +12,42 @@ format:
     code-tools: true
     code-overflow: wrap
 date-modified: last-modified
-draft: true
+draft: false
 ---
 
 # Homework 2
 
-- [ ] run all the code in the [DNA scoring tutorial notebook](https://github.com/hakyimlab/web-GENE-46100/blob/main/post/2025-03-25-unit00/updated-basic_DNA_tutorial.ipynb). You should also be able to find the notebook in your cloned course repository. (20 points)
-- [ ] complete the exercises in the notebook (30 points)
+- [ ] run all the code in the [notebook 03 - DNA Sequence Scoring with CNNs](https://gene46100-2026.hakyimlab.org/post/unit00/notebook-03-dna-cnn). (20 points)
+- [ ] complete the exercises in the notebook pasted below (30 points)
 - [ ] submit the jupyter notebook with the results to canvas assignment
+
+## Exercises
+
+### Question 1 (Part 1: Generate Synthetic DNA Data)
+
+Modify the scoring function to create a more complex pattern. Instead of giving fixed bonuses for `TAT` and `GCG`, implement a position-dependent scoring where a motif gets a higher bonus if it appears at the beginning of the sequence compared to the end. How does this change the distribution of scores?
+
+### Question 2 (Part 5: Train and Compare)
+
+Compare the performance of the Linear and CNN models by using different learning rates. First run both models with higher learning rates (0.05, 0.1) and lower learning rates (0.005, 0.001), then create loss plots showing:
+
+- Linear model with these learning rates
+- CNN model with these learning rates
+
+Then analyze your results by answering:
+
+1. How does changing the learning rate affect convergence for each model?
+2. Which model is more sensitive to learning rate changes, and why?
+3. Based on your analysis, what learning rate would you recommend for each model type, and why?
+
+### Question 3 (Part 6: Evaluate on Test Set)
+
+Design an approach to improve the model's prediction accuracy, particularly focusing on the sequences where the current model performs poorly:
+
+1. After identifying sequences where the CNN model has high prediction errors, propose and implement a modification to either the model architecture, the loss function, the training process, or the data representation
+2. Retrain the model with your modifications
+3. Create comparative visualizations (such as scatter plots, error histograms, or other appropriate plots) to demonstrate the impact of your changes
+4. Analyze your results by discussing how your modification addresses the specific weaknesses you identified. What are the trade-offs involved in your approach?
 
 
 

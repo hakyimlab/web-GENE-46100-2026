@@ -1,0 +1,10 @@
+---
+title: "00 · 00 · What Is a Large Language Model?"
+date: '2026-04-02'
+author: "Haky Im"
+description: "GENE 46100 — Unit 01"
+categories: [slides]
+draft: true
+---
+
+[Open slide deck](slides-00-intro-llms.html){.btn .btn-primary .btn-lg}

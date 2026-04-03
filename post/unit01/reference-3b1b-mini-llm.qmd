@@ -1,0 +1,166 @@
+---
+title: "Reference: 3Blue1Brown — Large Language Models Explained Briefly"
+subtitle: "Notes from https://www.3blue1brown.com/lessons/mini-llm"
+author: "3Blue1Brown (Grant Sanderson)"
+date: 2026-04-02
+draft: true
+description: "Lesson notes from 3Blue1Brown's mini-LLM explainer — next-word prediction, training, transformers, attention, and emergence."
+---
+
+*Source: <https://www.3blue1brown.com/lessons/mini-llm>*
+
+---
+
+## Narrative arc
+
+1. Definition — LLM = function that predicts next word (probability distribution, not
+  single answer)
+  2. Chatbot mechanics — the "movie script" analogy: fill in the missing assistant turn by
+  sampling one word at a time; concrete semiconductor sentence example
+  3. Randomness — deterministic model, non-deterministic output; why sampling beats greedy
+  4. Training — parameters start random → backprop over trillions of examples; 2,600-year
+  reading stat; 100M-year compute stat
+  5. Pre-training vs. RLHF — raw predictor vs. assistant
+  6. GPUs — why parallel hardware matters
+  7. Transformer (2017) — processes whole sequence at once; embeddings as long number lists;
+  attention lets vectors "communicate" (the "bank" → "riverbank" example); feed-forward
+  layers; alternating layers → final vector → next-word distribution
+  8. Emergence — behavior arises from training, not explicit rules; why this is hard to
+  interpret
+
+## Core Concept
+
+An LLM is **"a sophisticated mathematical function that predicts what word comes next for any piece of text."**
+
+Rather than selecting one word with certainty, it assigns probabilities to all possible next words.
+
+---
+
+## How Chatbots Work: The Script Completion Method
+
+The lesson uses a compelling analogy: imagine a movie script in which a person asks an AI assistant a question, but the assistant's response is missing. You could complete the dialogue by repeatedly:
+
+1. Feeding the existing text to the prediction machine
+2. Observing its probability forecast for the next word
+3. Appending that sampled word to the growing script
+4. Repeating iteratively
+
+**Example progression:**
+
+- Feed `"Can you explain … a semiconductor device …"` → model predicts `"used"` as likely next word
+- Feed `"Can you explain … semiconductor device used …"` → model predicts `"to"`
+
+This incremental, autoregressive process mirrors actual chatbot interactions.
+
+---
+
+## Randomness in Generation
+
+Although the model itself is deterministic, outputs vary between runs. This happens intentionally — models **occasionally select less-likely words**, which makes responses feel more natural. As a result, identical prompts typically yield different responses.
+
+---
+
+## Training: Parameters and Scale
+
+### Parameters
+
+LLMs contain **"hundreds of billions"** of adjustable parameters — continuous numerical values that determine model behavior. No human sets these manually. They begin randomly (producing gibberish) and are refined through training.
+
+### Data Scale
+
+Reading the text used to train GPT-3 would require **"24/7 reading for over 2,600 years."** Larger models train on vastly more data.
+
+### The Backpropagation Process
+
+Training proceeds by:
+
+1. Taking a training example ranging from "a handful of words" to "thousands"
+2. Passing all but the final word through the model
+3. Comparing the prediction against the true final word
+4. Using **backpropagation** to adjust parameters: making the correct prediction slightly more likely, incorrect predictions slightly less likely
+5. Repeating across **"many, many trillions of examples"**
+
+After enough iterations, models generalize — they improve not just on training data but on **unseen text**.
+
+### Computational Scale
+
+At one billion operations per second, training the largest models would require **"well over 100,000,000 years"** of computation. GPUs make this feasible through massive parallelism.
+
+---
+
+## Pre-training vs. RLHF
+
+**Pre-training** teaches the model to predict next words from internet text. This creates a capable predictor but not necessarily a useful assistant.
+
+**Reinforcement Learning with Human Feedback (RLHF)** adds critical refinement:
+
+- Human workers flag unhelpful, unsafe, or problematic predictions
+- These corrections further adjust parameters toward human-preferred outputs
+- This is what transforms a raw language model into a chatbot
+
+---
+
+## Hardware: Why GPUs?
+
+GPUs (graphics processing units) are designed for **parallel operations** — originally for rendering many pixels simultaneously. This parallelism is exactly what large-scale training and inference require.
+
+Prior to 2017, most language models processed text **"one word at a time"** and could not fully exploit GPU parallelism.
+
+---
+
+## The Transformer Architecture (2017)
+
+Google researchers introduced the Transformer in 2017. The key innovation: instead of processing text sequentially, transformers **"soak it all in at once, in parallel."**
+
+### Word Embeddings
+
+Each word is associated with **"a long list of numbers"** encoding its meaning. These numerical representations are necessary because training works exclusively with continuous values (tensors).
+
+Initial vectors encode only individual word identity — like a lookup table. As vectors flow through the network, they accumulate richer, context-specific meanings.
+
+### Attention Mechanism
+
+The attention operation lets token vectors **"communicate with one another and refine the meanings they encode based on the context around."**
+
+**Example:** The numbers representing `"bank"` might shift based on surrounding words like `"river"` and `"jumped into"`, encoding the specific meaning "riverbank" rather than "financial institution."
+
+Attention is the mechanism that allows long-range dependencies to be captured in parallel.
+
+### Feed-Forward Neural Networks (MLPs)
+
+Following attention, each vector passes through a small feed-forward network independently (no cross-token communication here). These networks **store additional language patterns** learned during training, providing extra model capacity.
+
+### Information Flow
+
+Data flows repeatedly through alternating **attention → feed-forward** layers. Each pass enriches the vectors with more contextual information. At the end of the sequence, a final function processes the last vector — updated by all input context and all training knowledge — to produce the next-word probability distribution.
+
+---
+
+## Emergence: Why Understanding LLMs Is Hard
+
+Researchers design the transformer framework. But **"specific behavior is an emergent phenomenon based on how those hundreds of billions of parameters are tuned during training."**
+
+This makes understanding *why* a model makes a particular prediction **"incredibly challenging."**
+
+No one explicitly programs the model to know facts, follow instructions, or generate coherent paragraphs — these capabilities emerge from the training process itself. This is why mechanistic interpretability is an active research area.
+
+---
+
+## Summary Table
+
+| Concept | Key Point |
+|---------|-----------|
+| LLM definition | Probability distribution over next word |
+| Chatbot generation | Autoregressive: sample one token, feed back, repeat |
+| Randomness | Intentional sampling from distribution — same prompt → different outputs |
+| Parameters | Hundreds of billions; start random, tuned by backprop |
+| Training data | GPT-3: equivalent to 2,600+ years of reading |
+| Compute | Largest models: >100 million years at 1B ops/sec |
+| Pre-training | Next-word prediction on internet text |
+| RLHF | Human feedback shifts parameters toward preferred outputs |
+| GPU | Parallel processing; essential for transformer training |
+| Transformer (2017) | Processes full sequence in parallel, not word-by-word |
+| Embedding | Word → long vector; meaning encoded geometrically |
+| Attention | Vectors communicate across sequence; context shifts meaning |
+| Feed-forward | Per-token MLP; stores additional patterns |
+| Emergence | Behavior arises from training, not explicit programming |

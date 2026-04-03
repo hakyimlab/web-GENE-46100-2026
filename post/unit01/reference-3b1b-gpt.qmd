@@ -11,6 +11,7 @@ description: "Lesson notes from 3Blue1Brown's GPT explainer — tokens, embeddin
 
 ---
 
+
 ## Narrative Arc
 
 This lesson is the **first in a series** on transformers. It does not yet cover attention — that comes in a follow-up. The arc is deliberately bottom-up: establish the vocabulary (tokens, vectors, dot products, softmax) before tackling the mechanism that makes transformers distinctive.
