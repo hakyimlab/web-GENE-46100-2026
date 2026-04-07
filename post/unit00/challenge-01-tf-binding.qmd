@@ -32,8 +32,8 @@ Data prepared by Sofia Salazar.
 
 ## Getting Started
 - [Data download link](https://uchicago.box.com/s/eajhnujlaxnd5441sv3dt73pfoxvgh4l)
-- [Starter notebook](notebook-04-tf-binding.ipynb)
-- [Example implementation]()
+- [Starter notebook](notebook-04-tf-binding.qmd)
+<!-- - [Example implementation]() -->
 
 ## Timeline
 - **Training Sessions**:
