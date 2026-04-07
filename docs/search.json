@@ -775,5 +775,68 @@
     "title": "02 · Genomic Language Model with nanoGPT",
     "section": "Conclusion",
     "text": "Conclusion\nTo sum up everything we have gone through in this notebook, here are a few major points:\n\nLarge language models (LLMs) have become well-known for their popular use (i.e. ChatGPT), but they have strong potential for use as research tools in various fields as well.\nGenomic langauge models (gLMs) are a type of LLM that attempt to learn relationships between different of regions of DNA directly from DNA sequence.\nIn general, gLMs can be created similarly to any other type of language model (usually using the Attention mechanism), however strategies for tokenization can differ due to the simplified vocabulary of DNA sequence.\nOnce tokenization and embeddings are defined, a gLM can be trained just like any other language model.\ngLMs can be fine-tuned to perform specific tasks.\n\nThe applications of language modeling to functional genomic research is a very new field, and publications of high-performing models are just beginning to emerge. If you are interested in further investigation, we would highly recommend the DNABERT-2 and Nucleotide Transformer papers. These represent two distinctly different approaches to DNA language modeling, each with their own benefits and downsides."
+  },
+  {
+    "objectID": "post/unit00/setup-conda-environment.html",
+    "href": "post/unit00/setup-conda-environment.html",
+    "title": "preparing environment for unit 00",
+    "section": "",
+    "text": "```{bash}\n\n## download miniconda from the command line\n\nwget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh\n\n## or manually from https://www.anaconda.com/docs/getting-started/miniconda/main\n\n## install miniconda\nbash Miniconda3-latest-Linux-x86_64.sh\n\n```\n© HakyImLab and Listed Authors - CC BY 4.0 License"
+  },
+  {
+    "objectID": "post/unit00/setup-conda-environment.html#install-conda",
+    "href": "post/unit00/setup-conda-environment.html#install-conda",
+    "title": "preparing environment for unit 00",
+    "section": "",
+    "text": "```{bash}\n\n## download miniconda from the command line\n\nwget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh\n\n## or manually from https://www.anaconda.com/docs/getting-started/miniconda/main\n\n## install miniconda\nbash Miniconda3-latest-Linux-x86_64.sh\n\n```"
+  },
+  {
+    "objectID": "post/unit00/setup-conda-environment.html#create-conda-environment",
+    "href": "post/unit00/setup-conda-environment.html#create-conda-environment",
+    "title": "preparing environment for unit 00",
+    "section": "create conda environment",
+    "text": "create conda environment\n```{bash}\nconda create -n gene46100 python=3.12\nconda activate gene46100\n\n```"
+  },
+  {
+    "objectID": "post/unit00/setup-conda-environment.html#do-not-install-packages-with-conda",
+    "href": "post/unit00/setup-conda-environment.html#do-not-install-packages-with-conda",
+    "title": "preparing environment for unit 00",
+    "section": "do not install packages with conda",
+    "text": "do not install packages with conda\n(I ran into lots of issues with torch version incompatibility with torchvision and torchmetrics)\n```{bash}\n# DONT USE CONDA TO INSTALL PYTORCH at least for now\n# conda install scikit-learn plotnine pytorch \n\n## installing torchvision and torchmetrics forced downgrading torch to 2.3.1 which was not compatible with mps\n\n```"
+  },
+  {
+    "objectID": "post/unit00/setup-conda-environment.html#install-all-packages-within-jupyter-notebook-with-pip",
+    "href": "post/unit00/setup-conda-environment.html#install-all-packages-within-jupyter-notebook-with-pip",
+    "title": "preparing environment for unit 00",
+    "section": "install all packages within jupyter notebook with %pip",
+    "text": "install all packages within jupyter notebook with %pip\nas of 2025-03-24\nusing %pip will make sure that the packages are accessible by the kernel you are using for the jupyter notebook\n```{bash}\n%pip install scikit-learn plotnine tqdm pandas \n%pip install torch\n%pip install torchvision\n%pip install torchmetrics\n```"
+  },
+  {
+    "objectID": "post/unit00/setup-conda-environment.html#install-cursor-or-vscode-to-run-the-jupyter-notebook",
+    "href": "post/unit00/setup-conda-environment.html#install-cursor-or-vscode-to-run-the-jupyter-notebook",
+    "title": "preparing environment for unit 00",
+    "section": "install cursor or vscode to run the jupyter notebook",
+    "text": "install cursor or vscode to run the jupyter notebook\n\ninstall the python extension for cursor or vscode.\nselect the python interpreter to be the one in the conda environment you created (gene46100)"
+  },
+  {
+    "objectID": "post/unit00/setup-conda-environment.html#save-the-environment-for-reproducibility",
+    "href": "post/unit00/setup-conda-environment.html#save-the-environment-for-reproducibility",
+    "title": "preparing environment for unit 00",
+    "section": "Save the environment for reproducibility",
+    "text": "Save the environment for reproducibility\n\nto reproduce the environment exactly, save the environment\n```{bash}\n# Save conda packages with their sources\nconda env export --from-history &gt; environment-gene46100.yml\n\n# Save pip-installed packages separately\npip list --format=freeze &gt; requirements-gene46100.txt\n\n# Save full environment state (for reference)\nconda env export &gt; environment_full-gene46100.yml\n```\n\n\nto clone the environment\n```{bash}\n# create a new environment named newenv46100 with the same packages as the original environment test46100\nconda create --name newenv46100 --clone test46100\n```\n\n\nto remove the environment\n```{bash}\nconda env remove --name newenv46100\n```"
+  },
+  {
+    "objectID": "post/unit00/setup-conda-environment.html#do-not-run-the-following-unless-need-to-reinstall-the-environment-for-some-reason",
+    "href": "post/unit00/setup-conda-environment.html#do-not-run-the-following-unless-need-to-reinstall-the-environment-for-some-reason",
+    "title": "preparing environment for unit 00",
+    "section": "DO NOT RUN THE FOLLOWING UNLESS NEED TO REINSTALL THE ENVIRONMENT FOR SOME REASON",
+    "text": "DO NOT RUN THE FOLLOWING UNLESS NEED TO REINSTALL THE ENVIRONMENT FOR SOME REASON\n\nreinstall the environment\n```{bash}\n# Create environment from conda packages\nconda env create -f environment-gene46100.yml\n\n# Activate the environment\nconda activate gene46100\n\n# Install pip packages\npip install -r requirements-gene46100.txt\n\n```"
+  },
+  {
+    "objectID": "post/unit00/setup-conda-environment.html#configuration-to-run-python-in-qmd-files",
+    "href": "post/unit00/setup-conda-environment.html#configuration-to-run-python-in-qmd-files",
+    "title": "preparing environment for unit 00",
+    "section": "configuration to run python in qmd files",
+    "text": "configuration to run python in qmd files\nFollow instructions in https://thedatasavvycorner.com/blogs/08-quarto-conda-en copied to /DRAFTS/2025-02-20-testin/08-quarto-conda-env.qmd\nBelow is a shortened version of the instructions when you already have a conda environment.\n```{bash}\nconda activate gene46100\npip install nbclient nbformat\n\n# Use conda to install the nb_conda_kernels package. This is used to manage python jupyter kernels for notebooks.\n\nconda install nb_conda_kernels jupyter_server ipykernel\n## in new install I needed conda install nb_conda_kernels jupyter_server\n\n# Copy the path returned from the below command\njupyter --config-dir\n\n# in my case it was ~/.jupyter\n\n# Create a jupyter_config.json in the jupyter config directory:\ntouch ~/.jupyter/jupyter_config.json\necho '{\n  \"CondaKernelSpecManager\": {\n    \"kernelspec_path\": \"--user\"\n  }\n}' &gt;&gt; ~/.jupyter/jupyter_config.json\n\n# Run the below command to return a list of available kernels:\npython -m nb_conda_kernels list\n\n# Copy the name (not the path) for the environment that you created with the format `conda-env-&lt;YOUR_ENV_NAME&gt;-py`.\n```\nadd the following to the yaml header in the qmd file with python blocks\n```{yaml}\njupyter: \n  kernelspec:\n    name: \"conda-env-&lt;YOUR_ENV_NAME&gt;-py\"\n    language: \"python\"\n    display_name: \"&lt;YOUR_ENV_NAME&gt;\"\n```\nmy environment was conda-env-gene46100-py you can run quarto render and it will be rendered with the conda environment you specified when running interactively, you can choose the kernel, similarly to a jupyter notebook\n```{yaml}\njupyter: \n  kernelspec:\n    name: \"conda-env-gene46100-py\"\n    language: \"python\"\n    display_name: \"gene46100\"\nfreeze: true\n## you may want to choose freeze true if you don't want to run the code every time you render the qmd file\n\n```"
   }
 ]

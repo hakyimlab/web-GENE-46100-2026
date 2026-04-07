@@ -274,7 +274,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">March 30, 2026</p>
+      <p class="date-modified">April 7, 2026</p>
     </div>
   </div>
     
@@ -301,11 +301,11 @@ window.Quarto = {
 <p>This notebook uses a pure numerical signal — no DNA yet. The same mechanics apply exactly when we switch to DNA sequences in notebook-03.</p>
 <section id="install-and-load-packages" class="level2">
 <h2 class="anchored" data-anchor-id="install-and-load-packages">Install and load packages</h2>
-<div id="e539dadd" class="cell" data-execution_count="1">
+<div id="fd5e2738" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">False</span>:</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">%</span>pip install torch plotnine numpy scikit<span class="op">-</span>learn</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="3346be21" class="cell" data-execution_count="2">
+<div id="a9b384fb" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch <span class="im">import</span> nn</span>
@@ -355,7 +355,7 @@ Step 3:  out[2] = x3*w1 + x4*w2 + x5*w3
 <section id="convolution-by-hand" class="level2">
 <h2 class="anchored" data-anchor-id="convolution-by-hand">Convolution by hand</h2>
 <p>Let’s implement this manually to see exactly what <code>Conv1d</code> does internally.</p>
-<div id="79d9288c" class="cell" data-execution_count="3">
+<div id="27962c11" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># A tiny input signal and a filter</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>signal <span class="op">=</span> np.array([<span class="fl">0.0</span>, <span class="fl">0.2</span>, <span class="fl">0.8</span>, <span class="fl">1.0</span>, <span class="fl">0.9</span>, <span class="fl">0.3</span>, <span class="fl">0.1</span>, <span class="fl">0.0</span>])</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>filt   <span class="op">=</span> np.array([<span class="op">-</span><span class="fl">1.0</span>, <span class="fl">0.0</span>, <span class="fl">1.0</span>])  <span class="co"># detects a rising edge: computes signal[i+2] - signal[i]</span></span>
@@ -381,7 +381,7 @@ Output values: [ 0.8  0.8  0.1 -0.7 -0.8 -0.3]</code></pre>
 <p><strong>Discuss:</strong> The output is large and positive where the signal rises — <code>[-1, 0, 1]</code> computes <code>signal[i+2] - signal[i]</code>. Changing the filter weights detects different patterns.</p>
 </blockquote>
 <p>Plotting input and filter output side by side shows where the rising-edge filter fires.</p>
-<div id="029d9121" class="cell" data-execution_count="4">
+<div id="23644658" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot input and filter output together</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>offset <span class="op">=</span> (<span class="bu">len</span>(filt) <span class="op">-</span> <span class="dv">1</span>) <span class="op">/</span> <span class="dv">2</span>   <span class="co"># center the shorter output on the input axis</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>plot_df <span class="op">=</span> pd.DataFrame({</span>
@@ -423,7 +423,7 @@ Conv1d: n_filters kernels  →  shape (batch, n_filters, out_len)</code></pre>
 </blockquote>
 <section id="shapes-and-parameters" class="level2">
 <h2 class="anchored" data-anchor-id="shapes-and-parameters">Shapes and parameters</h2>
-<div id="e0bec72f" class="cell" data-execution_count="5">
+<div id="990e08d1" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># in_channels=1 (one signal), out_channels=4 (four filters), kernel_size=5</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>conv <span class="op">=</span> nn.Conv1d(in_channels<span class="op">=</span><span class="dv">1</span>, out_channels<span class="op">=</span><span class="dv">4</span>, kernel_size<span class="op">=</span><span class="dv">5</span>)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -452,7 +452,7 @@ Output shape: torch.Size([1, 4, 46])</code></pre>
 <section id="adding-relu-and-pooling" class="level2">
 <h2 class="anchored" data-anchor-id="adding-relu-and-pooling">Adding ReLU and pooling</h2>
 <p>Stacking ReLU and max pooling after conv shows how each step changes the tensor shape.</p>
-<div id="9846aab8" class="cell" data-execution_count="6">
+<div id="178a6050" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>x    <span class="op">=</span> torch.randn(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">50</span>)</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>conv <span class="op">=</span> nn.Conv1d(in_channels<span class="op">=</span><span class="dv">1</span>, out_channels<span class="op">=</span><span class="dv">4</span>, kernel_size<span class="op">=</span><span class="dv">5</span>)</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>pool <span class="op">=</span> nn.MaxPool1d(kernel_size<span class="op">=</span><span class="dv">2</span>)</span>
@@ -481,7 +481,7 @@ After maxpool:   torch.Size([1, 4, 23])</code></pre>
 <section id="generate-the-data" class="level2">
 <h2 class="anchored" data-anchor-id="generate-the-data">Generate the data</h2>
 <p>We generate 2000 sequences of length 100: half contain the spike pattern embedded at a random position, half are pure noise.</p>
-<div id="e725fedf" class="cell" data-execution_count="7">
+<div id="7a62dfde" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">42</span>)</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -507,7 +507,7 @@ After maxpool:   torch.Size([1, 4, 23])</code></pre>
 </section>
 <section id="visualize-a-few-examples" class="level2">
 <h2 class="anchored" data-anchor-id="visualize-a-few-examples">Visualize a few examples</h2>
-<div id="5606ad2f" class="cell" data-execution_count="8">
+<div id="e6c54224" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>examples <span class="op">=</span> pd.DataFrame({</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">'position'</span>: <span class="bu">list</span>(<span class="bu">range</span>(SEQ_LEN)) <span class="op">*</span> <span class="dv">2</span>,</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'amplitude'</span>: <span class="bu">list</span>(X[<span class="dv">0</span>]) <span class="op">+</span> <span class="bu">list</span>(X[N_SAMPLES <span class="op">//</span> <span class="dv">2</span>]),</span>
@@ -585,7 +585,7 @@ Warning
 </div>
 </div>
 <p>We achieve this in two steps: first reserve 20% for test, then split the remainder 90/10 into train and val. The code below does exactly that and converts the arrays to PyTorch tensors.</p>
-<div id="ad498896" class="cell" data-execution_count="9">
+<div id="c02c22a0" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>X_train, X_test, y_train, y_test <span class="op">=</span> train_test_split(X, y, test_size<span class="op">=</span><span class="fl">0.2</span>, random_state<span class="op">=</span><span class="dv">42</span>)</span>
@@ -612,7 +612,7 @@ Warning
 <section id="define-the-model" class="level2">
 <h2 class="anchored" data-anchor-id="define-the-model">Define the model</h2>
 <p>One conv layer (8 filters, width 7) → ReLU → max pool → linear classifier with 2 outputs (spike / no spike).</p>
-<div id="05087edc" class="cell" data-execution_count="10">
+<div id="ab20613d" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> SpikeCNN(nn.Module):</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, n_filters<span class="op">=</span><span class="dv">8</span>, kernel_size<span class="op">=</span><span class="dv">7</span>):</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()   <span class="co"># required boilerplate for every PyTorch model class</span></span>
@@ -651,7 +651,7 @@ SpikeCNN(
 <section id="training-loop" class="level2">
 <h2 class="anchored" data-anchor-id="training-loop">Training loop</h2>
 <p>The optimizer (<code>Adam</code>) adjusts the model’s weights to minimize the loss function (<code>CrossEntropyLoss</code>, which measures how far the predicted class probabilities are from the true labels). Each pass through the data is one <strong>epoch</strong>. We log training loss and validation accuracy to watch for overfitting.</p>
-<div id="84fca7aa" class="cell" data-execution_count="11">
+<div id="a4f8ef38" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train(model, X_tr, y_tr, X_val, y_val, n_epochs<span class="op">=</span><span class="dv">30</span>, lr<span class="op">=</span><span class="fl">1e-3</span>):</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    optimizer <span class="op">=</span> torch.optim.Adam(model.parameters(), lr<span class="op">=</span>lr)</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    loss_fn   <span class="op">=</span> nn.CrossEntropyLoss()</span>
@@ -699,7 +699,7 @@ Epoch  50 | train_loss=0.4850 | val_loss=0.4769 | val_acc=0.981</code></pre>
 <blockquote class="blockquote">
 <p><strong>Discuss:</strong> Do train and val loss track each other? If val loss starts rising while train loss keeps falling, that is the signature of overfitting.</p>
 </blockquote>
-<div id="fb4e8e25" class="cell" data-execution_count="12">
+<div id="4a92d876" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>epochs <span class="op">=</span> <span class="bu">list</span>(<span class="bu">range</span>(<span class="dv">1</span>, <span class="bu">len</span>(history[<span class="st">'train_loss'</span>]) <span class="op">+</span> <span class="dv">1</span>))</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>curve_df <span class="op">=</span> pd.DataFrame({</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'epoch'</span>: epochs <span class="op">*</span> <span class="dv">2</span>,</span>
@@ -725,7 +725,7 @@ Epoch  50 | train_loss=0.4850 | val_loss=0.4769 | val_acc=0.981</code></pre>
 <blockquote class="blockquote">
 <p><strong>Discuss:</strong> How does test accuracy compare to validation accuracy? A large gap suggests the model overfit even to the validation set.</p>
 </blockquote>
-<div id="c0bb9fc6" class="cell" data-execution_count="13">
+<div id="0b4e7698" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>model.<span class="bu">eval</span>()</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad():</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    test_acc <span class="op">=</span> (model(X_test_t).argmax(<span class="dv">1</span>) <span class="op">==</span> y_test_t).<span class="bu">float</span>().mean().item()</span>
@@ -746,7 +746,7 @@ Epoch  50 | train_loss=0.4850 | val_loss=0.4769 | val_acc=0.981</code></pre>
 <p><strong>DNA connection:</strong> in notebook-03, these same filter weights become <strong>sequence motifs</strong>. We’ll convert them to position weight matrices and compare to known TF binding motifs.</p>
 </blockquote>
 <p>A key advantage of CNNs is interpretability — each filter is a small weight vector we can visualize directly.</p>
-<div id="23140547" class="cell" data-execution_count="14">
+<div id="8686f5b1" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># detach() removes gradient tracking, .cpu() moves to CPU — both needed before converting to numpy</span></span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>filters <span class="op">=</span> model.conv1.weight.detach().cpu().numpy()  <span class="co"># shape: (n_filters, 1, kernel_size)</span></span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>n_filters, _, kernel_size <span class="op">=</span> filters.shape</span>
@@ -1321,7 +1321,7 @@ Epoch  50 | train_loss=0.4850 | val_loss=0.4769 | val_acc=0.981</code></pre>
 <div class="sourceCode" id="cb26" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "02 · What Are Convolutional Neural Networks?"</span></span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> Haky Im</span></span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> '2026-04-02'</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> '2026-04-01'</span></span>
 <span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="an">date-modified:</span><span class="co"> last-modified</span></span>
 <span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span></span>
 <span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="co">  - gene46100</span></span>

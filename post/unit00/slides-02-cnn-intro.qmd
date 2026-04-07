@@ -3,7 +3,7 @@ title: "What Are Convolutional Neural Networks?"
 subtitle: "GENE 46100 — Unit 00"
 author: "Haky Im"
 institute: "[based on MathWorks: What Are CNNs?](https://www.mathworks.com/videos/introduction-to-deep-learning-what-are-convolutional-neural-networks--1489512765771.html)"
-date: 2026-04-01
+date: 2026-03-31
 draft: false
 engine: knitr
 format:

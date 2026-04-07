@@ -224,7 +224,7 @@ Submission requirements (updated — read before you start)
 </ol>
 </div>
 </div>
-<div id="43292dce" class="cell" data-execution_count="1">
+<div id="175e396a" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -241,7 +241,7 @@ Submission requirements (updated — read before you start)
 <span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    torch.set_default_dtype(torch.float32)</span>
 <span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"Set default to float32 for MPS compatibility"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="4e26032a" class="cell" data-execution_count="2">
+<div id="485b1421" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> set_seed(seed: <span class="bu">int</span> <span class="op">=</span> <span class="dv">42</span>) <span class="op">-&gt;</span> <span class="va">None</span>:</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    np.random.seed(seed)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    random.seed(seed)</span>
@@ -256,7 +256,7 @@ Submission requirements (updated — read before you start)
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>set_seed(<span class="dv">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="b2216eb9" class="cell" data-execution_count="3">
+<div id="eceed2d5" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>DEVICE <span class="op">=</span> torch.device(<span class="st">'mps'</span> <span class="cf">if</span> torch.backends.mps.is_available()</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                      <span class="cf">else</span> <span class="st">'cuda'</span> <span class="cf">if</span> torch.cuda.is_available()</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                      <span class="cf">else</span> <span class="st">'cpu'</span>)</span>
@@ -264,7 +264,7 @@ Submission requirements (updated — read before you start)
 </div>
 <section id="load-data" class="level2">
 <h2 class="anchored" data-anchor-id="load-data">Load Data</h2>
-<div id="70c6f793" class="cell" data-execution_count="4">
+<div id="4808fabc" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>DIR <span class="op">=</span> <span class="st">'/Users/sofiasalazar/Library/CloudStorage/Box-Box/imlab-data/Courses/AI-in-Genomics-2025/data/'</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>sequences <span class="op">=</span> pd.read_csv(os.path.join(DIR, <span class="st">'chr22_sequences.txt.gz'</span>), sep<span class="op">=</span><span class="st">'</span><span class="ch">\t</span><span class="st">'</span>, compression<span class="op">=</span><span class="st">'gzip'</span>)</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>scores <span class="op">=</span> pd.read_csv(os.path.join(DIR, <span class="st">'chr22_scores.txt.gz'</span>), sep<span class="op">=</span><span class="st">'</span><span class="ch">\t</span><span class="st">'</span>, compression<span class="op">=</span><span class="st">'gzip'</span>, dtype<span class="op">=</span><span class="st">'float32'</span>)</span>
@@ -276,7 +276,7 @@ Submission requirements (updated — read before you start)
 </section>
 <section id="one-hot-encoding" class="level2">
 <h2 class="anchored" data-anchor-id="one-hot-encoding">One-Hot Encoding</h2>
-<div id="ffa3c94a" class="cell" data-execution_count="5">
+<div id="7755d93c" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> one_hot_encode(seq):</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""One-hot encode a DNA sequence into a (seq_len, 4) numpy array."""</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    allowed <span class="op">=</span> <span class="bu">set</span>(<span class="st">"ACTGN"</span>)</span>
@@ -295,7 +295,7 @@ Submission requirements (updated — read before you start)
 </section>
 <section id="train-val-test-split" class="level2">
 <h2 class="anchored" data-anchor-id="train-val-test-split">Train / Val / Test Split</h2>
-<div id="1d7f843a" class="cell" data-execution_count="6">
+<div id="7e8f1b3c" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>train_df, test_df <span class="op">=</span> train_test_split(sequences, test_size<span class="op">=</span><span class="fl">0.2</span>, random_state<span class="op">=</span><span class="dv">42</span>)</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>train_df, val_df <span class="op">=</span> train_test_split(train_df, test_size<span class="op">=</span><span class="fl">0.2</span>, random_state<span class="op">=</span><span class="dv">42</span>)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -306,7 +306,7 @@ Submission requirements (updated — read before you start)
 </section>
 <section id="dataset-and-dataloader" class="level2">
 <h2 class="anchored" data-anchor-id="dataset-and-dataloader">Dataset and DataLoader</h2>
-<div id="2d5670ac" class="cell" data-execution_count="7">
+<div id="b3ed48d6" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> SeqDatasetOHE(Dataset):</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Dataset that one-hot encodes DNA sequences and retrieves multi-TF scores."""</span></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, seq_df, scores_df, seq_col<span class="op">=</span><span class="st">'sequence'</span>, target_col<span class="op">=</span><span class="st">'window_name'</span>):</span>
@@ -325,7 +325,7 @@ Submission requirements (updated — read before you start)
 <span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__getitem__</span>(<span class="va">self</span>, idx):</span>
 <span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.ohe_seqs[idx], <span class="va">self</span>.labels[idx]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="96687e45" class="cell" data-execution_count="8">
+<div id="b4c31739" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_dataloaders(train_df, val_df, test_df, scores_df, batch_size<span class="op">=</span><span class="dv">64</span>):</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Create DataLoaders from train, val, and test DataFrames."""</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    train_ds <span class="op">=</span> SeqDatasetOHE(train_df, scores_df)</span>
@@ -336,13 +336,13 @@ Submission requirements (updated — read before you start)
 <span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    test_dl  <span class="op">=</span> DataLoader(test_ds,  batch_size<span class="op">=</span>batch_size)</span>
 <span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> train_dl, val_dl, test_dl</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="59341476" class="cell" data-execution_count="9">
+<div id="3dbbdbe4" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>train_dl, val_dl, test_dl <span class="op">=</span> build_dataloaders(train_df, val_df, test_df, scores)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="model" class="level2">
 <h2 class="anchored" data-anchor-id="model">Model</h2>
-<div id="a218a2e5" class="cell" data-execution_count="10">
+<div id="145ac0ef" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> DNA_CNN(nn.Module):</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, seq_len, num_filters<span class="op">=</span><span class="dv">32</span>, kernel_size<span class="op">=</span><span class="dv">8</span>, num_outputs<span class="op">=</span><span class="dv">300</span>):</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
@@ -356,7 +356,7 @@ Submission requirements (updated — read before you start)
 <span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> x.flatten(<span class="dv">1</span>)</span>
 <span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.linear(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="76ac80ad" class="cell" data-execution_count="11">
+<div id="aceffed6" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>SEQ_LEN <span class="op">=</span> <span class="bu">len</span>(sequences[<span class="st">'sequence'</span>].iloc[<span class="dv">0</span>])</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>NUM_TFS <span class="op">=</span> scores.shape[<span class="dv">0</span>]</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Sequence length: </span><span class="sc">{</span>SEQ_LEN<span class="sc">}</span><span class="ss">, Number of TFs: </span><span class="sc">{</span>NUM_TFS<span class="sc">}</span><span class="ss">"</span>)</span>
@@ -366,7 +366,7 @@ Submission requirements (updated — read before you start)
 </section>
 <section id="training" class="level2">
 <h2 class="anchored" data-anchor-id="training">Training</h2>
-<div id="e84d524a" class="cell" data-execution_count="12">
+<div id="863cc1b8" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_model(model, train_dl, val_dl, device, lr<span class="op">=</span><span class="fl">0.01</span>, epochs<span class="op">=</span><span class="dv">50</span>):</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Train a model and return loss histories."""</span></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    optimizer <span class="op">=</span> torch.optim.SGD(model.parameters(), lr<span class="op">=</span>lr)</span>
@@ -405,13 +405,13 @@ Submission requirements (updated — read before you start)
 <span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> train_losses, val_losses</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="5f33b6a7" class="cell" data-execution_count="13">
+<div id="d7a20cda" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>EPOCHS <span class="op">=</span> <span class="dv">100</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>LR <span class="op">=</span> <span class="fl">0.01</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>train_losses, val_losses <span class="op">=</span> train_model(model, train_dl, val_dl, DEVICE, lr<span class="op">=</span>LR, epochs<span class="op">=</span>EPOCHS)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="c53fc291" class="cell" data-execution_count="14">
+<div id="e05bc86c" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> quick_loss_plot(data_label_list, loss_type<span class="op">=</span><span class="st">"MSE Loss"</span>):</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i, (train_data, val_data, label) <span class="kw">in</span> <span class="bu">enumerate</span>(data_label_list):</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>        plt.plot(train_data, linestyle<span class="op">=</span><span class="st">'--'</span>, color<span class="op">=</span><span class="ss">f"C</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span>, label<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss"> Train"</span>)</span>
@@ -426,7 +426,7 @@ Submission requirements (updated — read before you start)
 </section>
 <section id="test-evaluation" class="level2">
 <h2 class="anchored" data-anchor-id="test-evaluation">Test Evaluation</h2>
-<div id="aa82e315" class="cell" data-execution_count="15">
+<div id="67076dd6" class="cell" data-execution_count="15">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_model(model, test_dl, device):</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Run model on test set; return predictions, observations, and per-sample Pearson r."""</span></span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    model.<span class="bu">eval</span>()</span>
@@ -448,7 +448,7 @@ Submission requirements (updated — read before you start)
 <span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Mean Pearson r (test set): </span><span class="sc">{</span>pearson_per_sample<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
 <span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Best Pearson r:            </span><span class="sc">{</span>pearson_per_sample<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="d9856eaf" class="cell" data-execution_count="16">
+<div id="fb38952d" class="cell" data-execution_count="16">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">5</span>))</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>plt.hist(pearson_per_sample, bins<span class="op">=</span><span class="dv">20</span>, edgecolor<span class="op">=</span><span class="st">'black'</span>, alpha<span class="op">=</span><span class="fl">0.7</span>)</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'Pearson Correlation'</span>)</span>
@@ -459,7 +459,7 @@ Submission requirements (updated — read before you start)
 </section>
 <section id="example-best-predicted-sequence" class="level2">
 <h2 class="anchored" data-anchor-id="example-best-predicted-sequence">Example: Best-predicted sequence</h2>
-<div id="dfce83ac" class="cell" data-execution_count="17">
+<div id="7ebf5559" class="cell" data-execution_count="17">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> plot_comparison(pred, obs, r_value):</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> np.arange(<span class="bu">len</span>(pred))</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    bar_width <span class="op">=</span> <span class="fl">0.4</span></span>
@@ -507,14 +507,14 @@ Submission requirements (updated — read before you start)
 </tbody>
 </table>
 <p>The <code>state_dict</code> approach is preferred because it separates weights from code, making it easier to share and version.</p>
-<div id="f81c121f" class="cell" data-execution_count="18">
+<div id="88c3f6a3" class="cell" data-execution_count="18">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Save ---</span></span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>SAVE_PATH <span class="op">=</span> <span class="st">'model_weights.pt'</span></span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>torch.save(model.state_dict(), SAVE_PATH)</span>
 <span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Weights saved to </span><span class="sc">{</span>SAVE_PATH<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="d282b236" class="cell" data-execution_count="19">
+<div id="79f305ac" class="cell" data-execution_count="19">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Load ---</span></span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-create the architecture with the same hyperparameters, then load weights into it.</span></span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>loaded_model <span class="op">=</span> DNA_CNN(seq_len<span class="op">=</span>SEQ_LEN, num_filters<span class="op">=</span><span class="dv">32</span>, kernel_size<span class="op">=</span><span class="dv">8</span>, num_outputs<span class="op">=</span>NUM_TFS).to(DEVICE)</span>
@@ -522,7 +522,7 @@ Submission requirements (updated — read before you start)
 <span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>loaded_model.<span class="bu">eval</span>()</span>
 <span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Weights loaded successfully."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="18465ad9" class="cell" data-execution_count="20">
+<div id="105839b4" class="cell" data-execution_count="20">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify the loaded model produces identical predictions</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>_, _, pearson_loaded <span class="op">=</span> test_model(loaded_model, test_dl, DEVICE)</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Mean Pearson r (loaded model): </span><span class="sc">{</span>pearson_loaded<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
@@ -532,7 +532,7 @@ Submission requirements (updated — read before you start)
 <section id="saving-a-checkpoint-weights-optimizer-state" class="level3">
 <h3 class="anchored" data-anchor-id="saving-a-checkpoint-weights-optimizer-state">Saving a checkpoint (weights + optimizer state)</h3>
 <p>If you want to <strong>resume training later</strong> (not just evaluate), save the optimizer state and epoch number alongside the weights.</p>
-<div id="983396d8" class="cell" data-execution_count="21">
+<div id="e41492f8" class="cell" data-execution_count="21">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Save checkpoint ---</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>CHECKPOINT_PATH <span class="op">=</span> <span class="st">'dna_cnn_checkpoint.pt'</span></span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -547,7 +547,7 @@ Submission requirements (updated — read before you start)
 <span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>}, CHECKPOINT_PATH)</span>
 <span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Checkpoint saved to </span><span class="sc">{</span>CHECKPOINT_PATH<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="d8795a23" class="cell" data-execution_count="22">
+<div id="2713a17b" class="cell" data-execution_count="22">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Resume from checkpoint ---</span></span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>checkpoint <span class="op">=</span> torch.load(CHECKPOINT_PATH, map_location<span class="op">=</span>DEVICE)</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1079,7 +1079,7 @@ Submission requirements (updated — read before you start)
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="sourceCode" id="cb26" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "TF Binding Prediction — Starter Code"</span></span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> '2026-04-11'</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> '2026-04-08'</span></span>
 <span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> Sofia Salazar</span></span>
 <span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span></span>
 <span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="co">  - gene46100</span></span>

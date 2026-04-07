@@ -213,12 +213,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="installing-wb" class="level3">
 <h3 class="anchored" data-anchor-id="installing-wb">1. Installing W&amp;B</h3>
 <p>First install w&amp;b in your environment with the following command, it should take only a couple of seconds</p>
-<div id="9945f326" class="cell" data-execution_count="1">
+<div id="a74d8993" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>pip install wandb onnx <span class="op">-</span>Uq</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>pip install nbformat</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Load all libraries</p>
-<div id="8303f076" class="cell" data-execution_count="2">
+<div id="e286b494" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch <span class="im">import</span> nn</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -233,14 +233,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="login-to-wb" class="level3">
 <h3 class="anchored" data-anchor-id="login-to-wb">2. Login to w&amp;b</h3>
 <p>If you don’t already have a w&amp;b account, sign up <a href="https://wandb.ai/site/">here</a>. Then, run the following command which will prompt you to insert your API key</p>
-<div id="ed30c596" class="cell" data-execution_count="3">
+<div id="696240c4" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>wandb.login()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="define-your-regular-functions" class="level3">
 <h3 class="anchored" data-anchor-id="define-your-regular-functions">3. Define your regular functions</h3>
 <p>Then, define your functions, this will remain unchanged</p>
-<div id="d38375aa" class="cell" data-execution_count="4">
+<div id="af216b84" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_device():</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">"""</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">  Determines the device to use for PyTorch computations.</span></span>
@@ -264,7 +264,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Example usage:</span></span>
 <span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>device <span class="op">=</span> get_device()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="a3246915" class="cell" data-execution_count="5">
+<div id="1da3993e" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> one_hot_encode(seq):</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">    Given a DNA sequence, return its one-hot encoding</span></span>
@@ -287,7 +287,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> vec</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="4fde588f" class="cell" data-execution_count="6">
+<div id="921525ea" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> split_sequences(sequences_df):</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    train_df, test_df <span class="op">=</span> train_test_split(sequences_df, test_size<span class="op">=</span><span class="fl">0.2</span>, random_state<span class="op">=</span><span class="dv">42</span>)</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    train_df, val_df <span class="op">=</span> train_test_split(train_df, test_size<span class="op">=</span><span class="fl">0.2</span>, random_state<span class="op">=</span><span class="dv">42</span>)</span>
@@ -296,7 +296,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"Test: "</span>, test_df.shape)</span>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> train_df, val_df, test_df</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="5a9e144e" class="cell" data-execution_count="7">
+<div id="594fbae9" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_data_tensors(scores_df, sequences_df):</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># split sequences in train, validation and test sets</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    train_sequences, val_sequences, test_sequences <span class="op">=</span> split_sequences(sequences_df)</span>
@@ -321,7 +321,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> train_scores, train_sequences_tensor, val_scores, val_sequences_tensor, test_scores, test_sequences_tensor</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="d221fe98" class="cell" data-execution_count="8">
+<div id="4a74c510" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> create_dataloader(predictors, targets, batch_size, is_train <span class="op">=</span> <span class="va">True</span>):</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">'''</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co">    features: one hot encoded sequences</span></span>
@@ -333,7 +333,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    dataset <span class="op">=</span> torch.utils.data.TensorDataset(predictors, targets)</span>
 <span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> torch.utils.data.DataLoader(dataset, batch_size, shuffle <span class="op">=</span> is_train)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="84eb5312" class="cell" data-execution_count="9">
+<div id="aaab16c2" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> DNA_CNN(nn.Module):</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>,</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>                 seq_len,</span>
@@ -364,7 +364,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>            out <span class="op">=</span> <span class="va">self</span>.sigmoid(out)</span>
 <span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> out</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="b6a74535" class="cell" data-execution_count="10">
+<div id="1091c1f3" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> process_batch(model, loss_func, x_batch, y_batch, opt<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    xb_out <span class="op">=</span> model(x_batch.to(torch.float32))</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -377,7 +377,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> loss.item(), <span class="bu">len</span>(x_batch)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="f5d38816" class="cell" data-execution_count="11">
+<div id="3eebf021" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_epoch(model, train_dl, loss_func, device, opt):</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    model.train()</span>
@@ -400,7 +400,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> train_loss</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="00c4949c" class="cell" data-execution_count="12">
+<div id="bb3978df" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> val_epoch(model, val_dl, loss_func, device):</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Set model to Evaluation mode</span></span>
@@ -429,7 +429,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="modify-the-train_loop-function" class="level3">
 <h3 class="anchored" data-anchor-id="modify-the-train_loop-function">4. Modify the <code>train_loop()</code> function</h3>
 <p>The only function that we need to change is the <code>train_loop</code> function, because here is where we are recovering the parameters that we want to track with w&amp;b. We will use <code>wandb.log</code> and create a dictionary with the parmeters that we want to track.</p>
-<div id="7553b7d4" class="cell" data-execution_count="13">
+<div id="da50ff3a" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_loop(epochs, model, loss_func, opt, train_dl, val_dl, device):</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># keep track of losses</span></span>
@@ -454,7 +454,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> train_losses, val_losses</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Defining the <code>train_model</code> function. We omit the <code>plot_curves</code> function since all performance metrics will be tracked on w&amp;b.</p>
-<div id="63b89e83" class="cell" data-execution_count="14">
+<div id="004a2538" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_model(train_dl,val_dl,model,device, lr<span class="op">=</span><span class="fl">0.01</span>, epochs<span class="op">=</span><span class="dv">50</span>, lossf<span class="op">=</span><span class="va">None</span>,opt<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># define optimizer</span></span>
@@ -483,7 +483,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="also-track-the-correlation-metrics-of-the-test-set" class="level3">
 <h3 class="anchored" data-anchor-id="also-track-the-correlation-metrics-of-the-test-set">5. Also track the correlation metrics of the test set</h3>
 <p>As a way to evaluate each model, let’s modify the <code>test_model()</code> function so that wand also keeps track of the performance metrics. In this case the metrics are <code>pearson_per_sample</code>, <code>test_pearson_r</code> and <code>best_test</code>.</p>
-<div id="3de92f40" class="cell" data-execution_count="15">
+<div id="9eccf02c" class="cell" data-execution_count="15">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_model(model, test_features, test_targets):</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  model.<span class="bu">eval</span>()</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  predictions <span class="op">=</span> model(test_features.to(torch.float32).to(device)).detach().cpu().numpy()</span>
@@ -498,7 +498,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="define-the-sweep-configuration" class="level3">
 <h3 class="anchored" data-anchor-id="define-the-sweep-configuration">6. Define the <code>sweep</code> configuration</h3>
 <p>A <code>sweep</code> is the training and testing of a single model with a given configuration of hyperparameters. with <code>wandb.sweep</code> we define the set of hyperparameters to test, which will be then combined in different configurations each sweep.</p>
-<div id="01ebb963" class="cell" data-execution_count="16">
+<div id="5dba7ba7" class="cell" data-execution_count="16">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>sweep_config <span class="op">=</span> {</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">'method'</span>: <span class="st">'random'</span>,</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'metric'</span>: {<span class="st">'name'</span>: <span class="st">'test_avg_pearsonr'</span>, <span class="st">'goal'</span>: <span class="st">'maximize'</span>},</span>
@@ -513,18 +513,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Create a project ID for your model, all your tests will be saved in this project</p>
-<div id="92425ee9" class="cell" data-execution_count="17">
+<div id="ab43c629" class="cell" data-execution_count="17">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>sweep_id <span class="op">=</span> wandb.sweep(sweep_config, project<span class="op">=</span><span class="st">"DNA_model"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="get-the-training-val-and-test-sets-ready-for-training" class="level3">
 <h3 class="anchored" data-anchor-id="get-the-training-val-and-test-sets-ready-for-training">7. Get the training, val and test sets ready for training</h3>
-<div id="a4b8eb1a" class="cell" data-execution_count="18">
+<div id="867170fa" class="cell" data-execution_count="18">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>DIR <span class="op">=</span> <span class="st">'/Users/sofiasalazar/Library/CloudStorage/Box-Box/imlab-data/Courses/AI-in-Genomics-2025/data/'</span></span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>sequences <span class="op">=</span> pd.read_csv(os.path.join(DIR, <span class="st">'chr22_sequences.txt.gz'</span>), sep<span class="op">=</span><span class="st">"</span><span class="ch">\t</span><span class="st">"</span>, compression<span class="op">=</span><span class="st">'gzip'</span>)</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>scores <span class="op">=</span> pd.read_csv(os.path.join(DIR, <span class="st">'chr22_scores.txt.gz'</span>), sep<span class="op">=</span><span class="st">"</span><span class="ch">\t</span><span class="st">"</span>, compression<span class="op">=</span><span class="st">'gzip'</span>,dtype<span class="op">=</span><span class="st">'float32'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="773a62fc" class="cell" data-execution_count="19">
+<div id="247d5efb" class="cell" data-execution_count="19">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>train_scores, train_sequences_tensor, val_scores, val_sequences_tensor, test_scores, test_sequences_tensor <span class="op">=</span> get_data_tensors(scores, sequences)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
@@ -538,7 +538,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><p>Create the dataloaders</p></li>
 <li><p>Train and test the model</p></li>
 </ol>
-<div id="26bf2e33" class="cell" data-execution_count="20">
+<div id="05140d80" class="cell" data-execution_count="20">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_sweep():</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> wandb.init(project <span class="op">=</span> <span class="st">"DNA_model"</span>):</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>        config <span class="op">=</span> wandb.config</span>
@@ -554,7 +554,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>        test_model(model, test_sequences_tensor, test_scores)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Finally, we train with <code>wandb.agent</code>, the argument <code>count</code> is the number of combinations of hyperparameters I want to try. The maximum in my case is 240 combinations</p>
-<div id="14e28074" class="cell" data-execution_count="21">
+<div id="315f0a8b" class="cell" data-execution_count="21">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wandb.agent(sweep_id, train_sweep, count=240)</span></span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>wandb.agent(sweep_id, train_sweep, count<span class="op">=</span><span class="dv">6</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -1018,7 +1018,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="sourceCode" id="cb22" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "05 · Calibrating hyperparameters with weights and biases"</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> '2026-04-10'</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> '2026-04-09'</span></span>
 <span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> Sofia Salazar</span></span>
 <span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span></span>
 <span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="co">  - gene46100</span></span>

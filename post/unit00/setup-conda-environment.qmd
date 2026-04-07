@@ -7,7 +7,7 @@ categories:
   - gene46100
   - how-to
 eval: false
-draft: true
+draft: false
 ---
 
 ## install conda

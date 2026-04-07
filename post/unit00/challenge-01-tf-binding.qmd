@@ -1,7 +1,7 @@
 ---
 title: "TF binding prediction challenge"
 author: Haky Im
-date: 2026-04-11
+date: 2026-04-07
 description: "Competition details for TF binding prediction challenge"
 categories:
   - gene46100

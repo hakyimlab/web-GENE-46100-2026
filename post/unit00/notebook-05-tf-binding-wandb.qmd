@@ -1,6 +1,6 @@
 ---
 title: "05 · Calibrating hyperparameters with weights and biases"
-date: '2026-04-10'
+date: '2026-04-09'
 author: Sofia Salazar
 categories:
   - gene46100
