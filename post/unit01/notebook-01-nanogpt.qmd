@@ -6,7 +6,6 @@ categories:
   - notebook
   - gene46100
 description: "Companion notebook to Karpathy's nanoGPT video — build a character-level GPT on Tiny Shakespeare, step by step."
-freeze: true
 jupyter:
   kernelspec:
     name: "conda-env-gene46100-py"
@@ -19,7 +18,7 @@ format:
     code-tools: true
     code-overflow: wrap
 date-modified: last-modified
-draft: true
+draft: false
 ---
 
 ## Building a GPT

@@ -7,8 +7,8 @@ categories:
   - gene46100
 description: "Pretrain a character-level GPT on the human reference genome, then fine-tune for promoter activity and TF binding prediction."
 date-modified: last-modified
-draft: true
-eval: false
+draft: false
+eval: true
 jupyter:
   kernelspec:
     name: "conda-env-nanogpt46100-py"
@@ -24,6 +24,8 @@ jupyter:
 ## Introduction
 
 In this notebook, we explore how one can pretrain and fine-tune a basic genomic language model (gLM). As the basis of our model, we use Andrej Karpathy's publicly-available [nanoGPT framework](https://github.com/karpathy/nanoGPT) (with some slight edits). This is a flexible implementation of a basic GPT model (based on GPT-2) that can take generic text as input. Here, we showcase how relatively sophisticated models can be trained efficiently, and how these can be fine-tuned to specific prediction tasks using datasets pulled from the [Nucleotide Transformer training notebook](https://github.com/huggingface/notebooks/blob/main/examples/nucleotide_transformer_dna_sequence_modelling.ipynb) (direct sources will be cited when datasets are introduced). Generally, the goal of this notebook is to provide hands-on experience in working with language models, and give insight into the fundamentals of attention-based deep learning.
+
+This notebook builds directly on [notebook-01](notebook-01-nanogpt.qmd), where you built a character-level GPT from scratch on tiny Shakespeare. Here we apply the same architecture to a much larger, biologically meaningful corpus: the 3.2-billion-character human reference genome. The `GPT` class you will see below implements exactly what you assembled piece by piece in notebook-01 — just packaged into the production-ready form from Karpathy's [nanoGPT repository](https://github.com/karpathy/nanoGPT).
 
 ## Steps
 
@@ -76,42 +78,47 @@ For our training, we will be using the GRCh38 human reference genome (credit to 
 running_in_colab = False
 if running_in_colab:
   WORKDIR = '/root/data/'
-  !mkdir /root/data
+  os.makedirs(WORKDIR, exist_ok=True)
   fasta_file = WORKDIR + 'genome.fa'
   !wget -O - https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz | gunzip -c > {fasta_file}
   input_file_path = os.path.join(WORKDIR, 'genome.fa')
 else:
-  WORKDIR = '~/Downloads/'
   fasta_path = '/Users/haekyungim/Library/CloudStorage/Box-Box/LargeFiles/imlab-data/Reference-Data/ref_sequences/hg38/'
   fasta_file = fasta_path + 'Homo_sapiens_assembly38.fasta'
   input_file_path = fasta_file
-  # Properly expand the home directory if using ~
-  WORKDIR = os.path.expanduser('~/Downloads')
-  # Create directory if it doesn't exist
+  WORKDIR = os.path.expanduser('~/Downloads/gene46100-unit01')
   os.makedirs(WORKDIR, exist_ok=True)
-
-
-"""
-Prepare the hg38 genomic dataset for character-level language modeling.
-So instead of encoding with BPE tokens, we just map characters to ints.
-Will save train.bin, val.bin containing the ids, and meta.pkl containing the
-encoder and decoder and some other related info.
-"""
-
 ```
+
+> **Note:** If you are running locally, set `fasta_file` to the path of your local hg38 FASTA file. All outputs (tokenized genome, checkpoints) will be saved to `~/Downloads/gene46100-unit01/`. The fasta path above is instructor-specific and will not work on your machine.
+
+Prepare the hg38 genomic dataset for character-level language modeling. Instead of encoding with BPE tokens, we just map characters to ints. This will save `train.bin`, `val.bin` containing the ids, and `meta.pkl` containing the encoder and decoder and some other related info.
 
 Now that we have the genome file saved locally, we have to read it into our environment in order to make it usable. To do this, we just read in the entire file as one long string, which we can then subset and investigate as we wish. For example, we may want to know the total length of our dataset, and all of the unique characters we have:
 
 ```{python}
-with open(input_file_path, 'r') as f:
-    data = f.read()
-print(f"length of dataset in characters: {len(data):,}")
+meta_path = os.path.join(WORKDIR, 'meta.pkl')
+tokenized_exists = (os.path.exists(os.path.join(WORKDIR, 'train.bin')) and
+                    os.path.exists(os.path.join(WORKDIR, 'val.bin')) and
+                    os.path.exists(meta_path))
 
-# get all the unique characters that occur in this text
-chars = sorted(list(set(data)))
-vocab_size = len(chars)
-print("all the unique characters:", ''.join(chars))
-print(f"vocab size: {vocab_size:,}")
+if tokenized_exists:
+    print("Tokenized files found — loading vocab from meta.pkl, skipping genome read.")
+    with open(meta_path, 'rb') as f:
+        meta = pickle.load(f)
+    vocab_size = meta['vocab_size']
+    stoi = meta['stoi']
+    itos = meta['itos']
+    data = None  # not needed; tokenized files exist
+    print(f"vocab size: {vocab_size:,}")
+else:
+    with open(input_file_path, 'r') as f:
+        data = f.read()
+    print(f"length of dataset in characters: {len(data):,}")
+    chars = sorted(list(set(data)))
+    vocab_size = len(chars)
+    print("all the unique characters:", ''.join(chars))
+    print(f"vocab size: {vocab_size:,}")
 ```
 
 Great! The number of characters we have is approximately the same as the number of nucleotides in the human genome (about 3.2 billion), so it looks like our data imported correctly. However, you may notice that we have more characters than just "A", "T", "C", "G", and "N" as you may expect from genomic data. This is because our text file includes headers for each part of the genome assembly (i.e. chromosomes and fragments).
@@ -124,9 +131,10 @@ To keep the example simple, we will keep using the full genome file with non-DNA
 Now that we have our text, we need to put it into a format that is more easily readable for our model. Generally, this process is called Tokenization. There are many different methods for this, and each will impact the performance of the model differently (for example byte pair encoding or non-overlapping kmer tokenization used by other gLMs), but for the purpose of this notebook we will use a simple character-level tokenization. This means that we will simply assign a different integer to each unique character, and then transform our input into a long list of integers to be read by our model:
 
 ```{python}
-# create a mapping from characters to integers
-stoi = { ch:i for i,ch in enumerate(chars) }
-itos = { i:ch for i,ch in enumerate(chars) }
+if not tokenized_exists:
+    # create a mapping from characters to integers
+    stoi = { ch:i for i,ch in enumerate(chars) }
+    itos = { i:ch for i,ch in enumerate(chars) }
 ```
 
 ```{python}
@@ -139,32 +147,35 @@ def decode(l):
 Now that we have our functions defined, it is time to actually do the tokenization. This will take a few minutes, so go ahead and run the block, and see the description of what it is doing below:
 
 ```{python}
-# create the train and test splits
-n = len(data)
-train_data = data[:int(n*0.9)]
-val_data = data[int(n*0.9):]
+if tokenized_exists:
+    print("Tokenized files already exist — skipping tokenization.")
+else:
+    # create the train and test splits
+    n = len(data)
+    train_data = data[:int(n*0.9)]
+    val_data = data[int(n*0.9):]
 
-#save memory
-del data
+    #save memory
+    del data
 
-#helper function to store/append data to binary files and save RAM
-def append_to_binary_file(filename, obj):
-    with open(filename, 'ab') as file:  # Open in append-binary mode
-        obj.tofile(file)
+    #helper function to store/append data to binary files and save RAM
+    def append_to_binary_file(filename, obj):
+        with open(filename, 'ab') as file:  # Open in append-binary mode
+            obj.tofile(file)
 
-# encode both to integers
-ntrain=len(train_data)
-nval = len(val_data)
-for i in np.arange(0,1,0.05):
-  print(f"Tokenizing: {int(i*100):,}% complete")
-  train_ids = encode(train_data[int(ntrain*i):int(ntrain*(i+0.05))])
-  val_ids = encode(val_data[int(nval*i):int(nval*(i+0.05))])
-  train_ids = np.array(train_ids, dtype=np.uint16)
-  val_ids = np.array(val_ids, dtype=np.uint16)
-  append_to_binary_file(os.path.join(WORKDIR, 'train.bin'), train_ids)
-  append_to_binary_file(os.path.join(WORKDIR, 'val.bin'), val_ids)
-print(f"train has {ntrain:,} tokens")
-print(f"val has {nval:,} tokens")
+    # encode both to integers
+    ntrain=len(train_data)
+    nval = len(val_data)
+    for i in np.arange(0,1,0.05):
+      print(f"Tokenizing: {int(i*100):,}% complete")
+      train_ids = encode(train_data[int(ntrain*i):int(ntrain*(i+0.05))])
+      val_ids = encode(val_data[int(nval*i):int(nval*(i+0.05))])
+      train_ids = np.array(train_ids, dtype=np.uint16)
+      val_ids = np.array(val_ids, dtype=np.uint16)
+      append_to_binary_file(os.path.join(WORKDIR, 'train.bin'), train_ids)
+      append_to_binary_file(os.path.join(WORKDIR, 'val.bin'), val_ids)
+    print(f"train has {ntrain:,} tokens")
+    print(f"val has {nval:,} tokens")
 ```
 
 
@@ -192,11 +203,9 @@ if running_in_colab:
   os.kill(os.getpid(), 9) #If running in a low-memory environment, this will clear our RAM. After this, go run the very first block again!
 ```
 
-#### Questions:
+> **Discuss:** What does each "token" in our model represent — a single base, a stretch of bases, a functional region? What would change if you used k-mer tokens instead?
 
-
-1.   What does each "token" in our model represent? I.e. a single base, a stretch of a few bases, some functional region, etc.?
-2.   What is the purpose of tokenization? Why is it necessary to train our model?
+> **Discuss:** Why is tokenization necessary? What would it mean to feed raw DNA letters directly to a neural network?
 
 
 ## Creating the Model
@@ -227,7 +236,7 @@ def scaled_dot_product_attention(query, key, value, attn_mask=None, dropout_p=0.
     return attn_weight, attn_weight @ value
 ```
 
-Now that we have our attention function, it's time to define what our model will look like. This is a lot of code, so we will provide a short summary of what each layer is doing and the order in which they occur. If you are interested in the specifics, feel free to read through the code in detail.
+Now that we have our attention function, it's time to define the full model. This is the production-ready version of the architecture you built step by step in notebook-01 — the same `Head`, `MultiHeadAttention`, `Block`, and language model head, combined into a single `GPT` class. If you see something unfamiliar, trace it back to the corresponding piece from notebook-01.
 
 The main model is created as a class simply called **GPT**. Within this model, we have a few different types of layers/elements:
 
@@ -506,9 +515,29 @@ class GPT(nn.Module):
         return idx
 ```
 
+## Understanding Attention
+
+Let's talk about Attention. The first paper which outlines the Transformer neural network architecture (which relies heavily on the Attention mechanism and is the basis for most large language models today) is [Attention is All you Need](https://proceedings.neurips.cc/paper_files/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf). This paper describes the application of Attention in a machine translation model, but the underlying ideas can be applied across any model that processes sequences of text.
+
+At its core, the Attention mechanism allows us to analyze the pairwise relationship between every token in a given sequence. So, in a very simple example, if you're looking at the sentence "The cow jumped over the moon", and you are tokenizing by word, you may expect there to be a strong relationship between "jumped" and "over" (as one tends to jump over things), but not between the two iterations of "the". Below, I describe the actual mechanism behind this in plain language. It will be an oversimplification, but hopefully it can provide some context into what our model is doing.
+
+The way we model this using Attention is via Query (Q), Key (K), and Value (V) matrices. In short, the input into the Attention layer goes through three separate matrix multiplication processes with different weights to create Q, K, and V. The idea behind these matrices is that Q represents each position/token in the sequence, and what information each of those positions is "looking for". K represents the information that each position contains, and therefore the actual Attention Score is obtained by doing matrix multiplication on Q and K. If two positions are a good match, they will have a higher attention score. The authors of the [Enformer](https://www.nature.com/articles/s41592-021-01252-x) paper provide a good, simplified visualization of this, where darker colors represent a stronger relationship in the Key vector to the given Q position:
+
+![query-key-value](/post/images/key-query.png)
+
+Once we have our Attention score matrix, we then multiply this by the V matrix, which represents the actual information of each token. This puts the Attention scores back into the context of the original token embeddings, which can then be passed to future layers.
+
+One thing to note is that this calculation is often done in parallel, across multiple "heads" within a single layer. The idea behind this is that each head can learn different weights, and therefore multiple types of relationships between tokens can be represented within the same model. The [Attention is All you Need](https://proceedings.neurips.cc/paper_files/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf) paper provides a good diagram of the Attention process, and what multi-head attention looks like (note that Scaled Dot-Produce Attention is essentially the process we just described):
+
+![Attention_Diagram](/post/images/scale-dot-attention-multihead.png)
+
+> **Discuss:** Our model uses *causal* self-attention — each position can only attend to positions before it. Does this match how DNA actually works biologically? What would *bidirectional* attention mean for a genomic model?
+
+> **Discuss:** What is the difference between the Query, Key, and Value matrices? Try to give an intuitive analogy.
+
 ## Training
 
-Now that our model constructors are ready, it's time to start training! First, see below for the configuration settings we are using for the model. Most of these are not important for the purposes of this notebook, but just note that we are creating a model with 4 attention layers with 4 heads each (more on that below), our embedding size is 384 (so our vocabulary gets projected into 384-dimensional space), and our block size/context size is 300, so our model will look at 300 bp of sequence as each input. Training will take a while (about 5-10 minutes), so run the code block below and go to the end for a description of the Attention mechanism and a rundown of what our training loop does.
+Now that our model constructors are ready, it's time to start training! First, see below for the configuration settings we are using for the model. Most of these are not important for the purposes of this notebook, but just note that we are creating a model with 4 attention layers with 4 heads each (more on that below), our embedding size is 384 (so our vocabulary gets projected into 384-dimensional space), and our block size/context size is 300, so our model will look at 300 bp of sequence as each input. Training will take a while (about 5-10 minutes), so run the code block below and use the time to review the Attention section above and the training loop description below.
 
 ```{python}
 #| colab: {base_uri: https://localhost:8080/}
@@ -516,9 +545,15 @@ Now that our model constructors are ready, it's time to start training! First, s
 
 gc.collect()
 # -----------------------------------------------------------------------------
+# Set debug=True for a fast test run (finishes in ~1 min on CPU/MPS).
+# Set debug=False for the full training run used in the paper.
+debug = False
+# Set force_retrain_pretrain=True to ignore the saved checkpoint and retrain from scratch.
+force_retrain_pretrain = False
+# -----------------------------------------------------------------------------
 # default config values designed to train a gpt on hg38 reference genome
 # I/O
-out_dir = WORKDIR + 'out'
+out_dir = os.path.join(WORKDIR, 'out')
 eval_interval = 1000
 log_interval = 100
 eval_iters = 100
@@ -555,13 +590,19 @@ min_lr = 1e-4 # minimum learning rate, should be ~= learning_rate/10 per Chinchi
 # DDP settings
 #backend = 'nccl' # 'nccl', 'gloo', etc.
 # system
-device = 'cuda' # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1' etc., or try 'mps' on macbooks
-dtype = 'float16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float16' # 'float32', 'bfloat16', or 'float16', the latter will auto implement a GradScaler
-if torch.cuda.is_available() and device == 'cuda':
-    print('cuda')
-else:
-    print('CPU')
-compile = True # use PyTorch 2.0 to compile the model to be faster
+device = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
+dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float32'
+print(f"using device: {device}")
+compile = (device == 'cuda') # torch.compile only on CUDA; MPS/CPU support is experimental and unreliable
+
+if debug:
+    max_iters = 50
+    eval_interval = 25     # checkpoint saved at iter 25 and 50
+    eval_iters = 5         # fewer batches per eval
+    warmup_iters = 5
+    lr_decay_iters = 50
+    always_save_checkpoint = True  # save even if val loss doesn't improve
+    compile = False        # torch.compile is slow/unreliable on MPS
 # -----------------------------------------------------------------------------
 config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str))]
 #exec(open('configurator.py').read()) # overrides from command line or config file
@@ -586,7 +627,7 @@ ptdtype = {'float32': torch.float32, 'bfloat16': torch.bfloat16, 'float16': torc
 ctx = nullcontext() if device_type == 'cpu' else torch.amp.autocast(device_type=device_type, dtype=ptdtype)
 
 # poor man's data loader
-data_dir = '/root/data'
+data_dir = WORKDIR
 def get_batch(split):
     # We recreate np.memmap every batch to avoid a memory leak, as per
     # https://stackoverflow.com/questions/45132940/numpy-memmap-memory-usage-want-to-iterate-once/61472122#61472122
@@ -636,7 +677,7 @@ if block_size < model.config.block_size:
 model.to(device)
 
 # initialize a GradScaler. If enabled=False scaler is a no-op
-scaler = torch.cuda.amp.GradScaler(enabled=(dtype == 'float16'))
+scaler = torch.cuda.amp.GradScaler(enabled=(dtype == 'float16' and device_type == 'cuda'))
 
 # optimizer
 optimizer = model.configure_optimizers(weight_decay, learning_rate, (beta1, beta2), device_type)
@@ -685,102 +726,93 @@ if wandb_log and master_process:
     import wandb
     wandb.init(project=wandb_project, name=wandb_run_name, config=config)
 
-# training loop
-X, Y = get_batch('train') # fetch the very first batch
-t0 = time.time()
-local_iter_num = 0 # number of iterations in the lifetime of this process
-raw_model = model
-running_mfu = -1.0
-while True:
+_pretrain_ckpt = os.path.join(out_dir, 'ckpt.pt')
+if os.path.exists(_pretrain_ckpt) and not force_retrain_pretrain:
+    print(f"Pretraining checkpoint found at {_pretrain_ckpt} — skipping training.")
+    print("Set force_retrain_pretrain=True to retrain from scratch.")
+else:
+    # training loop
+    X, Y = get_batch('train') # fetch the very first batch
+    t0 = time.time()
+    local_iter_num = 0 # number of iterations in the lifetime of this process
+    raw_model = model
+    running_mfu = -1.0
+    while True:
 
-    # determine and set the learning rate for this iteration
-    lr = get_lr(iter_num) if decay_lr else learning_rate
-    for param_group in optimizer.param_groups:
-        param_group['lr'] = lr
+        # determine and set the learning rate for this iteration
+        lr = get_lr(iter_num) if decay_lr else learning_rate
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = lr
 
-    # evaluate the loss on train/val sets and write checkpoints
-    if iter_num % eval_interval == 0 and master_process:
-        losses = estimate_loss()
-        print(f"step {iter_num}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
-        if wandb_log:
-            wandb.log({
-                "iter": iter_num,
-                "train/loss": losses['train'],
-                "val/loss": losses['val'],
-                "lr": lr,
-                "mfu": running_mfu*100, # convert to percentage
-            })
-        if losses['val'] < best_val_loss or always_save_checkpoint:
-            best_val_loss = losses['val']
-            if iter_num > 0:
-                checkpoint = {
-                    'model': raw_model.state_dict(),
-                    'optimizer': optimizer.state_dict(),
-                    'model_args': model_args,
-                    'iter_num': iter_num,
-                    'best_val_loss': best_val_loss,
-                    'config': config,
-                }
-                print(f"saving checkpoint to {out_dir}")
-                torch.save(checkpoint, os.path.join(out_dir, 'ckpt.pt'))
-    if iter_num == 0 and eval_only:
-        break
+        # evaluate the loss on train/val sets and write checkpoints
+        if iter_num % eval_interval == 0 and master_process:
+            losses = estimate_loss()
+            print(f"step {iter_num}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
+            if wandb_log:
+                wandb.log({
+                    "iter": iter_num,
+                    "train/loss": losses['train'],
+                    "val/loss": losses['val'],
+                    "lr": lr,
+                    "mfu": running_mfu*100, # convert to percentage
+                })
+            if losses['val'] < best_val_loss or always_save_checkpoint:
+                best_val_loss = losses['val']
+                if iter_num > 0:
+                    checkpoint = {
+                        'model': raw_model.state_dict(),
+                        'optimizer': optimizer.state_dict(),
+                        'model_args': model_args,
+                        'iter_num': iter_num,
+                        'best_val_loss': best_val_loss,
+                        'config': config,
+                    }
+                    print(f"saving checkpoint to {out_dir}")
+                    torch.save(checkpoint, os.path.join(out_dir, 'ckpt.pt'))
+        if iter_num == 0 and eval_only:
+            break
 
-    # forward backward update, with optional gradient accumulation to simulate larger batch size
-    # and using the GradScaler if data type is float16
-    for micro_step in range(gradient_accumulation_steps):
-        with ctx:
-            logits, loss = model(X, Y)[:2]
-            loss = loss / gradient_accumulation_steps # scale the loss to account for gradient accumulation
-        # immediately async prefetch next batch while model is doing the forward pass on the GPU
-        X, Y = get_batch('train')
-        # backward pass, with gradient scaling if training in fp16
-        scaler.scale(loss).backward()
-    # clip the gradient
-    if grad_clip != 0.0:
-        scaler.unscale_(optimizer)
-        torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
-    # step the optimizer and scaler if training in fp16
-    scaler.step(optimizer)
-    scaler.update()
-    # flush the gradients as soon as we can, no need for this memory anymore
-    optimizer.zero_grad(set_to_none=True)
+        # forward backward update, with optional gradient accumulation to simulate larger batch size
+        # and using the GradScaler if data type is float16
+        for micro_step in range(gradient_accumulation_steps):
+            with ctx:
+                logits, loss = model(X, Y)[:2]
+                loss = loss / gradient_accumulation_steps # scale the loss to account for gradient accumulation
+            # immediately async prefetch next batch while model is doing the forward pass on the GPU
+            X, Y = get_batch('train')
+            # backward pass, with gradient scaling if training in fp16
+            scaler.scale(loss).backward()
+        # clip the gradient
+        if grad_clip != 0.0:
+            scaler.unscale_(optimizer)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
+        # step the optimizer and scaler if training in fp16
+        scaler.step(optimizer)
+        scaler.update()
+        # flush the gradients as soon as we can, no need for this memory anymore
+        optimizer.zero_grad(set_to_none=True)
 
-    # timing and logging
-    t1 = time.time()
-    dt = t1 - t0
-    t0 = t1
-    if iter_num % log_interval == 0 and master_process:
-        # get loss as float. note: this is a CPU-GPU sync point
-        # scale up to undo the division above, approximating the true total loss (exact would have been a sum)
-        lossf = loss.item() * gradient_accumulation_steps
-        if local_iter_num >= 5: # let the training loop settle a bit
-            mfu = raw_model.estimate_mfu(batch_size * gradient_accumulation_steps, dt)
-            running_mfu = mfu if running_mfu == -1.0 else 0.9*running_mfu + 0.1*mfu
-        print(f"iter {iter_num}: loss {lossf:.4f}, time {dt*1000:.2f}ms, mfu {running_mfu*100:.2f}%")
-    iter_num += 1
-    local_iter_num += 1
+        # timing and logging
+        t1 = time.time()
+        dt = t1 - t0
+        t0 = t1
+        if iter_num % log_interval == 0 and master_process:
+            # get loss as float. note: this is a CPU-GPU sync point
+            # scale up to undo the division above, approximating the true total loss (exact would have been a sum)
+            lossf = loss.item() * gradient_accumulation_steps
+            if local_iter_num >= 5: # let the training loop settle a bit
+                mfu = raw_model.estimate_mfu(batch_size * gradient_accumulation_steps, dt)
+                running_mfu = mfu if running_mfu == -1.0 else 0.9*running_mfu + 0.1*mfu
+            print(f"iter {iter_num}: loss {lossf:.4f}, time {dt*1000:.2f}ms, mfu {running_mfu*100:.2f}%")
+        iter_num += 1
+        local_iter_num += 1
 
-    # termination conditions
-    if iter_num > max_iters:
-        break
+        # termination conditions
+        if iter_num > max_iters:
+            break
 ```
 
-Now that we've started training, let's talk about Attention. The first paper which outlines the Transformer neural network architecture (which relies heavily on the Attention mechanism and is the basis for most large language models today) is [Attention is All you Need](https://proceedings.neurips.cc/paper_files/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf). This paper describes the application of Attention in a machine translation model, but the underlying ideas can be applied across any model that processes sequences of text.
-
-At its core, the Attention mechanism allows us to analyze the pairwise relationship between every token in a given sequence. So, in a very simple example, if you're looking at the sentence "The cow jumped over the moon", and you are tokenizing by word, you may expect there to be a strong relationship between "jumped" and "over" (as one tends to jump over things), but not between the two iterations of "the". Below, I describe the actual mechanism behind this in plain language. It will be an oversimplification, but hopefully it can provide some context into what our model is doing.
-
-The way we model this using Attention is via Query (Q), Key (K), and Value (V) matrices. In short, the input into the Attention layer goes through three separate matrix multiplication processes with different weights to create Q, K, and V. The idea behind these matrices is that Q represents each position/token in the sequence, and what information each of those positions is "looking for". K represents the information that each position contains, and therefore the actual Attention Score is obtained by doing matrix multiplication on Q and K. If two positions are a good match, they will have a higher attention score. The authors of the [Enformer](https://www.nature.com/articles/s41592-021-01252-x) paper provide a good, simplified visualization of this, where darker colors represent a stronger relationship in the Key vector to the given Q position:
-
-![query-key-value](/post/images/key-query.png)
-
-Once we have our Attention score matrix, we then multiply this by the V matrix, which represents the actual information of each token. This puts the Attention scores back into the context of the original token embeddings, which can then be passed to future layers.
-
-One thing to note is that this calculation is often done in parallel, across multiple "heads" within a single layer. The idea behind this is that each head can learn different weights, and therefore multiple types of relationships between tokens can be represented within the same model. The [Attention is All you Need](https://proceedings.neurips.cc/paper_files/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf) paper provides a good diagram of the Attention process, and what multi-head attention looks like (note that Scaled Dot-Produce Attention is essentially the process we just described):
-
-![Attention_Diagram](/post/images/scale-dot-attention-multihead.png)
-
-Now that we've defined the Attention mechanism, our training loop is actually pretty straightforward. See below for the steps:
+Now that the model is defined and the Attention mechanism is clear, let's walk through what the training loop is doing:
 
 
 1.   Generate a batch from our training data: This consists of sampling a 300 bp sequence out of the genome as our "data", then the same 300 bp but shifted over by 1 as our "labels". Our batch size is 64, so a single batch will be 64 of these pairs of sequences
@@ -806,32 +838,32 @@ Sample from a trained model
 
 # -----------------------------------------------------------------------------
 init_from = 'resume' # either 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2-xl')
-out_dir = '/root/data/out' # ignored if init_from is not 'resume'
+out_dir = os.path.join(WORKDIR, 'out') # ignored if init_from is not 'resume'
 start = "\n" # or "<|endoftext|>" or etc. Can also specify a file, use as: "FILE:prompt.txt"
 num_samples = 5 # number of samples to draw
 max_new_tokens = 250 # number of tokens generated in each sample
 temperature = 0.8 # 1.0 = no change, < 1.0 = less random, > 1.0 = more random, in predictions
 top_k = 200 # retain only the top_k most likely tokens, clamp others to have 0 probability
 seed = 1337
-device = 'cuda' # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1', etc.
-dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float16' # 'float32' or 'bfloat16' or 'float16'
-compile = True # use PyTorch 2.0 to compile the model to be faster
+device = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
+dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float32' # 'float32' or 'bfloat16' or 'float16'
+compile = (device == 'cuda') # torch.compile only on CUDA; MPS/CPU support is experimental and unreliable
 # -----------------------------------------------------------------------------
 
-torch.cuda.init()
 torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(seed)
 torch.backends.cuda.matmul.allow_tf32 = True # allow tf32 on matmul
 torch.backends.cudnn.allow_tf32 = True # allow tf32 on cudnn
 device_type = 'cuda' if 'cuda' in device else 'cpu' # for later use in torch.autocast
-ptdtype = {'float32': torch.float32, 'bfloat16': torch.bfloat16, 'float16': torch.float16}['float16']
+ptdtype = {'float32': torch.float32, 'bfloat16': torch.bfloat16, 'float16': torch.float16}[dtype]
 ctx = nullcontext() if device_type == 'cpu' else torch.amp.autocast(device_type=device_type, dtype=ptdtype)
 
 # model
 if init_from == 'resume':
     # init from a model saved in a specific directory
     ckpt_path = os.path.join(out_dir, 'ckpt.pt')
-    checkpoint = torch.load(ckpt_path, map_location=device)
+    checkpoint = torch.load(ckpt_path, map_location=device, weights_only=False)
     gptconf = GPTConfig(**checkpoint['model_args'])
     model = GPT(gptconf)
     state_dict = checkpoint['model']
@@ -849,7 +881,7 @@ if compile:
 # look for the meta pickle in case it is available in the dataset folder
 load_meta = False
 if init_from == 'resume' and 'config' in checkpoint and 'dataset' in checkpoint['config']: # older checkpoints might not have these...
-    meta_path = os.path.join('/root/data', 'meta.pkl')
+    meta_path = os.path.join(WORKDIR, 'meta.pkl')
     load_meta = os.path.exists(meta_path)
 if load_meta:
     print(f"Loading meta from {meta_path}...")
@@ -880,17 +912,16 @@ And voila, it looks like our model is generating DNA sequence! But, that begs th
 
 **Note for those interested**: You may also notice some uppercase and lowercase sequences. This is expected, as in our original file any soft-masked bases (i.e. lower-confidence segments) are lowercase rather than uppercase. The fact that our model is not mixing lower and uppercase bases is a good sign, as these should not be mixed based on sequencing assembly techniques.
 
-#### Questions
+> **Discuss:** Look at the generated sequences. Do they look like real DNA? What properties would you check to evaluate quality (nucleotide frequencies, k-mer distributions, known motifs)?
 
-
-1.   As mentioned above, our model is using "causal" self-attention, meaning that it is only paying attention to the ~300 tokens/base pairs that come before the current one. Does this align with how DNA interacts in a biological sense? Why or why not?
-2.   What effect do you think adding more attention layers/heads to our model would have? What about training for more epochs? Are there any downsides to expanding our model in this way?
-3.   What is the difference between the Query, Key, and Value matrices?
+> **Discuss:** What effect would adding more attention layers or heads have on the model's performance? What are the tradeoffs?
 
 
 ## Fine-Tuning (Promoter Classification)
 
-Now that we have our gLM up and running, let's try applying it to two different problems. First, let's look at a promoter classification problem pulled from the [Nucleotide Transformer training notebook](https://github.com/huggingface/notebooks/blob/main/examples/nucleotide_transformer_dna_sequence_modelling.ipynb). In short, this dataset is made up of 300 bp sequences, each labelled as 1 for promoter or 0 for non-promoter. Let's try to train our language model to separate these classes!
+Generating plausible DNA sequences shows that the model has learned something real about genomic structure. But generation alone doesn't let us evaluate the model against ground truth. The key insight of **transfer learning** is that we can *reuse* that learned structure for a prediction task without starting from scratch: we freeze or lightly retrain the pretrained weights and add a small classification head on top. This is far more data-efficient than training a classifier from random initialization, because the model's representations of DNA sequence already carry useful information.
+
+Now let's try applying this to two different problems. First, let's look at a promoter classification problem pulled from the [Nucleotide Transformer training notebook](https://github.com/huggingface/notebooks/blob/main/examples/nucleotide_transformer_dna_sequence_modelling.ipynb). In short, this dataset is made up of 300 bp sequences, each labelled as 1 for promoter or 0 for non-promoter. Let's try to train our language model to separate these classes!
 
 Note: This data was pulled from the [DeePromoter](https://www.frontiersin.org/journals/genetics/articles/10.3389/fgene.2019.00286/full) paper, as cited below:
 
@@ -898,23 +929,37 @@ Oubounyt, M., Louadi, Z., Tayara, H., & Chong, K. T. (2019). DeePromoter: Robust
 
 First, let's actually load in the data:
 
+::: {.callout-important}
+## Data setup required before running this section
+
+The fine-tuning sections use pre-packaged dataset files stored in the course repository. You need to make these files available in the right location before running the cells below.
+
+**If you are running locally (cloned the repo):** The files are already in place — no action needed. They live at `post/unit01/data/` relative to the repo root.
+
+**If you are running on Google Colab:**
+
+1. Go to the [course GitHub repository](https://github.com/hakyimlab/web-GENE-46100-2026) and download the four files inside `post/unit01/data/`:
+   - `promoter_all_train.parquet`
+   - `promoter_all_test.parquet`
+   - `enhancers_types_train.parquet`
+   - `enhancers_types_test.parquet`
+2. In the Colab file browser (left sidebar → folder icon), create a folder named `data` in the current working directory.
+3. Upload all four files into that `data/` folder.
+
+Alternatively, run this cell once to clone the repo and symlink the data folder:
+```python
+!git clone https://github.com/hakyimlab/web-GENE-46100-2026.git
+import os; os.symlink("web-GENE-46100-2026/post/unit01/data", "data")
+```
+:::
+
 ```{python}
-# Load the promoter dataset from the InstaDeep Hugging Face resources
-dataset_name = "promoter_all"
-train_dataset_promoter = load_dataset(
-        "InstaDeepAI/nucleotide_transformer_downstream_tasks",
-        dataset_name,
-        split="train",
-        streaming= False,
-        trust_remote_code=True
-    )
-test_dataset_promoter = load_dataset(
-        "InstaDeepAI/nucleotide_transformer_downstream_tasks",
-        dataset_name,
-        split="test",
-        streaming= False,
-        trust_remote_code=True
-    )
+# Load the promoter dataset from local parquet files
+data_dir = "data"
+train_dataset_promoter = load_dataset("parquet",
+    data_files=os.path.join(data_dir, "promoter_all_train.parquet"), split="train")
+test_dataset_promoter = load_dataset("parquet",
+    data_files=os.path.join(data_dir, "promoter_all_test.parquet"), split="train")
 
 num_labels_promoter = 2
 ```
@@ -1033,28 +1078,32 @@ Now that we have our new model defined, let's pull in the model we trained previ
 ```{python}
 #| colab: {base_uri: https://localhost:8080/}
 # -----------------------------------------------------------------------------
+# Set force_retrain_promoter=True to ignore the saved checkpoint and retrain.
+force_retrain_promoter = False
+_promoter_ckpt = os.path.join(WORKDIR, 'promoter_classifier.pt')
+# -----------------------------------------------------------------------------
 init_from = 'resume' # either 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2-xl')
-out_dir = '/root/data/out' # ignored if init_from is not 'resume'
+out_dir = os.path.join(WORKDIR, 'out') # ignored if init_from is not 'resume'
 seed = 1337
-device = 'cuda' # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1', etc.
-dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float16' # 'float32' or 'bfloat16' or 'float16'
-compile = True # use PyTorch 2.0 to compile the model to be faster
+device = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
+dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float32' # 'float32' or 'bfloat16' or 'float16'
+compile = (device == 'cuda') # torch.compile only on CUDA; MPS/CPU support is experimental and unreliable
 # -----------------------------------------------------------------------------
 
-torch.cuda.init()
 torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(seed)
 torch.backends.cuda.matmul.allow_tf32 = True # allow tf32 on matmul
 torch.backends.cudnn.allow_tf32 = True # allow tf32 on cudnn
 device_type = 'cuda' if 'cuda' in device else 'cpu' # for later use in torch.autocast
-ptdtype = {'float32': torch.float32, 'bfloat16': torch.bfloat16, 'float16': torch.float16}['float16']
+ptdtype = {'float32': torch.float32, 'bfloat16': torch.bfloat16, 'float16': torch.float16}[dtype]
 ctx = nullcontext() if device_type == 'cpu' else torch.amp.autocast(device_type=device_type, dtype=ptdtype)
 
 # model
 if init_from == 'resume':
     # init from a model saved in a specific directory
     ckpt_path = os.path.join(out_dir, 'ckpt.pt')
-    checkpoint = torch.load(ckpt_path, map_location=device)
+    checkpoint = torch.load(ckpt_path, map_location=device, weights_only=False)
     gptconf = GPTConfig(**checkpoint['model_args'])
     model = GPT(gptconf)
     state_dict = checkpoint['model']
@@ -1098,52 +1147,62 @@ def calc_f1(predictions, true_labels):
     F1 = (2*precision*recall / (precision + recall))
     return F1
 
-val_predictions = []
-val_true_labels = []
+if os.path.exists(_promoter_ckpt) and not force_retrain_promoter:
+    print(f"Promoter checkpoint found at {_promoter_ckpt} — loading saved model and metrics.")
+    print("Set force_retrain_promoter=True to retrain from scratch.")
+    _saved = torch.load(_promoter_ckpt, map_location=device, weights_only=False)
+    new_model.load_state_dict(_saved['model'])
+    f1_scores = _saved['f1_scores']
+else:
+    val_predictions = []
+    val_true_labels = []
 
-#Training Loop
-loss_lst = []
-val_loss_lst = []
-f1_scores = []
-new_model.train()
-for epoch in range(num_epochs):
-    i = 0
-    for batch in train_dataloader:
-        input_ids, labels = batch
-        optimizer.zero_grad()
+    #Training Loop
+    loss_lst = []
+    val_loss_lst = []
+    f1_scores = []
+    new_model.train()
+    for epoch in range(num_epochs):
+        i = 0
+        for batch in train_dataloader:
+            input_ids, labels = batch
+            optimizer.zero_grad()
 
-        # Forward pass
-        outputs = new_model(input_ids, labels=labels)
-        loss = outputs[1]
-        loss_lst.append(loss.item())
+            # Forward pass
+            outputs = new_model(input_ids, labels=labels)
+            loss = outputs[1]
+            loss_lst.append(loss.item())
 
-        # Backward pass and optimization
-        loss.backward()
-        optimizer.step()
-        i += 1
-        if i % 100 == 99:
-            new_model.eval()
-            with torch.no_grad():
-                for val_batch in validation_dataloader:
-                    val_input_ids, val_labels = val_batch
-                    optimizer.zero_grad()
-                    val_outputs = new_model(val_input_ids, labels=val_labels)
-                    val_loss = val_outputs[1]
-                    val_loss_lst.append(val_loss.item())
-                    val_logits = val_outputs[0]  # Get the logits
-                    val_predictions.append(val_logits)
-                    val_true_labels.append(val_labels)
-                val_predictions = torch.cat(val_predictions, dim=0)
-                val_true_labels = torch.cat(val_true_labels, dim=0)
-                val_predictions = torch.argmax(val_predictions, dim=1).tolist()
-                val_true_labels = val_true_labels.tolist()
-                f1_scores.append(calc_f1(val_predictions, val_true_labels))
-            print(f"Epoch {epoch}, Batch {i}, Train Loss: {np.mean(loss_lst)}, Val Loss: {np.mean(val_loss_lst)}, Val F1: {calc_f1(val_predictions, val_true_labels)}")
-            loss_lst = []
-            val_loss_lst = []
-            new_model.train()
-            val_predictions = []
-            val_true_labels = []
+            # Backward pass and optimization
+            loss.backward()
+            optimizer.step()
+            i += 1
+            if i % 100 == 99:
+                new_model.eval()
+                with torch.no_grad():
+                    for val_batch in validation_dataloader:
+                        val_input_ids, val_labels = val_batch
+                        optimizer.zero_grad()
+                        val_outputs = new_model(val_input_ids, labels=val_labels)
+                        val_loss = val_outputs[1]
+                        val_loss_lst.append(val_loss.item())
+                        val_logits = val_outputs[0]  # Get the logits
+                        val_predictions.append(val_logits)
+                        val_true_labels.append(val_labels)
+                    val_predictions = torch.cat(val_predictions, dim=0)
+                    val_true_labels = torch.cat(val_true_labels, dim=0)
+                    val_predictions = torch.argmax(val_predictions, dim=1).tolist()
+                    val_true_labels = val_true_labels.tolist()
+                    f1_scores.append(calc_f1(val_predictions, val_true_labels))
+                print(f"Epoch {epoch}, Batch {i}, Train Loss: {np.mean(loss_lst)}, Val Loss: {np.mean(val_loss_lst)}, Val F1: {calc_f1(val_predictions, val_true_labels)}")
+                loss_lst = []
+                val_loss_lst = []
+                new_model.train()
+                val_predictions = []
+                val_true_labels = []
+
+    torch.save({'model': new_model.state_dict(), 'f1_scores': f1_scores}, _promoter_ckpt)
+    print(f"Promoter model saved to {_promoter_ckpt}")
 
 plt.plot(f1_scores, label='Validation F1 score')
 plt.title("Validation F1 score for promoter prediction")
@@ -1250,12 +1309,11 @@ The first set is a breakdown of all of the heads of our first attention layer. A
 
 This pattern becomes even more apparent as we move to the second set of heatmaps, where we average the attention weights for all heads in each layer (to give an approximate idea of what each full layer learns about the input). At this level, we see some interesting patterns emerge. For example, multiple layers have strong attention weights at the position around 160-170 bp into the sequence, which means that it likely played an important role in deciding this sequence's classification. Each head and layer learned some unique things about the sequence, so take some time to try and understand what these heatmaps are showing!
 
-#### Questions
+> **Discuss:** Promoters have characteristic sequence features like TATA boxes. Does that make this classification task easier or harder compared to a task without such motifs? Why?
 
+> **Discuss:** The validation F1 score does not increase uniformly during training. What could cause this?
 
-1.   Promoters are known for having very characteristic structures of DNA sequence (i.e. TATA boxes as I mentioned above). How could this influence our classification accuracy (i.e. make the classification problem easier or harder)? Why?
-2.   You can see that our validation F1 score metric does not uniformly increase across the training process. How can you explain this?
-3.   Provide your interpretation of the graphs of the Attention weights above. Are there any locations in the input sequence that appear to be highly important (i.e. have a lot of "attention" on them)?
+> **Discuss:** Look at the attention weight heatmaps. Are there specific positions in the input sequence that consistently attract high attention? What might those positions correspond to biologically?
 
 
 ## Fine-Tuning (Enhancer Classification)
@@ -1267,22 +1325,11 @@ Geng, Q., Yang, R., & Zhang, L. (2022). A deep learning framework for enhancer p
 To start, we are going to load the data and tokenize it the exact same way we did previously:
 
 ```{python}
-# Load the enhancer dataset from the InstaDeep Hugging Face ressources
-dataset_name = "enhancers_types"
-train_dataset_enhancers = load_dataset(
-        "InstaDeepAI/nucleotide_transformer_downstream_tasks",
-        dataset_name,
-        split="train",
-        streaming= False,
-        trust_remote_code=True
-    )
-test_dataset_enhancers = load_dataset(
-        "InstaDeepAI/nucleotide_transformer_downstream_tasks",
-        dataset_name,
-        split="test",
-        streaming= False,
-        trust_remote_code=True
-    )
+# Load the enhancer dataset from local parquet files
+train_dataset_enhancers = load_dataset("parquet",
+    data_files=os.path.join(data_dir, "enhancers_types_train.parquet"), split="train")
+test_dataset_enhancers = load_dataset("parquet",
+    data_files=os.path.join(data_dir, "enhancers_types_test.parquet"), split="train")
 
 num_labels_enhancer = 3
 ```
@@ -1355,28 +1402,32 @@ Now, let's load back in our **original** gLM, i.e. not the one we fine-tuned to 
 ```{python}
 #| colab: {base_uri: https://localhost:8080/}
 # -----------------------------------------------------------------------------
+# Set force_retrain_enhancer=True to ignore the saved checkpoint and retrain.
+force_retrain_enhancer = False
+_enhancer_ckpt = os.path.join(WORKDIR, 'enhancer_classifier.pt')
+# -----------------------------------------------------------------------------
 init_from = 'resume' # either 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2-xl')
-out_dir = '/root/data/out' # ignored if init_from is not 'resume'
+out_dir = os.path.join(WORKDIR, 'out') # ignored if init_from is not 'resume'
 seed = 1337
-device = 'cuda' # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1', etc.
-dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float16' # 'float32' or 'bfloat16' or 'float16'
-compile = True # use PyTorch 2.0 to compile the model to be faster
+device = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
+dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float32' # 'float32' or 'bfloat16' or 'float16'
+compile = (device == 'cuda') # torch.compile only on CUDA; MPS/CPU support is experimental and unreliable
 # -----------------------------------------------------------------------------
 
-torch.cuda.init()
 torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(seed)
 torch.backends.cuda.matmul.allow_tf32 = True # allow tf32 on matmul
 torch.backends.cudnn.allow_tf32 = True # allow tf32 on cudnn
 device_type = 'cuda' if 'cuda' in device else 'cpu' # for later use in torch.autocast
-ptdtype = {'float32': torch.float32, 'bfloat16': torch.bfloat16, 'float16': torch.float16}['float16']
+ptdtype = {'float32': torch.float32, 'bfloat16': torch.bfloat16, 'float16': torch.float16}[dtype]
 ctx = nullcontext() if device_type == 'cpu' else torch.amp.autocast(device_type=device_type, dtype=ptdtype)
 
 # model
 if init_from == 'resume':
     # init from a model saved in a specific directory
     ckpt_path = os.path.join(out_dir, 'ckpt.pt')
-    checkpoint = torch.load(ckpt_path, map_location=device)
+    checkpoint = torch.load(ckpt_path, map_location=device, weights_only=False)
     gptconf = GPTConfig(**checkpoint['model_args'])
     model = GPT(gptconf)
     state_dict = checkpoint['model']
@@ -1401,48 +1452,58 @@ optimizer = torch.optim.AdamW(new_model.parameters(), lr=2e-5)
 num_epochs=10
 total_steps = len(train_dataloader) * num_epochs
 
-val_predictions = []
-val_true_labels = []
+if os.path.exists(_enhancer_ckpt) and not force_retrain_enhancer:
+    print(f"Enhancer checkpoint found at {_enhancer_ckpt} — loading saved model and metrics.")
+    print("Set force_retrain_enhancer=True to retrain from scratch.")
+    _saved = torch.load(_enhancer_ckpt, map_location=device, weights_only=False)
+    new_model.load_state_dict(_saved['model'])
+    mcc_scores = _saved['mcc_scores']
+else:
+    val_predictions = []
+    val_true_labels = []
 
-#Training Loop
-loss_lst = []
-val_loss_lst = []
-mcc_scores = []
-new_model.train()
-for epoch in range(num_epochs):
-    i = 0
-    for batch in train_dataloader:
-        input_ids, labels = batch
-        optimizer.zero_grad()
+    #Training Loop
+    loss_lst = []
+    val_loss_lst = []
+    mcc_scores = []
+    new_model.train()
+    for epoch in range(num_epochs):
+        i = 0
+        for batch in train_dataloader:
+            input_ids, labels = batch
+            optimizer.zero_grad()
 
-        # Forward pass
-        outputs = new_model(input_ids, labels=labels)
-        loss = outputs[1]
-        loss_lst.append(loss.item())
+            # Forward pass
+            outputs = new_model(input_ids, labels=labels)
+            loss = outputs[1]
+            loss_lst.append(loss.item())
 
-        # Backward pass and optimization
-        loss.backward()
-        optimizer.step()
-        i += 1
-        if i % 100 == 99:
-            new_model.eval()
-            with torch.no_grad():
-                for val_batch in validation_dataloader:
-                    val_input_ids, val_labels = val_batch
-                    optimizer.zero_grad()
-                    val_outputs = new_model(val_input_ids, labels=val_labels)
-                    val_loss = val_outputs[1]
-                    val_loss_lst.append(val_loss.item())
-                    val_logits = val_outputs[0]  # Get the logits
-                    val_predictions.append(torch.argmax(val_logits).item())
-                    val_true_labels.append(val_labels.item())
-            print(f"Epoch {epoch}, Batch {i}, Train Loss: {np.mean(loss_lst)}, Val Loss: {np.mean(val_loss_lst)}, Val MCC: {matthews_corrcoef(val_true_labels, val_predictions)}")
-            mcc_scores.append(matthews_corrcoef(val_true_labels, val_predictions))
-            loss_lst = []
-            val_loss_lst = []
-            new_model.train()
-            val_predictions = []
-            val_true_labels = []
+            # Backward pass and optimization
+            loss.backward()
+            optimizer.step()
+            i += 1
+            if i % 100 == 99:
+                new_model.eval()
+                with torch.no_grad():
+                    for val_batch in validation_dataloader:
+                        val_input_ids, val_labels = val_batch
+                        optimizer.zero_grad()
+                        val_outputs = new_model(val_input_ids, labels=val_labels)
+                        val_loss = val_outputs[1]
+                        val_loss_lst.append(val_loss.item())
+                        val_logits = val_outputs[0]  # Get the logits
+                        val_predictions.append(torch.argmax(val_logits).item())
+                        val_true_labels.append(val_labels.item())
+                print(f"Epoch {epoch}, Batch {i}, Train Loss: {np.mean(loss_lst)}, Val Loss: {np.mean(val_loss_lst)}, Val MCC: {matthews_corrcoef(val_true_labels, val_predictions)}")
+                mcc_scores.append(matthews_corrcoef(val_true_labels, val_predictions))
+                loss_lst = []
+                val_loss_lst = []
+                new_model.train()
+                val_predictions = []
+                val_true_labels = []
+
+    torch.save({'model': new_model.state_dict(), 'mcc_scores': mcc_scores}, _enhancer_ckpt)
+    print(f"Enhancer model saved to {_enhancer_ckpt}")
 ```
 
 Now that we've finished training, we can see that our training loss remains significantly higher for this task than our promoter prediction task, as expected. Note that we use a slightly different performance metric here as well (MCC), which gives us a single scalar value for classification performance (whereas using F1 again would not be so simple). In any case, let's see how this model performs on the test data.
@@ -1507,12 +1568,11 @@ Oof, those numbers are a little rough, especially compared to our previous model
 
 In any case, this goes to show that sometimes there are limitations to the complexity that a single model can accurately represent. If we increased the size of our initial gLM and let it run for more training iterations, our performance on this task would likely improve dramatically. Unfortunately, we don't have the time or computing resources for that in this notebook, but I would encourage all of you to continue to investigate if you are interested!
 
-#### Questions
+> **Discuss:** Why is enhancer classification harder than promoter classification, both statistically and biologically?
 
+> **Discuss:** Compare the attention weight heatmaps for the enhancer model to those for the promoter model. What differences do you notice, and what might explain them?
 
-1.   Why is this enhancer classification problem harder than the promoter classification problem we looked at previously?
-2.   Similarly to the question above, provide your interpretation of the graphs of Attention weights.
-3.   One characteristic of enhancers is that they tend to have some distance from the gene they influence (much greater than 300 bp). How could we potentially change our original gLM in order to potentially improve our performance in this problem?
+> **Discuss:** Enhancers often act at distances greater than 300 bp from their target gene. How would you modify the model architecture to potentially improve performance on this task?
 
 
 ## Conclusion
