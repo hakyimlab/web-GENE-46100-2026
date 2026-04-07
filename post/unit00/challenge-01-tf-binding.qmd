@@ -1,7 +1,7 @@
 ---
 title: "TF binding prediction challenge"
 author: Haky Im
-date: 2026-04-07
+date: 2026-04-11
 description: "Competition details for TF binding prediction challenge"
 categories:
   - gene46100
@@ -50,7 +50,9 @@ Data prepared by Sofia Salazar.
   - zoom link for presentation https://uchicago.zoom.us/j/92299280676?pwd=nnx7WMjZb8ds5b5Wkj3jVsulN11Eyd.1
 
 - **Submission Deadline**: April 17
-  - Submit best model to Canvas
+  - Submit best model to Canvas (follow these instructions to share the trained model weights)
   - TA (Festus) will test on held-out data (TODO add link to box here, only accessible by instructors and TA)
   - Leaderboard will be created
+
+
 
