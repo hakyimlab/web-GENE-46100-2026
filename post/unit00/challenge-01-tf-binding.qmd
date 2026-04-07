@@ -42,11 +42,12 @@ Data prepared by Sofia Salazar.
   - Thursday, April 9: Sofia will explain how to use **weights and biases** to calibrate hyperparameters of the model (learning rate, number of filters, kernel size, etc). Charles, Sofia, Ran, and Haky will be available to help.
 
 - **Presentation Day** (Thursday, April 9):
-  Students will present:
+  Students will present preliminary
   - Model architecture
   - Model performance
   - Filter interpretation (time permitting)
   - Lessons learned
+  - zoom link for presentation https://uchicago.zoom.us/j/92299280676?pwd=nnx7WMjZb8ds5b5Wkj3jVsulN11Eyd.1
 
 - **Submission Deadline**: April 17
   - Submit best model to Canvas
