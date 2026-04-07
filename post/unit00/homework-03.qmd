@@ -4,7 +4,7 @@ date: 2026-04-10
 categories:
   - gene46100
   - homework
-draft: true
+draft: false
 format:
   html:
     toc: true
@@ -17,30 +17,37 @@ date-modified: last-modified
 
 # Homework 3
 
+This homework is your implementation of the [TF Binding Prediction Challenge](challenge-01-tf-binding.qmd). Use the [starter notebook](challenge-01-tf-binding-starter.qmd) as your reference implementation.
+
 ## Part 1: Hyperparameter Calibration with Weights & Biases
 - [ ] Implement hyperparameter tuning using Weights & Biases (wandb)
 - [ ] Choose one of the following problems to apply this to:
   - TF binding prediction
   - Simple DNA scoring
   - Cubic function with MLP
-- [ ] Reference example: [TF Binding with wandb](https://gene46100.hakyimlab.org/post/2025-03-25-unit00/tf-binding-wandb)
+- [ ] Reference example: [TF Binding with wandb](notebook-05-tf-binding-wandb.qmd)
 - [ ] Document the hyperparameters you tuned and their impact on model performance
 
 ## Part 2: Model Deployment and Testing
-- [ ] Upload your complete Jupyter notebook containing:
+- [ ] Upload your complete notebook containing:
   - Model architecture
   - Training code
   - Evaluation metrics
   - Prediction code
-- [ ] Include a separate, self-contained prediction script that:
-  - Loads all required packages
-  - Loads the trained model architecture and weights
-  - Makes predictions on the hold-out test set
-  - Can be run independently without executing the entire notebook
+- [ ] Save your model weights using state dict (not the full model object):
+  ```python
+  torch.save(model.state_dict(), 'model_weights.pt')
+  ```
+- [ ] Submit a self-contained `predict.py` script that:
+  - Defines your model architecture (copy the class definition from your notebook)
+  - Loads your saved weights via `model.load_state_dict(torch.load('model_weights.pt', ...))`
+  - Accepts a sequences data path as argument and writes predictions to a file
+  - Can be run as: `python predict.py --data <path_to_sequences> --out <output_file>`
+  - See the starter notebook for a skeleton
 
 ## Submission Requirements
 1. Submit your Jupyter notebook with all code and documentation
-2. Include a separate prediction script as described above
+2. Submit `model_weights.pt` (state dict) and `predict.py`
 3. Document your hyperparameter tuning process and results
 4. Provide clear instructions for running the prediction script
 

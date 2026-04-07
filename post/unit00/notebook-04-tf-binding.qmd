@@ -6,7 +6,11 @@ categories:
   - gene46100
   - project
   - notebook
-jupyter: python3
+jupyter:
+  kernelspec:
+    name: "conda-env-gene46100-py"
+    language: "python"
+    display_name: "gene46100"
 draft: false
 eval: false
 ---
