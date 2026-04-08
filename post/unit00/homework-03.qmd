@@ -17,7 +17,10 @@ date-modified: last-modified
 
 # Homework 3
 
-This homework is your implementation of the [TF Binding Prediction Challenge](challenge-01-tf-binding.qmd). Use the [starter notebook](challenge-01-tf-binding-starter.qmd) as your reference implementation.
+This homework has two parts:
+
+1. **Hyperparameter Tuning with W&B** — use [Weights & Biases](notebook-06-tf-binding-wandb.qmd) to systematically calibrate your model's hyperparameters and identify the best configuration.
+2. **TF Binding Prediction** — implement the [TF Binding Prediction Challenge](challenge-01-tf-binding.qmd) using the [starter notebook](notebook-05-tf-binding-starter.qmd) as your starting point.
 
 ## Part 1: Hyperparameter Calibration with Weights & Biases
 - [ ] Implement hyperparameter tuning using Weights & Biases (wandb)
@@ -25,7 +28,7 @@ This homework is your implementation of the [TF Binding Prediction Challenge](ch
   - TF binding prediction
   - Simple DNA scoring
   - Cubic function with MLP
-- [ ] Reference example: [TF Binding with wandb](notebook-05-tf-binding-wandb.qmd)
+- [ ] Reference example: [TF Binding with wandb](notebook-06-tf-binding-wandb.qmd)
 - [ ] Document the hyperparameters you tuned and their impact on model performance
 
 ## Part 2: Model Deployment and Testing

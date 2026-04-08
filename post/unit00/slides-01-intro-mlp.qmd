@@ -1172,7 +1172,7 @@ Open [playground.hakyimlab.org](https://playground.hakyimlab.org/#activation=rel
 | Week 2a | CNN concepts | *(slides-02)* |
 | Week 2b | CNN for DNA scoring | `notebook-03-dna-cnn` |
 | Week 3a | TF binding project | `notebook-04-tf-binding` |
-| Week 3b | Hyperparameter tuning | `notebook-05-tf-binding-wandb` |
+| Week 3b | Hyperparameter tuning | `notebook-06-tf-binding-wandb` |
 
 ---
 
