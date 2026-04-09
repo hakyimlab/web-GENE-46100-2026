@@ -46,7 +46,7 @@ This homework has two parts:
   - Loads your saved weights via `model.load_state_dict(torch.load('model_weights.pt', ...))`
   - Accepts a sequences data path as argument and writes predictions to a file
   - Can be run as: `python predict.py --data <path_to_sequences> --out <output_file>`
-  - See the starter notebook for a skeleton
+  - See the [starter notebook](notebook-05-tf-binding-starter.qmd) for a skeleton
 
 ## Submission Requirements
 1. Submit your Jupyter notebook with all code and documentation
