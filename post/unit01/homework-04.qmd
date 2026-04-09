@@ -1,6 +1,6 @@
 ---
 title: homework 4
-date: 2025-04-18
+date: 2026-04-20
 categories:
   - gene46100
   - homework

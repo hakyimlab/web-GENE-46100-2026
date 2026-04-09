@@ -277,14 +277,14 @@ window.Quarto = {
 <p>(https://github.com/karpathy/nanoGPT)</p>
 <section id="download-the-tiny-shakespeare-dataset" class="level3">
 <h3 class="anchored" data-anchor-id="download-the-tiny-shakespeare-dataset">download the tiny shakespeare dataset</h3>
-<div id="fb97ae84" class="cell" data-execution_count="1">
+<div id="1ae2fc34" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1"></a><span class="co"># Download the tiny shakespeare dataset</span></span>
 <span id="cb1-2"><a href="#cb1-2"></a><span class="co">#!wget https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="ec87d9f6" class="cell" data-execution_count="2">
+<div id="5ceddbeb" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1"></a><span class="co"># read it in to inspect it</span></span>
@@ -292,7 +292,7 @@ window.Quarto = {
 <span id="cb2-3"><a href="#cb2-3"></a>    text <span class="op">=</span> f.read()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="aa10285d" class="cell" data-execution_count="3">
+<div id="c8bf8109" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1"></a><span class="co"># print the length of the dataset</span></span>
@@ -302,7 +302,7 @@ window.Quarto = {
 <pre><code>length of dataset in characters:  1115394</code></pre>
 </div>
 </div>
-<div id="4819762d" class="cell" data-execution_count="4">
+<div id="2d080c32" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1"></a><span class="co"># let's look at the first 1000 characters</span></span>
@@ -352,7 +352,7 @@ speak this in hunger for bread, not in thirst for revenge.
 </code></pre>
 </div>
 </div>
-<div id="3c59d60e" class="cell" data-execution_count="5">
+<div id="f450af2f" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1"></a><span class="co"># here are all the unique characters that occur in this text</span></span>
@@ -370,7 +370,7 @@ speak this in hunger for bread, not in thirst for revenge.
 </section>
 <section id="mapping-characters-to-integers-and-vice-versa" class="level3">
 <h3 class="anchored" data-anchor-id="mapping-characters-to-integers-and-vice-versa">mapping characters to integers and vice versa</h3>
-<div id="c97e3c80" class="cell" data-execution_count="6">
+<div id="4f9ad181" class="cell" data-execution_count="6">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1"></a><span class="co"># create a mapping from characters to integers</span></span>
@@ -390,7 +390,7 @@ hii there</code></pre>
 </section>
 <section id="encode-the-data-into-torch-tensor" class="level3">
 <h3 class="anchored" data-anchor-id="encode-the-data-into-torch-tensor">encode the data into torch tensor</h3>
-<div id="6c71ce65" class="cell" data-execution_count="7">
+<div id="808df695" class="cell" data-execution_count="7">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1"></a><span class="co"># let's now encode the entire text dataset and store it into a torch.Tensor</span></span>
@@ -462,7 +462,7 @@ tensor([18, 47, 56, 57, 58,  1, 15, 47, 58, 47, 64, 43, 52, 10,  0, 14, 43, 44,
 </section>
 <section id="split-up-the-data-into-train-and-validation-sets" class="level3">
 <h3 class="anchored" data-anchor-id="split-up-the-data-into-train-and-validation-sets">split up the data into train and validation sets</h3>
-<div id="40e4b25c" class="cell" data-execution_count="8">
+<div id="26186475" class="cell" data-execution_count="8">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1"></a><span class="co"># split up the data into train and validation sets</span></span>
@@ -474,7 +474,7 @@ tensor([18, 47, 56, 57, 58,  1, 15, 47, 58, 47, 64, 43, 52, 10,  0, 14, 43, 44,
 </section>
 <section id="define-the-block-size" class="level3">
 <h3 class="anchored" data-anchor-id="define-the-block-size">define the block size</h3>
-<div id="98d060cc" class="cell" data-execution_count="9">
+<div id="db03e580" class="cell" data-execution_count="9">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1"></a>block_size <span class="op">=</span> <span class="dv">8</span></span>
@@ -487,7 +487,7 @@ tensor([18, 47, 56, 57, 58,  1, 15, 47, 58, 47, 64, 43, 52, 10,  0, 14, 43, 44,
 </section>
 <section id="define-the-context-and-target-8-examples-in-one-batch" class="level3">
 <h3 class="anchored" data-anchor-id="define-the-context-and-target-8-examples-in-one-batch">define the context and target: 8 examples in one batch</h3>
-<div id="86a02fe5" class="cell" data-execution_count="10">
+<div id="c78c3ac3" class="cell" data-execution_count="10">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1"></a>x <span class="op">=</span> train_data[:block_size]</span>
@@ -511,7 +511,7 @@ when input is tensor([18, 47, 56, 57, 58,  1, 15, 47]) the target: 58</code></pr
 </section>
 <section id="define-the-batch-size-and-get-the-batch" class="level3">
 <h3 class="anchored" data-anchor-id="define-the-batch-size-and-get-the-batch">define the batch size and get the batch</h3>
-<div id="db42d925" class="cell" data-execution_count="11">
+<div id="03582d44" class="cell" data-execution_count="11">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1"></a>torch.manual_seed(<span class="dv">1337</span>)</span>
@@ -593,7 +593,7 @@ when input is [25, 17, 27, 10, 0, 21, 1, 54] the target: 39</code></pre>
 </section>
 <section id="start-with-a-simple-model-the-bigram-language-model" class="level3">
 <h3 class="anchored" data-anchor-id="start-with-a-simple-model-the-bigram-language-model">start with a simple model: the bigram language model</h3>
-<div id="01497236" class="cell" data-execution_count="12">
+<div id="6dcb404c" class="cell" data-execution_count="12">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1"></a><span class="co"># define the bigram language model</span></span>
@@ -650,7 +650,7 @@ when input is [25, 17, 27, 10, 0, 21, 1, 54] the target: 39</code></pre>
 </section>
 <section id="initialize-the-model-and-compute-the-loss" class="level3">
 <h3 class="anchored" data-anchor-id="initialize-the-model-and-compute-the-loss">initialize the model and compute the loss</h3>
-<div id="180bdf8c" class="cell" data-execution_count="13">
+<div id="a792d850" class="cell" data-execution_count="13">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1"></a>m <span class="op">=</span> BigramLanguageModel(vocab_size)</span>
@@ -666,7 +666,7 @@ tensor(4.8786, grad_fn=&lt;NllLossBackward0&gt;)</code></pre>
 </section>
 <section id="generate-text" class="level3">
 <h3 class="anchored" data-anchor-id="generate-text">generate text</h3>
-<div id="854fe6f5" class="cell" data-execution_count="14">
+<div id="79b16055" class="cell" data-execution_count="14">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1"></a><span class="bu">print</span>(decode(m.generate(idx <span class="op">=</span> torch.zeros((<span class="dv">1</span>, <span class="dv">1</span>), dtype<span class="op">=</span>torch.<span class="bu">long</span>), max_new_tokens<span class="op">=</span><span class="dv">100</span>)[<span class="dv">0</span>].tolist()))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -680,7 +680,7 @@ wnYWmnxKWWev-tDqXErVKLgJ</code></pre>
 </section>
 <section id="choose-adamw-as-the-optimizer" class="level3">
 <h3 class="anchored" data-anchor-id="choose-adamw-as-the-optimizer">choose AdamW as the optimizer</h3>
-<div id="b3f32c7a" class="cell" data-execution_count="15">
+<div id="ea7857e8" class="cell" data-execution_count="15">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1"></a>optimizer <span class="op">=</span> torch.optim.AdamW(m.parameters(), lr<span class="op">=</span><span class="fl">1e-3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -689,7 +689,7 @@ wnYWmnxKWWev-tDqXErVKLgJ</code></pre>
 </section>
 <section id="train-the-model" class="level3">
 <h3 class="anchored" data-anchor-id="train-the-model">train the model</h3>
-<div id="a772f922" class="cell" data-execution_count="16">
+<div id="fd75fbf1" class="cell" data-execution_count="16">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1"></a>batch_size <span class="op">=</span> <span class="dv">32</span> <span class="co"># Redefine batch size for training</span></span>
@@ -711,7 +711,7 @@ wnYWmnxKWWev-tDqXErVKLgJ</code></pre>
 </section>
 <section id="generate-text-starting-with-0n-as-initial-context" class="level3">
 <h3 class="anchored" data-anchor-id="generate-text-starting-with-0n-as-initial-context">generate text starting with 0=<code>\n</code> as initial context</h3>
-<div id="4f829014" class="cell" data-execution_count="17">
+<div id="028fccd0" class="cell" data-execution_count="17">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1"></a><span class="bu">print</span>(decode(m.generate(idx <span class="op">=</span> torch.zeros((<span class="dv">1</span>, <span class="dv">1</span>), dtype<span class="op">=</span>torch.<span class="bu">long</span>), max_new_tokens<span class="op">=</span><span class="dv">500</span>)[<span class="dv">0</span>].tolist()))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -736,7 +736,7 @@ D.?</code></pre>
 <section id="the-mathematical-trick-in-self-attention" class="level3">
 <h3 class="anchored" data-anchor-id="the-mathematical-trick-in-self-attention">The mathematical trick in self-attention</h3>
 <p>toy example illustrating how matrix multiplication can be used for a “weighted aggregation”</p>
-<div id="acc5e2b1" class="cell" data-execution_count="18">
+<div id="74b0cb08" class="cell" data-execution_count="18">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1"></a>torch.manual_seed(<span class="dv">42</span>)</span>
@@ -770,7 +770,7 @@ tensor([[2.0000, 7.0000],
         [4.6667, 5.3333]])</code></pre>
 </div>
 </div>
-<div id="d24009fd" class="cell" data-execution_count="19">
+<div id="a54b0f4e" class="cell" data-execution_count="19">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1"></a><span class="co"># consider the following toy example:</span></span>
@@ -786,7 +786,7 @@ tensor([[2.0000, 7.0000],
 </section>
 <section id="version-1-using-a-for-loop-to-compute-the-weighted-aggregation" class="level3">
 <h3 class="anchored" data-anchor-id="version-1-using-a-for-loop-to-compute-the-weighted-aggregation">version 1: using a for loop to compute the weighted aggregation</h3>
-<div id="0cbc161d" class="cell" data-execution_count="20">
+<div id="2b72d5e6" class="cell" data-execution_count="20">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1"></a><span class="co"># We want x[b,t] = mean_{i&lt;=t} x[b,i]</span></span>
@@ -800,7 +800,7 @@ tensor([[2.0000, 7.0000],
 </section>
 <section id="version-2-using-matrix-multiply-for-a-weighted-aggregation" class="level3">
 <h3 class="anchored" data-anchor-id="version-2-using-matrix-multiply-for-a-weighted-aggregation">version 2: using matrix multiply for a weighted aggregation</h3>
-<div id="5e33dc97" class="cell" data-execution_count="21">
+<div id="c9b33186" class="cell" data-execution_count="21">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1"></a><span class="co"># Create the averaging weight matrix</span></span>
@@ -817,7 +817,7 @@ tensor([[2.0000, 7.0000],
 </section>
 <section id="version-3-use-softmax" class="level3">
 <h3 class="anchored" data-anchor-id="version-3-use-softmax">version 3: use Softmax</h3>
-<div id="3b212e77" class="cell" data-execution_count="22">
+<div id="4bd74bb5" class="cell" data-execution_count="22">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1"></a>tril <span class="op">=</span> torch.tril(torch.ones(T, T))</span>
@@ -841,7 +841,7 @@ tensor([[2.0000, 7.0000],
 </section>
 <section id="version-4-self-attention" class="level3">
 <h3 class="anchored" data-anchor-id="version-4-self-attention">version 4: self-attention</h3>
-<div id="3ab899b0" class="cell" data-execution_count="23">
+<div id="92f2836d" class="cell" data-execution_count="23">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1"></a>torch.manual_seed(<span class="dv">1337</span>)</span>
@@ -881,7 +881,7 @@ tensor([[2.0000, 7.0000],
 <pre><code>torch.Size([4, 8, 16])</code></pre>
 </div>
 </div>
-<div id="bcb35576" class="cell" data-execution_count="24">
+<div id="8321d073" class="cell" data-execution_count="24">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb41"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1"></a>wei[<span class="dv">0</span>] <span class="co"># Show attention weights for the first sequence in the batch</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -945,7 +945,7 @@ tensor([[2.0000, 7.0000],
 <section id="why-scaled-attention" class="level3">
 <h3 class="anchored" data-anchor-id="why-scaled-attention">why scaled attention?</h3>
 <p>“Scaled” attention additionaly divides wei by 1/sqrt(head_size). This makes it so when input Q,K are unit variance, wei will be unit variance too and Softmax will stay diffuse and not saturate too much. Illustration below</p>
-<div id="a119ba3c" class="cell" data-execution_count="25">
+<div id="cc0021fc" class="cell" data-execution_count="25">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1"></a><span class="co"># Demonstrate variance without scaling</span></span>
@@ -965,7 +965,7 @@ tensor([[2.0000, 7.0000],
 k var: 0.9006, q var: 1.0037, wei (scaled) var: 0.9957</code></pre>
 </div>
 </div>
-<div id="591a9f78" class="cell" data-execution_count="26">
+<div id="9d807d33" class="cell" data-execution_count="26">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1"></a>k.var() <span class="co"># Should be close to 1</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -974,7 +974,7 @@ k var: 0.9006, q var: 1.0037, wei (scaled) var: 0.9957</code></pre>
 <pre><code>tensor(0.9006)</code></pre>
 </div>
 </div>
-<div id="237a2241" class="cell" data-execution_count="27">
+<div id="1295ebe8" class="cell" data-execution_count="27">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb48"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1"></a>q.var() <span class="co"># Should be close to 1</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -983,7 +983,7 @@ k var: 0.9006, q var: 1.0037, wei (scaled) var: 0.9957</code></pre>
 <pre><code>tensor(1.0037)</code></pre>
 </div>
 </div>
-<div id="b502812e" class="cell" data-execution_count="28">
+<div id="e98fa10d" class="cell" data-execution_count="28">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb50"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1"></a>wei.var() <span class="co"># With scaling, should be closer to 1 than head_size (16)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -992,7 +992,7 @@ k var: 0.9006, q var: 1.0037, wei (scaled) var: 0.9957</code></pre>
 <pre><code>tensor(0.9957)</code></pre>
 </div>
 </div>
-<div id="d6920f5f" class="cell" data-execution_count="29">
+<div id="af93c861" class="cell" data-execution_count="29">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb52"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1"></a><span class="co"># Softmax with small inputs (diffuse distribution)</span></span>
@@ -1002,7 +1002,7 @@ k var: 0.9006, q var: 1.0037, wei (scaled) var: 0.9957</code></pre>
 <pre><code>tensor([0.1925, 0.1426, 0.2351, 0.1426, 0.2872])</code></pre>
 </div>
 </div>
-<div id="ea54c683" class="cell" data-execution_count="30">
+<div id="ebb10c58" class="cell" data-execution_count="30">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb54"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1"></a><span class="co"># Softmax with large inputs (simulating unscaled attention scores) -&gt; peaks</span></span>
@@ -1015,7 +1015,7 @@ k var: 0.9006, q var: 1.0037, wei (scaled) var: 0.9957</code></pre>
 </section>
 <section id="layernorm1d" class="level3">
 <h3 class="anchored" data-anchor-id="layernorm1d">LayerNorm1d</h3>
-<div id="99545977" class="cell" data-execution_count="31">
+<div id="34b8c750" class="cell" data-execution_count="31">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb56"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1"></a><span class="kw">class</span> LayerNorm1d: <span class="co"># (used to be BatchNorm1d)</span></span>
@@ -1053,7 +1053,7 @@ k var: 0.9006, q var: 1.0037, wei (scaled) var: 0.9957</code></pre>
 </div>
 <p>Explanation of layernorm</p>
 <p>Input shape: (B, T, C) where: B = batch size T = sequence length (number of tokens) C = embedding dimension (features of each token) For each token in the sequence (each position T), LayerNorm: Takes its embedding vector of size C Calculates the mean and standard deviation of just that vector Normalizes that vector by subtracting its mean and dividing by its standard deviation Applies the learnable scale (gamma) and shift (beta) parameters So if you have a sequence like “The cat sat”, and each word is represented by a 64-dimensional embedding vector, LayerNorm would: Take “The”’s 64-dimensional vector and normalize it Take “cat”’s 64-dimensional vector and normalize it Take “sat”’s 64-dimensional vector and normalize it Each token’s vector is normalized independently of the others. This is different from BatchNorm, which would normalize across the batch dimension (i.e., looking at the same position across different examples in the batch). This per-token normalization helps maintain stable gradients during training and is particularly important in Transformers where the attention mechanism needs to work with normalized vectors to compute meaningful attention scores.</p>
-<div id="f600a748" class="cell" data-execution_count="32">
+<div id="6351e642" class="cell" data-execution_count="32">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb58"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href="#cb58-1"></a><span class="co"># Mean and std of the first feature *across the batch*. Not expected to be 0 and 1.</span></span>
@@ -1063,7 +1063,7 @@ k var: 0.9006, q var: 1.0037, wei (scaled) var: 0.9957</code></pre>
 <pre><code>(tensor(0.1469), tensor(0.8803))</code></pre>
 </div>
 </div>
-<div id="0a04c1ea" class="cell" data-execution_count="33">
+<div id="691c61e3" class="cell" data-execution_count="33">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb60"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href="#cb60-1"></a><span class="co"># Mean and std *across features* for the first item in the batch. Expected to be ~0 and ~1.</span></span>
@@ -1076,7 +1076,7 @@ k var: 0.9006, q var: 1.0037, wei (scaled) var: 0.9957</code></pre>
 </section>
 <section id="french-to-english-translation-example" class="level3">
 <h3 class="anchored" data-anchor-id="french-to-english-translation-example">French to English translation example:</h3>
-<div id="b1eb19b0" class="cell" data-execution_count="34">
+<div id="75eb2638" class="cell" data-execution_count="34">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb62"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb62-1"><a href="#cb62-1"></a><span class="co"># &lt;--------- ENCODE ------------------&gt;&lt;--------------- DECODE -----------------&gt;</span></span>
@@ -1086,7 +1086,7 @@ k var: 0.9006, q var: 1.0037, wei (scaled) var: 0.9957</code></pre>
 </section>
 <section id="full-finished-code-for-reference" class="level3">
 <h3 class="anchored" data-anchor-id="full-finished-code-for-reference">Full finished code, for reference</h3>
-<div id="ba3a7a6b" class="cell" data-execution_count="35">
+<div id="a51ebeda" class="cell" data-execution_count="35">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb63"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1"></a><span class="co"># Import necessary PyTorch modules</span></span>
@@ -1358,143 +1358,132 @@ k var: 0.9006, q var: 1.0037, wei (scaled) var: 0.9957</code></pre>
 0.209729 M parameters
 step 0: train loss 4.4116, val loss 4.4022
 step 100: train loss 2.6568, val loss 2.6670
-step 200: train loss 2.5091, val loss 2.5059
-step 300: train loss 2.4198, val loss 2.4341
-step 400: train loss 2.3503, val loss 2.3565
-step 500: train loss 2.2968, val loss 2.3135
-step 600: train loss 2.2411, val loss 2.2503
-step 700: train loss 2.2051, val loss 2.2185
-step 800: train loss 2.1638, val loss 2.1870
-step 900: train loss 2.1244, val loss 2.1509
-step 1000: train loss 2.1030, val loss 2.1302
-step 1100: train loss 2.0690, val loss 2.1174
-step 1200: train loss 2.0391, val loss 2.0803
-step 1300: train loss 2.0259, val loss 2.0651
-step 1400: train loss 1.9925, val loss 2.0364
-step 1500: train loss 1.9700, val loss 2.0300
-step 1600: train loss 1.9597, val loss 2.0453
-step 1700: train loss 1.9403, val loss 2.0120
-step 1800: train loss 1.9095, val loss 1.9970
-step 1900: train loss 1.9110, val loss 1.9910
-step 2000: train loss 1.8843, val loss 1.9944
-step 2100: train loss 1.8705, val loss 1.9736
-step 2200: train loss 1.8601, val loss 1.9608
-step 2300: train loss 1.8544, val loss 1.9512
-step 2400: train loss 1.8412, val loss 1.9446
-step 2500: train loss 1.8132, val loss 1.9399
-step 2600: train loss 1.8258, val loss 1.9404
-step 2700: train loss 1.8121, val loss 1.9352
-step 2800: train loss 1.8044, val loss 1.9252
-step 2900: train loss 1.8046, val loss 1.9283
-step 3000: train loss 1.7985, val loss 1.9203
-step 3100: train loss 1.7677, val loss 1.9200
-step 3200: train loss 1.7546, val loss 1.9100
-step 3300: train loss 1.7584, val loss 1.9103
-step 3400: train loss 1.7517, val loss 1.8929
-step 3500: train loss 1.7385, val loss 1.8981
-step 3600: train loss 1.7248, val loss 1.8874
-step 3700: train loss 1.7266, val loss 1.8812
-step 3800: train loss 1.7175, val loss 1.8922
-step 3900: train loss 1.7204, val loss 1.8740
-step 4000: train loss 1.7113, val loss 1.8591
-step 4100: train loss 1.7106, val loss 1.8736
-step 4200: train loss 1.7063, val loss 1.8653
-step 4300: train loss 1.7017, val loss 1.8491
-step 4400: train loss 1.7053, val loss 1.8620
-step 4500: train loss 1.6900, val loss 1.8523
-step 4600: train loss 1.6862, val loss 1.8390
-step 4700: train loss 1.6814, val loss 1.8454
-step 4800: train loss 1.6663, val loss 1.8449
-step 4900: train loss 1.6701, val loss 1.8355
-step 4999: train loss 1.6612, val loss 1.8219
+step 200: train loss 2.5090, val loss 2.5058
+step 300: train loss 2.4195, val loss 2.4337
+step 400: train loss 2.3506, val loss 2.3568
+step 500: train loss 2.2964, val loss 2.3128
+step 600: train loss 2.2409, val loss 2.2501
+step 700: train loss 2.2053, val loss 2.2190
+step 800: train loss 2.1631, val loss 2.1864
+step 900: train loss 2.1245, val loss 2.1512
+step 1000: train loss 2.1017, val loss 2.1283
+step 1100: train loss 2.0696, val loss 2.1186
+step 1200: train loss 2.0368, val loss 2.0791
+step 1300: train loss 2.0249, val loss 2.0638
+step 1400: train loss 1.9953, val loss 2.0391
+step 1500: train loss 1.9701, val loss 2.0304
+step 1600: train loss 1.9615, val loss 2.0468
+step 1700: train loss 1.9409, val loss 2.0118
+step 1800: train loss 1.9076, val loss 1.9936
+step 1900: train loss 1.9099, val loss 1.9892
+step 2000: train loss 1.8839, val loss 1.9935
+step 2100: train loss 1.8722, val loss 1.9741
+step 2200: train loss 1.8588, val loss 1.9619
+step 2300: train loss 1.8564, val loss 1.9530
+step 2400: train loss 1.8431, val loss 1.9453
+step 2500: train loss 1.8146, val loss 1.9416
+step 2600: train loss 1.8299, val loss 1.9425
+step 2700: train loss 1.8129, val loss 1.9349
+step 2800: train loss 1.8021, val loss 1.9201
+step 2900: train loss 1.8058, val loss 1.9303
+step 3000: train loss 1.7977, val loss 1.9227
+step 3100: train loss 1.7722, val loss 1.9217
+step 3200: train loss 1.7545, val loss 1.9094
+step 3300: train loss 1.7567, val loss 1.9055
+step 3400: train loss 1.7544, val loss 1.8941
+step 3500: train loss 1.7396, val loss 1.8986
+step 3600: train loss 1.7279, val loss 1.8918
+step 3700: train loss 1.7291, val loss 1.8890
+step 3800: train loss 1.7204, val loss 1.8960
+step 3900: train loss 1.7224, val loss 1.8756
+step 4000: train loss 1.7145, val loss 1.8631
+step 4100: train loss 1.7094, val loss 1.8754
+step 4200: train loss 1.7061, val loss 1.8649
+step 4300: train loss 1.6993, val loss 1.8448
+step 4400: train loss 1.7090, val loss 1.8681
+step 4500: train loss 1.6861, val loss 1.8474
+step 4600: train loss 1.6862, val loss 1.8337
+step 4700: train loss 1.6821, val loss 1.8471
+step 4800: train loss 1.6643, val loss 1.8476
+step 4900: train loss 1.6688, val loss 1.8405
+step 4999: train loss 1.6660, val loss 1.8293
 
 Foast.
 
-MENEN EDWIP:
-I sir, doth
-is by tought, CORine. Ib:
-All the great you had genone ammsouly.
-Do, as tondmpery way art deed superfecions
-Toke are is cannius, away! fou garief
-could streling'd us; to lace and though misful untoon
-And the proply ensugh you wife! holden you
-that's foul tlearss,--
+MENENIUS:
+Pravost
+O dothnie by tought, CORiced absell torminter, trong dever fear reath Lock,
+Who is make thy batted oub! servilians
+Toke as liht thy will woell. How is of beless strown'd us;
+I slace and though mistraction.
 
-VOMINIUS:
+PRUTNCELIA:
+Who proge your fathar givn.
+Why, they foul tlead,
+upill later and behoy crief my such in many that pettemenoes, whose then your
+Heffingraciany. WARWIf hm good mine.
 
-Let you
-TRENBUMNIO:
-On mady that prongmenoed, whose then your
-He quind, my would would and to pomple,
-And the hongselff; I makes thous latesse my dreap, what you call,
-King-ver Frie I see for upon to deam husping
-With man's orshepined and founds!
+KING RICHARD III:
+You reads
+to smanterline my dreep, what lady son,
+Kingived Fear not sentague; and death!
 
-HORTEN YCUKENTIO:
-Murbroke it.
+BOLINGBRALE:
+I worsh-priect.
+My sunswory, we-e
+Yor nobless, Dercoved, How dongere,--Bespain,
+All the savolums solvens worthor ong father you hast;
+Alaitles guary wish pregst, art with me
+dis offivost of meet.
 
-ThiORTESS:
-All my beculister to to my soldeps wortus mone father you his hame ell stry armsedians,
-Twe art with merd's off, Bothing eStruts.
+VORIOLANUS:
+Is spare the suid mave is saslain the fultungermiocaed up is grow;
+It Of I her be to emmes, me
+chirst for assester friendst him.
 
-Me LAUMNIO:
-Have the sui, my voices! look, kil betunt,
-Tilcael up is is me I, Ox I here mand too quesence on proved.
+MOMISAPNES:
+My my was I how better.
 
-KING RICHARD II:
-Come, dreight by thy, as I have I am plapely.
+ROPSOLANF:
+God my nouth lay.
 
-GLOUCESTES:
-What lay.
+HORTIO:
+O distreed as more of words:
+Whom cloust me, gurses thou his, that our hus lifess herse folt will queence the vil.
+And this that our fear us xy ensent.
 
-HORTES:
-O distreds, both you pout.
-Why, thou as queeng I am thou his,
-Our both hur life wouldse fortune deque;
-Tool! so me not thinged weould entount.
-Cewlent worm ont lume of heavy Our haver come,
-And thou one true to is a clame in thusfined me.
+KING RIVERWARD:
+Now him; how recond, ven thou one the rews,
+Take as king himfined make fingettread with tan yourst
+Shalt I hold told,--mossing his carrown
+Becond mine than dead reaights cure.
+Broy veat,
+That father what most let me it.
 
-VOLUS:
-The rin of an yoursts a pring long:
-Or, am blast mad the's naccusion.
+CLARENCE:
 
-HENRY VINV:
-Leave the underer you: if
-Up, I hold thee fainst may! Comins!
+FRICHAR GAR IV:
+Hy lamts well? pring now a friend, for they in was be.
+'Say Girne you. Gold, where dish.
 
-DUKE BERLANCE:
-Year my not tagus affetip in his unmire are flast folly?
+KING HENRY CAMILLIO:
 
-QUEEN ELIZAGUS:
-With the take man'd the well notle
-doth conleans-es.
+HRAG didone turn, making hath delse no do forful Proyd
+So make, if that Loth tondurising,
+And speenst us brave to partes and good,
+Wher, the was too would weatthly breast know,
+Os at mileady, what you smaste
+Fur c
+Will puloved Warwithom answer of with or cropplace:
+Of and we, I comet I say gone,
+gently art the petier ous, timost,
+For my live broke och or patist pecons.
 
-Tonly Duchter:
-O! hat us:
-sell, do for man to deviless nums:
-Go ant entongue sight.
-
-POMPEY:
-I' latess ma! partes and good, to d,
-Whelcands duke holdess wleth ere done frost these, if
-you in on this forth c
-Will poist,
-Jot that that me bour more requed of his bearite?
-
-PUPKERLA:
-Are I am liegs yours tune! therefus, time say as day BI thinks ocquert and to first.
-
-JOHN OF YORK:
-Fleeth staide liaries: I my me? you the is
-iver well encly togen
-our whus.
-
-ISABELLA:
-O'e our hostrace for love, our.
-
-WARWICK:
-And if fra</code></pre>
+JOHN OLIXF:
+In, he pastifity barwise of the but have fight untrtumber greath
+Fooly whus milders save as othalt sweeks,
+That honour. They, you
+and scauke</code></pre>
 </div>
 </div>
 <div class="callout callout-style-default callout-note callout-titled">

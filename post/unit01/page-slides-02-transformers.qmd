@@ -1,10 +1,10 @@
 ---
-title: "02 · 02 · Transformers: From Attention to GPT"
+title: "02 · Transformers: From Attention to GPT"
 date: '2026-04-21'
 author: "Haky Im"
 description: "GENE 46100 — Unit 01"
 categories: [slides]
-draft: true
+draft: false
 ---
 
 [Open slide deck](slides-02-transformers.html){.btn .btn-primary .btn-lg}

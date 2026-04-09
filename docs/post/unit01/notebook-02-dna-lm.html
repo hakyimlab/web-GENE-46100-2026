@@ -277,7 +277,7 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="setup">Setup</h2>
 <p>First, it is necessary to connect to the GPU. If you are working in Colab, this can be done in the upper right corner by selecting “T4 GPU” as your runtime option.</p>
 <p>Next, we need to install a few things that help us build and run the model efficiently.</p>
-<div id="1c78b645" class="cell" data-execution_count="1">
+<div id="9bc04a6a" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#%pip install torch numpy transformers datasets tiktoken wandb tqdm biopython huggingface_hub accelerate</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pickle</span>
@@ -309,7 +309,7 @@ window.Quarto = {
 <section id="download-and-read-the-reference-genome" class="level2">
 <h2 class="anchored" data-anchor-id="download-and-read-the-reference-genome">Download and Read the Reference Genome</h2>
 <p>For our training, we will be using the GRCh38 human reference genome (credit to the Genome Reference Consortium: https://www.ncbi.nlm.nih.gov/grc). In the next block, we simply create a place to store our genome in the Colab filesystem and download the genome file remotely.</p>
-<div id="e1dfcc2c" class="cell" data-execution_count="2">
+<div id="de97533c" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>running_in_colab <span class="op">=</span> <span class="va">False</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> running_in_colab:</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  WORKDIR <span class="op">=</span> <span class="st">'/root/data/'</span></span>
@@ -329,7 +329,7 @@ window.Quarto = {
 </blockquote>
 <p>Prepare the hg38 genomic dataset for character-level language modeling. Instead of encoding with BPE tokens, we just map characters to ints. This will save <code>train.bin</code>, <code>val.bin</code> containing the ids, and <code>meta.pkl</code> containing the encoder and decoder and some other related info.</p>
 <p>Now that we have the genome file saved locally, we have to read it into our environment in order to make it usable. To do this, we just read in the entire file as one long string, which we can then subset and investigate as we wish. For example, we may want to know the total length of our dataset, and all of the unique characters we have:</p>
-<div id="043d65ce" class="cell" data-execution_count="3">
+<div id="7aa1c410" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>meta_path <span class="op">=</span> os.path.join(WORKDIR, <span class="st">'meta.pkl'</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>tokenized_exists <span class="op">=</span> (os.path.exists(os.path.join(WORKDIR, <span class="st">'train.bin'</span>)) <span class="kw">and</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>                    os.path.exists(os.path.join(WORKDIR, <span class="st">'val.bin'</span>)) <span class="kw">and</span></span>
@@ -363,20 +363,20 @@ vocab size: 65</code></pre>
 <section id="mapping-characters-to-integers-i.e.-tokenization" class="level2">
 <h2 class="anchored" data-anchor-id="mapping-characters-to-integers-i.e.-tokenization">Mapping Characters to Integers (i.e.&nbsp;Tokenization)</h2>
 <p>Now that we have our text, we need to put it into a format that is more easily readable for our model. Generally, this process is called Tokenization. There are many different methods for this, and each will impact the performance of the model differently (for example byte pair encoding or non-overlapping kmer tokenization used by other gLMs), but for the purpose of this notebook we will use a simple character-level tokenization. This means that we will simply assign a different integer to each unique character, and then transform our input into a long list of integers to be read by our model:</p>
-<div id="7272accb" class="cell" data-execution_count="4">
+<div id="83518328" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> tokenized_exists:</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># create a mapping from characters to integers</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    stoi <span class="op">=</span> { ch:i <span class="cf">for</span> i,ch <span class="kw">in</span> <span class="bu">enumerate</span>(chars) }</span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    itos <span class="op">=</span> { i:ch <span class="cf">for</span> i,ch <span class="kw">in</span> <span class="bu">enumerate</span>(chars) }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="f6582806" class="cell" data-execution_count="5">
+<div id="fecf3431" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> encode(s):</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [stoi[c] <span class="cf">for</span> c <span class="kw">in</span> s] <span class="co"># encoder: take a string, output a list of integers</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> decode(l):</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="st">''</span>.join([itos[i] <span class="cf">for</span> i <span class="kw">in</span> l]) <span class="co"># decoder: take a list of integers, output a string</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now that we have our functions defined, it is time to actually do the tokenization. This will take a few minutes, so go ahead and run the block, and see the description of what it is doing below:</p>
-<div id="f658e311" class="cell" data-execution_count="6">
+<div id="b30abf93" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> tokenized_exists:</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"Tokenized files already exist — skipping tokenization."</span>)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
@@ -416,7 +416,7 @@ vocab size: 65</code></pre>
 <li>Finally, we actually go through and encode/tokenize our data. Since the dataset is so large, we don’t have enough memory to do this all at once in Colab, so we encode our data in batches and then push each new batch to our locally-saved files.</li>
 </ol>
 <p>We also want to save some of our metadata (i.e.&nbsp;vocabulary size, and our mappings from characters to integers and back) to pull back in later.</p>
-<div id="c4dbec07" class="cell" data-execution_count="7">
+<div id="f1a290f3" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># save the meta information as well, to help us encode/decode later</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>meta <span class="op">=</span> {</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'vocab_size'</span>: vocab_size,</span>
@@ -426,7 +426,7 @@ vocab size: 65</code></pre>
 <span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(os.path.join(WORKDIR, <span class="st">'meta.pkl'</span>), <span class="st">'wb'</span>) <span class="im">as</span> f:</span>
 <span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    pickle.dump(meta, f)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="7509cd61" class="cell" data-execution_count="8">
+<div id="a4812652" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> running_in_colab:</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  os.kill(os.getpid(), <span class="dv">9</span>) <span class="co">#If running in a low-memory environment, this will clear our RAM. After this, go run the very first block again!</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -440,7 +440,7 @@ vocab size: 65</code></pre>
 <section id="creating-the-model" class="level2">
 <h2 class="anchored" data-anchor-id="creating-the-model">Creating the Model</h2>
 <p>Now that we have our training data ready to go, it’s time to actually create the gLM. First, we define the function we are going to use to do the heavy lifting in the attention layers. We will go into more detail on what we mean by attention during training, but if you are interested in what the implementation looks like, see the block below (and be sure to run it either way!)</p>
-<div id="72e77502" class="cell" data-execution_count="9">
+<div id="775489dc" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Defining attention function (copied from Pytorch documentation, just need to save weights correctly)</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> scaled_dot_product_attention(query, key, value, attn_mask<span class="op">=</span><span class="va">None</span>, dropout_p<span class="op">=</span><span class="fl">0.0</span>, is_causal<span class="op">=</span><span class="va">False</span>, scale<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    L, S <span class="op">=</span> query.size(<span class="op">-</span><span class="dv">2</span>), key.size(<span class="op">-</span><span class="dv">2</span>)</span>
@@ -482,7 +482,7 @@ vocab size: 65</code></pre>
 <li>Linear layer to transform embedded outputs back into our vocab size</li>
 <li>Loss calculation (if training)</li>
 </ol>
-<div id="6ab96e48" class="cell" data-execution_count="10">
+<div id="214e60e2" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co">"""</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co">Full definition of a GPT Language Model, all of it in this single file.</span></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co">References:</span></span>
@@ -767,7 +767,7 @@ vocab size: 65</code></pre>
 <section id="training" class="level2">
 <h2 class="anchored" data-anchor-id="training">Training</h2>
 <p>Now that our model constructors are ready, it’s time to start training! First, see below for the configuration settings we are using for the model. Most of these are not important for the purposes of this notebook, but just note that we are creating a model with 4 attention layers with 4 heads each (more on that below), our embedding size is 384 (so our vocabulary gets projected into 384-dimensional space), and our block size/context size is 300, so our model will look at 300 bp of sequence as each input. Training will take a while (about 5-10 minutes), so run the code block below and use the time to review the Attention section above and the training loop description below.</p>
-<div id="e57cf78f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;}}" data-execution_count="11">
+<div id="4f62da44" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;}}" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co">#@title Training Time!</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>gc.collect()</span>
@@ -1047,7 +1047,7 @@ num decayed parameter tensors: 18, with 7,218,048 parameters
 num non-decayed parameter tensors: 9, with 3,456 parameters</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/var/folders/05/l5yxwwcn31q8qn8ytlm87q5r0000gr/T/ipykernel_34431/4245185043.py:137: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+<pre><code>/var/folders/05/l5yxwwcn31q8qn8ytlm87q5r0000gr/T/ipykernel_85196/4245185043.py:137: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
   scaler = torch.cuda.amp.GradScaler(enabled=(dtype == 'float16' and device_type == 'cuda'))</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
@@ -1071,7 +1071,7 @@ Set force_retrain_pretrain=True to retrain from scratch.</code></pre>
 <h2 class="anchored" data-anchor-id="sampling-from-the-model">Sampling from the model</h2>
 <p>Great! Now that we have a trained model, let’s see what it can generate it. The code block below simply pulls out the highest-performing version of the model we just trained, and feeds it a newline character to see what it will generate:</p>
 <p>Sampling from the model</p>
-<div id="b49c69db" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;}}" data-execution_count="12">
+<div id="bbdb2b7d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;}}" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co">"""</span></span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co">Sample from a trained model</span></span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="co">"""</span></span>
@@ -1221,7 +1221,7 @@ Data setup required before running this section
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os<span class="op">;</span> os.symlink(<span class="st">"web-GENE-46100-2026/post/unit01/data"</span>, <span class="st">"data"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
-<div id="6a0e255b" class="cell" data-execution_count="13">
+<div id="e36db79f" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the promoter dataset from local parquet files</span></span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>data_dir <span class="op">=</span> <span class="st">"data"</span></span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>train_dataset_promoter <span class="op">=</span> load_dataset(<span class="st">"parquet"</span>,</span>
@@ -1232,7 +1232,7 @@ Data setup required before running this section
 <span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>num_labels_promoter <span class="op">=</span> <span class="dv">2</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Next, let’s separate out the labels from the actual DNA sequences, and separate 5% of our training data to use as a validation set (the test set is already separated).</p>
-<div id="c1b8d15f" class="cell" data-execution_count="14">
+<div id="0a809a85" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get training data</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>train_sequences_promoter <span class="op">=</span> train_dataset_promoter[<span class="st">'sequence'</span>]</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>train_labels_promoter <span class="op">=</span> train_dataset_promoter[<span class="st">'label'</span>]</span>
@@ -1246,7 +1246,7 @@ Data setup required before running this section
 <span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>test_labels_promoter <span class="op">=</span> test_dataset_promoter[<span class="st">'label'</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now, let’s take a quick look at what one of these examples looks like:</p>
-<div id="9d19c60e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;}}" data-execution_count="15">
+<div id="2453f0ac" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;}}" data-execution_count="15">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>idx_sequence <span class="op">=</span> <span class="op">-</span><span class="dv">1</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>sequence, label <span class="op">=</span> train_sequences_promoter[idx_sequence], train_labels_promoter[idx_sequence]</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"The DNA sequence is </span><span class="sc">{</span>sequence<span class="sc">}</span><span class="ss">."</span>)</span>
@@ -1262,14 +1262,14 @@ This promoter is a TATA promoter, as the TATA motif is present at the 221st nucl
 </div>
 </div>
 <p>Now that we have all of our datasets, it is time to tokenize them using the same mapping that we created for our language model. first, we load them into a Dataset object so we can work with them more easily:</p>
-<div id="5a1bd169" class="cell" data-execution_count="16">
+<div id="d89515ca" class="cell" data-execution_count="16">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Promoter dataset</span></span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>ds_train_promoter <span class="op">=</span> Dataset.from_dict({<span class="st">"data"</span>: train_sequences_promoter,<span class="st">'labels'</span>:train_labels_promoter})</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>ds_validation_promoter <span class="op">=</span> Dataset.from_dict({<span class="st">"data"</span>: validation_sequences_promoter,<span class="st">'labels'</span>:validation_labels_promoter})</span>
 <span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>ds_test_promoter <span class="op">=</span> Dataset.from_dict({<span class="st">"data"</span>: test_sequences_promoter,<span class="st">'labels'</span>:test_labels_promoter})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Next, we do the actual tokenization. However, remember that our previous encoding function could only handle a single example at a time (since our initial data file was one long string). We define a new tokenizing function below to use the same process, but apply it to multiple separate sequences:</p>
-<div id="46770d49" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;,&quot;height&quot;:113,&quot;referenced_widgets&quot;:[&quot;2a9b870265654322be2a63d4ff812dfe&quot;,&quot;5e9c130c410646e4813b40a6fb3597b1&quot;,&quot;5f3b654fc40f4b0b8d83568dea1239cd&quot;,&quot;4bbba4b5bd8b48e891c7bdae396e7488&quot;,&quot;5a8f1f3fa60142db9fb87f978df994b7&quot;,&quot;32d80445eaeb4156a24e26ba193fb2f1&quot;,&quot;373ac7e2f3ca40279710de1eb5020a48&quot;,&quot;e1fe97f77a924e9dbd5f4224cbe18684&quot;,&quot;77d274c224a94518b26812ce062effe9&quot;,&quot;69dc1b78f0c94df98d9fbd35c8bc948a&quot;,&quot;0000abf1fcc24784856b4540222bff6d&quot;,&quot;3225536be36741de948c748768aae884&quot;,&quot;eb29624d75844a9780c3012ca7ba2dc9&quot;,&quot;613931c3d625432da145ce3cde5a7a58&quot;,&quot;c62c16210fc743ae8842c1cf9118f0ad&quot;,&quot;755a2822c8e740538001ae12f516a41d&quot;,&quot;81f5d6970fa44ff8a2cf8f2a98bd47be&quot;,&quot;926fd6673e154dc2b3ff34f09bd1a81a&quot;,&quot;a64a0f215cf54446a64c38add5358ae9&quot;,&quot;d0d29ef4832f4c51b63490dcd0b7321a&quot;,&quot;dc37b9e04c8c480a96cdb01f3f543a37&quot;,&quot;951732f504604f8baf480d7f1760fbd1&quot;,&quot;8827a52655f34c20b1ad6793dfcfd7dc&quot;,&quot;e023f192b56545d9b41fdf65337ea505&quot;,&quot;5d6f089e0b8849dd95af0bcf458919cf&quot;,&quot;54789985ef0a45629aacd7a334abb4dd&quot;,&quot;fb43d8ccf9514db58062d592cba297c6&quot;,&quot;63c6af1ca8104840b0691acd20cdf04c&quot;,&quot;a085653b4546498cbf8df67855e8a318&quot;,&quot;3632c4a3e47a421d994625d8a169fd7c&quot;,&quot;6ab83fc6c9604a849673eec027066ccd&quot;,&quot;ba58db5153cf4045a855f795d08f7e74&quot;,&quot;3e778489ec2e4fca8c7322b636c72d45&quot;]}}" data-execution_count="17">
+<div id="ed988b62" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;,&quot;height&quot;:113,&quot;referenced_widgets&quot;:[&quot;2a9b870265654322be2a63d4ff812dfe&quot;,&quot;5e9c130c410646e4813b40a6fb3597b1&quot;,&quot;5f3b654fc40f4b0b8d83568dea1239cd&quot;,&quot;4bbba4b5bd8b48e891c7bdae396e7488&quot;,&quot;5a8f1f3fa60142db9fb87f978df994b7&quot;,&quot;32d80445eaeb4156a24e26ba193fb2f1&quot;,&quot;373ac7e2f3ca40279710de1eb5020a48&quot;,&quot;e1fe97f77a924e9dbd5f4224cbe18684&quot;,&quot;77d274c224a94518b26812ce062effe9&quot;,&quot;69dc1b78f0c94df98d9fbd35c8bc948a&quot;,&quot;0000abf1fcc24784856b4540222bff6d&quot;,&quot;3225536be36741de948c748768aae884&quot;,&quot;eb29624d75844a9780c3012ca7ba2dc9&quot;,&quot;613931c3d625432da145ce3cde5a7a58&quot;,&quot;c62c16210fc743ae8842c1cf9118f0ad&quot;,&quot;755a2822c8e740538001ae12f516a41d&quot;,&quot;81f5d6970fa44ff8a2cf8f2a98bd47be&quot;,&quot;926fd6673e154dc2b3ff34f09bd1a81a&quot;,&quot;a64a0f215cf54446a64c38add5358ae9&quot;,&quot;d0d29ef4832f4c51b63490dcd0b7321a&quot;,&quot;dc37b9e04c8c480a96cdb01f3f543a37&quot;,&quot;951732f504604f8baf480d7f1760fbd1&quot;,&quot;8827a52655f34c20b1ad6793dfcfd7dc&quot;,&quot;e023f192b56545d9b41fdf65337ea505&quot;,&quot;5d6f089e0b8849dd95af0bcf458919cf&quot;,&quot;54789985ef0a45629aacd7a334abb4dd&quot;,&quot;fb43d8ccf9514db58062d592cba297c6&quot;,&quot;63c6af1ca8104840b0691acd20cdf04c&quot;,&quot;a085653b4546498cbf8df67855e8a318&quot;,&quot;3632c4a3e47a421d994625d8a169fd7c&quot;,&quot;6ab83fc6c9604a849673eec027066ccd&quot;,&quot;ba58db5153cf4045a855f795d08f7e74&quot;,&quot;3e778489ec2e4fca8c7322b636c72d45&quot;]}}" data-execution_count="17">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> tokenize_function(examples):</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  outputs <span class="op">=</span> np.empty((<span class="dv">0</span>, <span class="dv">300</span>), dtype<span class="op">=</span><span class="st">'int16'</span>)</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> example <span class="kw">in</span> examples[<span class="st">"data"</span>]:</span>
@@ -1295,13 +1295,13 @@ This promoter is a TATA promoter, as the TATA motif is present at the 221st nucl
 <span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a>    remove_columns<span class="op">=</span>[<span class="st">'data'</span>],</span>
 <span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Map:   0%|          | 0/50612 [00:00&lt;?, ? examples/s]Map:   4%|▍         | 2000/50612 [00:00&lt;00:02, 16727.30 examples/s]Map:   8%|▊         | 4000/50612 [00:00&lt;00:02, 16610.52 examples/s]Map:  12%|█▏        | 6000/50612 [00:00&lt;00:02, 16613.13 examples/s]Map:  16%|█▌        | 8000/50612 [00:00&lt;00:02, 16133.56 examples/s]Map:  20%|█▉        | 10000/50612 [00:00&lt;00:02, 16578.56 examples/s]Map:  24%|██▎       | 12000/50612 [00:00&lt;00:02, 16717.96 examples/s]Map:  28%|██▊       | 14000/50612 [00:00&lt;00:02, 16879.68 examples/s]Map:  32%|███▏      | 16000/50612 [00:00&lt;00:02, 16887.42 examples/s]Map:  36%|███▌      | 18000/50612 [00:01&lt;00:01, 16904.53 examples/s]Map:  40%|███▉      | 20000/50612 [00:01&lt;00:01, 16902.47 examples/s]Map:  43%|████▎     | 22000/50612 [00:01&lt;00:01, 17038.03 examples/s]Map:  47%|████▋     | 24000/50612 [00:01&lt;00:01, 17174.16 examples/s]Map:  51%|█████▏    | 26000/50612 [00:01&lt;00:01, 17365.29 examples/s]Map:  55%|█████▌    | 28000/50612 [00:01&lt;00:01, 17435.40 examples/s]Map:  59%|█████▉    | 30000/50612 [00:01&lt;00:01, 17399.38 examples/s]Map:  63%|██████▎   | 32000/50612 [00:01&lt;00:01, 17466.04 examples/s]Map:  67%|██████▋   | 34000/50612 [00:01&lt;00:00, 17543.08 examples/s]Map:  71%|███████   | 36000/50612 [00:02&lt;00:00, 17527.24 examples/s]Map:  75%|███████▌  | 38000/50612 [00:02&lt;00:00, 17573.21 examples/s]Map:  79%|███████▉  | 40000/50612 [00:02&lt;00:00, 17656.52 examples/s]Map:  83%|████████▎ | 42000/50612 [00:02&lt;00:00, 17619.26 examples/s]Map:  87%|████████▋ | 44000/50612 [00:02&lt;00:00, 17628.02 examples/s]Map:  91%|█████████ | 46000/50612 [00:02&lt;00:00, 17623.02 examples/s]Map:  95%|█████████▍| 48000/50612 [00:02&lt;00:00, 17522.48 examples/s]Map:  99%|█████████▉| 50000/50612 [00:02&lt;00:00, 17397.64 examples/s]Map: 100%|██████████| 50612/50612 [00:02&lt;00:00, 17330.34 examples/s]
-Map:   0%|          | 0/2664 [00:00&lt;?, ? examples/s]Map:  75%|███████▌  | 2000/2664 [00:00&lt;00:00, 16917.05 examples/s]Map: 100%|██████████| 2664/2664 [00:00&lt;00:00, 19458.76 examples/s]
-Map:   0%|          | 0/5920 [00:00&lt;?, ? examples/s]Map:  34%|███▍      | 2000/5920 [00:00&lt;00:00, 17006.50 examples/s]Map:  68%|██████▊   | 4000/5920 [00:00&lt;00:00, 17294.58 examples/s]Map: 100%|██████████| 5920/5920 [00:00&lt;00:00, 17848.59 examples/s]Map: 100%|██████████| 5920/5920 [00:00&lt;00:00, 17623.34 examples/s]</code></pre>
+<pre><code>Map:   0%|          | 0/50612 [00:00&lt;?, ? examples/s]Map:   4%|▍         | 2000/50612 [00:00&lt;00:02, 17286.69 examples/s]Map:   8%|▊         | 4000/50612 [00:00&lt;00:02, 17530.11 examples/s]Map:  12%|█▏        | 6000/50612 [00:00&lt;00:02, 17462.90 examples/s]Map:  16%|█▌        | 8000/50612 [00:00&lt;00:02, 17544.02 examples/s]Map:  20%|█▉        | 10000/50612 [00:00&lt;00:02, 17236.95 examples/s]Map:  26%|██▌       | 13000/50612 [00:00&lt;00:01, 19062.56 examples/s]Map:  30%|██▉       | 15000/50612 [00:00&lt;00:01, 18497.50 examples/s]Map:  34%|███▎      | 17000/50612 [00:00&lt;00:01, 18271.66 examples/s]Map:  38%|███▊      | 19000/50612 [00:01&lt;00:01, 18051.67 examples/s]Map:  41%|████▏     | 21000/50612 [00:01&lt;00:01, 17906.61 examples/s]Map:  45%|████▌     | 23000/50612 [00:01&lt;00:01, 17834.17 examples/s]Map:  51%|█████▏    | 26000/50612 [00:01&lt;00:01, 19196.86 examples/s]Map:  55%|█████▌    | 28000/50612 [00:01&lt;00:01, 18488.17 examples/s]Map:  59%|█████▉    | 30000/50612 [00:01&lt;00:01, 18122.06 examples/s]Map:  63%|██████▎   | 32000/50612 [00:01&lt;00:01, 17935.00 examples/s]Map:  67%|██████▋   | 34000/50612 [00:01&lt;00:00, 17877.11 examples/s]Map:  71%|███████   | 36000/50612 [00:01&lt;00:00, 17796.39 examples/s]Map:  75%|███████▌  | 38000/50612 [00:02&lt;00:00, 17825.16 examples/s]Map:  79%|███████▉  | 40000/50612 [00:02&lt;00:00, 17769.64 examples/s]Map:  85%|████████▍ | 43000/50612 [00:02&lt;00:00, 19057.51 examples/s]Map:  89%|████████▉ | 45000/50612 [00:02&lt;00:00, 18574.35 examples/s]Map:  93%|█████████▎| 47000/50612 [00:02&lt;00:00, 18485.02 examples/s]Map:  97%|█████████▋| 49000/50612 [00:02&lt;00:00, 18178.95 examples/s]Map: 100%|██████████| 50612/50612 [00:02&lt;00:00, 18269.65 examples/s]
+Map:   0%|          | 0/2664 [00:00&lt;?, ? examples/s]Map:  75%|███████▌  | 2000/2664 [00:00&lt;00:00, 17914.27 examples/s]Map: 100%|██████████| 2664/2664 [00:00&lt;00:00, 20534.36 examples/s]
+Map:   0%|          | 0/5920 [00:00&lt;?, ? examples/s]Map:  34%|███▍      | 2000/5920 [00:00&lt;00:00, 17289.08 examples/s]Map:  68%|██████▊   | 4000/5920 [00:00&lt;00:00, 16972.34 examples/s]Map: 100%|██████████| 5920/5920 [00:00&lt;00:00, 18148.60 examples/s]</code></pre>
 </div>
 </div>
 <p>Now that we’ve tokenized the data, let’s load it into Tensor format (which Pytorch uses in its models). Then, we can create a DataLoader, which will automatically create batches of our data and put them into a format which our model can read easily:</p>
-<div id="370c6fd7" class="cell" data-execution_count="18">
+<div id="2cc2b46f" class="cell" data-execution_count="18">
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>train_dataset <span class="op">=</span> TensorDataset(torch.tensor(tokenized_datasets_train_promoter[<span class="st">'input_ids'</span>], device<span class="op">=</span>device),</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>                              torch.tensor(tokenized_datasets_train_promoter[<span class="st">'labels'</span>], device<span class="op">=</span>device))</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>train_dataloader <span class="op">=</span> DataLoader(train_dataset, shuffle<span class="op">=</span><span class="va">True</span>, batch_size<span class="op">=</span><span class="dv">64</span>)</span>
@@ -1317,7 +1317,7 @@ Map:   0%|          | 0/5920 [00:00&lt;?, ? examples/s]Map:  34%|███▍   
 <span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>test_dataloader <span class="op">=</span> DataLoader(test_dataset, shuffle<span class="op">=</span><span class="va">False</span>, batch_size<span class="op">=</span><span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>In the last step before training, we have to actually define a slightly new type of model. Essentially all we need to do here is add one more linear layer to our old model, which takes the original output and projects it into a two-dimensional output. This means that the “new” model will output the probability of the example belonging to each class. To do this, we just create a new model which pulls in our language model and adds the new layer on top:</p>
-<div id="777dbc52" class="cell" data-execution_count="19">
+<div id="258dc87c" class="cell" data-execution_count="19">
 <div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ClassificationModel(nn.Module):</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, base_model, num_labels):</span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">super</span>(ClassificationModel, <span class="va">self</span>).<span class="fu">__init__</span>()</span>
@@ -1337,7 +1337,7 @@ Map:   0%|          | 0/5920 [00:00&lt;?, ? examples/s]Map:  34%|███▍   
 <span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (logits, loss, attn_weights) <span class="cf">if</span> loss <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> (logits, attn_weights)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now that we have our new model defined, let’s pull in the model we trained previously, and use it to create this new 2-label classification model:</p>
-<div id="5332a7e4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;}}" data-execution_count="20">
+<div id="ec11fe15" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;}}" data-execution_count="20">
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># -----------------------------------------------------------------------------</span></span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Set force_retrain_promoter=True to ignore the saved checkpoint and retrain.</span></span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>force_retrain_promoter <span class="op">=</span> <span class="va">False</span></span>
@@ -1384,7 +1384,7 @@ Map:   0%|          | 0/5920 [00:00&lt;?, ? examples/s]Map:  34%|███▍   
 </div>
 </div>
 <p>Now, go ahead and run the next block of code to train our new model. Again, this will take about 10 minutes, so go to the next paragraph for a description of what our training is actually doing.</p>
-<div id="1ec6cb63" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;,&quot;height&quot;:715}}" data-execution_count="21">
+<div id="6acc7acc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;,&quot;height&quot;:715}}" data-execution_count="21">
 <div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> torch.optim.AdamW(new_model.parameters(), lr<span class="op">=</span><span class="fl">2e-5</span>)</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>num_epochs<span class="op">=</span><span class="dv">2</span></span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>total_steps <span class="op">=</span> <span class="bu">len</span>(train_dataloader) <span class="op">*</span> num_epochs</span>
@@ -1472,21 +1472,8 @@ Map:   0%|          | 0/5920 [00:00&lt;?, ? examples/s]Map:  34%|███▍   
 <span id="cb32-85"><a href="#cb32-85" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
 <span id="cb32-86"><a href="#cb32-86" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Epoch 0, Batch 99, Train Loss: 0.7852443059285482, Val Loss: 0.6431625173205421, Val F1: 0.6657283603096411
-Epoch 0, Batch 199, Train Loss: 0.5914899677038192, Val Loss: 0.5129594802856445, Val F1: 0.7422524565381708
-Epoch 0, Batch 299, Train Loss: 0.4695886895060539, Val Loss: 0.3742648483741851, Val F1: 0.8405044510385756
-Epoch 0, Batch 399, Train Loss: 0.3675766980648041, Val Loss: 0.2865948815430914, Val F1: 0.8673718470301057
-Epoch 0, Batch 499, Train Loss: 0.3004111607372761, Val Loss: 0.23273632710888273, Val F1: 0.9061032863849765
-Epoch 0, Batch 599, Train Loss: 0.2735249815881252, Val Loss: 0.30886207627398626, Val F1: 0.8644501278772379
-Epoch 0, Batch 699, Train Loss: 0.2619949109852314, Val Loss: 0.22818011914690337, Val F1: 0.9010989010989011
-Epoch 1, Batch 99, Train Loss: 0.23174227543994394, Val Loss: 0.20837861370472682, Val F1: 0.9088699878493317
-Epoch 1, Batch 199, Train Loss: 0.21040638998150826, Val Loss: 0.23942307524737858, Val F1: 0.8937577511368335
-Epoch 1, Batch 299, Train Loss: 0.22429307520389558, Val Loss: 0.1814308331481048, Val F1: 0.92110532639167
-Epoch 1, Batch 399, Train Loss: 0.21664299055933953, Val Loss: 0.23769744485616684, Val F1: 0.8960662525879917
-Epoch 1, Batch 499, Train Loss: 0.19047050792723894, Val Loss: 0.20412566228991463, Val F1: 0.913290113452188
-Epoch 1, Batch 599, Train Loss: 0.19464786298573017, Val Loss: 0.25495333313232377, Val F1: 0.8951512639867385
-Epoch 1, Batch 699, Train Loss: 0.20170207567512988, Val Loss: 0.22045027642022996, Val F1: 0.9086460032626428
-Promoter model saved to /Users/haekyungim/Downloads/gene46100-unit01/promoter_classifier.pt</code></pre>
+<pre><code>Promoter checkpoint found at /Users/haekyungim/Downloads/gene46100-unit01/promoter_classifier.pt — loading saved model and metrics.
+Set force_retrain_promoter=True to retrain from scratch.</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div>
@@ -1506,7 +1493,7 @@ Promoter model saved to /Users/haekyungim/Downloads/gene46100-unit01/promoter_cl
 <li>Every 100 batches, run all validation samples through the model and calculate an average loss and F1 score (a metric for classification performance) for tracking purposes</li>
 </ol>
 <p>Now that we’ve trained our model, let’s run the test data through it and see how it performs. While we do so, let’s also look at the attention weights for a specific test sample, and try to get some idea of what our model is doing:</p>
-<div id="6f113426" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;,&quot;height&quot;:1000}}" data-execution_count="22">
+<div id="19547439" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;,&quot;height&quot;:1000}}" data-execution_count="22">
 <div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>new_model.<span class="bu">eval</span>()  <span class="co"># Set the model to evaluation mode</span></span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> []</span>
@@ -1561,7 +1548,7 @@ Promoter model saved to /Users/haekyungim/Downloads/gene46100-unit01/promoter_cl
 </div>
 </div>
 </div>
-<div id="7840ce4d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;}}" data-execution_count="23">
+<div id="001ed598" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;}}" data-execution_count="23">
 <div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>correct <span class="op">=</span> <span class="dv">0</span></span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="co">#print(len(predictions))</span></span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> np.arange(<span class="bu">len</span>(predictions)) :</span>
@@ -1615,7 +1602,7 @@ F1 Score: 0.9</code></pre>
 <p>Now that we’ve introduced the idea of fine-tuning and have a simple example, let’s move on to a more complicated task. We have another set of data from the <a href="https://github.com/huggingface/notebooks/blob/main/examples/nucleotide_transformer_dna_sequence_modelling.ipynb">Nucleotide Transformer training notebook</a> which is made up of 200-bp sequences that are either labeled as strong enhancers, weak enhancers, or non-enhancers. This is a more complicated task not only because it is multi-class classification, enhancers also generally have less “characteristic” genomic structure compared to promoters. This means that (in theory) our model will have to understand more subtle relationships within each sequence to classify them correctly. This data comes from the below paper:</p>
 <p>Geng, Q., Yang, R., &amp; Zhang, L. (2022). A deep learning framework for enhancer prediction using word embedding and sequence generation. Biophysical Chemistry, 286, 106822. https://doi.org/10.1016/j.bpc.2022.106822</p>
 <p>To start, we are going to load the data and tokenize it the exact same way we did previously:</p>
-<div id="66defa73" class="cell" data-execution_count="24">
+<div id="86db75f5" class="cell" data-execution_count="24">
 <div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the enhancer dataset from local parquet files</span></span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>train_dataset_enhancers <span class="op">=</span> load_dataset(<span class="st">"parquet"</span>,</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    data_files<span class="op">=</span>os.path.join(data_dir, <span class="st">"enhancers_types_train.parquet"</span>), split<span class="op">=</span><span class="st">"train"</span>)</span>
@@ -1624,7 +1611,7 @@ F1 Score: 0.9</code></pre>
 <span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>num_labels_enhancer <span class="op">=</span> <span class="dv">3</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="a04fdea7" class="cell" data-execution_count="25">
+<div id="8ade50a7" class="cell" data-execution_count="25">
 <div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get training data</span></span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>train_sequences_enhancers <span class="op">=</span> train_dataset_enhancers[<span class="st">'sequence'</span>]</span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>train_labels_enhancers <span class="op">=</span> train_dataset_enhancers[<span class="st">'label'</span>]</span>
@@ -1637,12 +1624,12 @@ F1 Score: 0.9</code></pre>
 <span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>test_sequences_enhancers <span class="op">=</span> test_dataset_enhancers[<span class="st">'sequence'</span>]</span>
 <span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>test_labels_enhancers <span class="op">=</span> test_dataset_enhancers[<span class="st">'label'</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="df4ae7f2" class="cell" data-execution_count="26">
+<div id="768413d5" class="cell" data-execution_count="26">
 <div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>ds_train_enhancers <span class="op">=</span> Dataset.from_dict({<span class="st">"data"</span>: train_sequences_enhancers,<span class="st">'labels'</span>:train_labels_enhancers})</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>ds_validation_enhancers <span class="op">=</span> Dataset.from_dict({<span class="st">"data"</span>: validation_sequences_enhancers,<span class="st">'labels'</span>:validation_labels_enhancers})</span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>ds_test_enhancers <span class="op">=</span> Dataset.from_dict({<span class="st">"data"</span>: test_sequences_enhancers,<span class="st">'labels'</span>:test_labels_enhancers})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="89cb545b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;,&quot;height&quot;:113,&quot;referenced_widgets&quot;:[&quot;ba7e00d625434246b0d9350c43c2b685&quot;,&quot;26153eb79538457aa9b1c42d0cc2b1c4&quot;,&quot;9fa042736574449aa0d7480db94948f9&quot;,&quot;064305970f744149a30fe4806bd769b6&quot;,&quot;6659a84f236345c7aa7c42fc59e9d562&quot;,&quot;ca0322f52d0b48a8a487c36f0bf980e8&quot;,&quot;706281fc44d747d6afd0df8c92fce1ea&quot;,&quot;0c3a06f8b6b14f2db7cb6ace3776d6b0&quot;,&quot;6f28360f35a0406ba6bee5b6d13a06e4&quot;,&quot;7db13094f0564c528b4699e2ee294c44&quot;,&quot;16d1f0703ee34a4a98fcebe46f50ddce&quot;,&quot;4fab4aad92e046c9876a8690b2f398d9&quot;,&quot;f9e505f993374b07b29c5452271e552c&quot;,&quot;040e1b122e434ad38fc49117aa3ef901&quot;,&quot;1f00650d54884828af3769a2c0b73eac&quot;,&quot;d9782bda299e4eb38be264626e171b39&quot;,&quot;e37a0625f77844c1b14f4d007249009c&quot;,&quot;33e3372d213249ae8465b61a1d402c35&quot;,&quot;e0d4ab1da2a3416fa87ebc1cf33a24ff&quot;,&quot;876f665776b84cb6a42a46e2cf7e7ca9&quot;,&quot;49aa2d61956344238ddb701b201e51fc&quot;,&quot;042d641a8937436580a1f12ceb000253&quot;,&quot;41c39de1a11d410eaad74c197be09db1&quot;,&quot;6020be2a91f94c1a9652d776609aa6d5&quot;,&quot;712129fac1c9437f9cefc3375c2edb93&quot;,&quot;191c4ac205884d3a9748e80ff95ab1f7&quot;,&quot;2afe23f4ce2947edb63e11ceb415f990&quot;,&quot;ff2d244001b24897af9c2c0956dbb873&quot;,&quot;9b2819a5df8d41b59bc13701bde9d98f&quot;,&quot;dbf334fe7dce46639273e45c814fe6ee&quot;,&quot;5575b6539450472c97f8e6f67b32698e&quot;,&quot;b84620c051d34654a0bd628f1388c6f5&quot;,&quot;f9f09835e67b4cd1bc4459de6cd6ab18&quot;]}}" data-execution_count="27">
+<div id="13d2410a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;,&quot;height&quot;:113,&quot;referenced_widgets&quot;:[&quot;ba7e00d625434246b0d9350c43c2b685&quot;,&quot;26153eb79538457aa9b1c42d0cc2b1c4&quot;,&quot;9fa042736574449aa0d7480db94948f9&quot;,&quot;064305970f744149a30fe4806bd769b6&quot;,&quot;6659a84f236345c7aa7c42fc59e9d562&quot;,&quot;ca0322f52d0b48a8a487c36f0bf980e8&quot;,&quot;706281fc44d747d6afd0df8c92fce1ea&quot;,&quot;0c3a06f8b6b14f2db7cb6ace3776d6b0&quot;,&quot;6f28360f35a0406ba6bee5b6d13a06e4&quot;,&quot;7db13094f0564c528b4699e2ee294c44&quot;,&quot;16d1f0703ee34a4a98fcebe46f50ddce&quot;,&quot;4fab4aad92e046c9876a8690b2f398d9&quot;,&quot;f9e505f993374b07b29c5452271e552c&quot;,&quot;040e1b122e434ad38fc49117aa3ef901&quot;,&quot;1f00650d54884828af3769a2c0b73eac&quot;,&quot;d9782bda299e4eb38be264626e171b39&quot;,&quot;e37a0625f77844c1b14f4d007249009c&quot;,&quot;33e3372d213249ae8465b61a1d402c35&quot;,&quot;e0d4ab1da2a3416fa87ebc1cf33a24ff&quot;,&quot;876f665776b84cb6a42a46e2cf7e7ca9&quot;,&quot;49aa2d61956344238ddb701b201e51fc&quot;,&quot;042d641a8937436580a1f12ceb000253&quot;,&quot;41c39de1a11d410eaad74c197be09db1&quot;,&quot;6020be2a91f94c1a9652d776609aa6d5&quot;,&quot;712129fac1c9437f9cefc3375c2edb93&quot;,&quot;191c4ac205884d3a9748e80ff95ab1f7&quot;,&quot;2afe23f4ce2947edb63e11ceb415f990&quot;,&quot;ff2d244001b24897af9c2c0956dbb873&quot;,&quot;9b2819a5df8d41b59bc13701bde9d98f&quot;,&quot;dbf334fe7dce46639273e45c814fe6ee&quot;,&quot;5575b6539450472c97f8e6f67b32698e&quot;,&quot;b84620c051d34654a0bd628f1388c6f5&quot;,&quot;f9f09835e67b4cd1bc4459de6cd6ab18&quot;]}}" data-execution_count="27">
 <div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> tokenize_function(examples):</span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>  min_length <span class="op">=</span> <span class="bu">min</span>(<span class="bu">len</span>(i) <span class="cf">for</span> i <span class="kw">in</span> examples[<span class="st">'data'</span>])</span>
 <span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>  outputs <span class="op">=</span> np.empty((<span class="dv">0</span>, min_length), dtype<span class="op">=</span><span class="st">'int16'</span>)</span>
@@ -1683,13 +1670,13 @@ F1 Score: 0.9</code></pre>
 <span id="cb40-38"><a href="#cb40-38" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb40-39"><a href="#cb40-39" aria-hidden="true" tabindex="-1"></a>test_dataloader <span class="op">=</span> DataLoader(test_dataset, shuffle<span class="op">=</span><span class="va">True</span>, batch_size<span class="op">=</span><span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Map:   0%|          | 0/13471 [00:00&lt;?, ? examples/s]Map:  45%|████▍     | 6000/13471 [00:00&lt;00:00, 45463.51 examples/s]Map:  89%|████████▉ | 12000/13471 [00:00&lt;00:00, 45387.25 examples/s]Map: 100%|██████████| 13471/13471 [00:00&lt;00:00, 45771.01 examples/s]
-Map:   0%|          | 0/1497 [00:00&lt;?, ? examples/s]Map: 100%|██████████| 1497/1497 [00:00&lt;00:00, 48128.72 examples/s]
-Map:   0%|          | 0/400 [00:00&lt;?, ? examples/s]Map: 100%|██████████| 400/400 [00:00&lt;00:00, 54347.96 examples/s]</code></pre>
+<pre><code>Map:   0%|          | 0/13471 [00:00&lt;?, ? examples/s]Map:  45%|████▍     | 6000/13471 [00:00&lt;00:00, 45739.33 examples/s]Map:  89%|████████▉ | 12000/13471 [00:00&lt;00:00, 46967.42 examples/s]Map: 100%|██████████| 13471/13471 [00:00&lt;00:00, 47384.50 examples/s]
+Map:   0%|          | 0/1497 [00:00&lt;?, ? examples/s]Map: 100%|██████████| 1497/1497 [00:00&lt;00:00, 49232.16 examples/s]
+Map:   0%|          | 0/400 [00:00&lt;?, ? examples/s]Map: 100%|██████████| 400/400 [00:00&lt;00:00, 58308.89 examples/s]</code></pre>
 </div>
 </div>
 <p>Now, let’s load back in our <strong>original</strong> gLM, i.e.&nbsp;not the one we fine-tuned to classify promoters. This time, we need it to classify on 3 labels rather than 2, so it is simpler to just recreate a new version and fine-tune it from scratch.</p>
-<div id="b9e7157d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;}}" data-execution_count="28">
+<div id="8234cb95" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;}}" data-execution_count="28">
 <div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># -----------------------------------------------------------------------------</span></span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Set force_retrain_enhancer=True to ignore the saved checkpoint and retrain.</span></span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>force_retrain_enhancer <span class="op">=</span> <span class="va">False</span></span>
@@ -1736,7 +1723,7 @@ Map:   0%|          | 0/400 [00:00&lt;?, ? examples/s]Map: 100%|█████�
 </div>
 </div>
 <p>Now, let’s run through the same training loop. You may notice that we have greatly increased the number of epochs we are training for. This is partially due to the fact that the enhancer dataset is much smaller than the promoter dataset (so we need more epochs to get the equivalent number of training batches), but the task is also more complex, so it benefits our model to have more training iterations in general.</p>
-<div id="5eb302fe" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;}}" data-execution_count="29">
+<div id="06a8de66" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;}}" data-execution_count="29">
 <div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> torch.optim.AdamW(new_model.parameters(), lr<span class="op">=</span><span class="fl">2e-5</span>)</span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>num_epochs<span class="op">=</span><span class="dv">10</span></span>
 <span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>total_steps <span class="op">=</span> <span class="bu">len</span>(train_dataloader) <span class="op">*</span> num_epochs</span>
@@ -1794,31 +1781,12 @@ Map:   0%|          | 0/400 [00:00&lt;?, ? examples/s]Map: 100%|█████�
 <span id="cb44-55"><a href="#cb44-55" aria-hidden="true" tabindex="-1"></a>    torch.save({<span class="st">'model'</span>: new_model.state_dict(), <span class="st">'mcc_scores'</span>: mcc_scores}, _enhancer_ckpt)</span>
 <span id="cb44-56"><a href="#cb44-56" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Enhancer model saved to </span><span class="sc">{</span>_enhancer_ckpt<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Epoch 0, Batch 99, Train Loss: 1.0387800227512012, Val Loss: 0.8664407651017886, Val MCC: 0.2945673933984293
-Epoch 0, Batch 199, Train Loss: 0.8529182410240174, Val Loss: 0.7536472478556728, Val MCC: 0.4582964392680521
-Epoch 1, Batch 99, Train Loss: 0.7910185450906152, Val Loss: 0.6904157148991414, Val MCC: 0.5091465124551264
-Epoch 1, Batch 199, Train Loss: 0.7277035248279572, Val Loss: 0.6481487835392247, Val MCC: 0.55020933749683
-Epoch 2, Batch 99, Train Loss: 0.7117179876512235, Val Loss: 0.6249565996164947, Val MCC: 0.5534360556870476
-Epoch 2, Batch 199, Train Loss: 0.6598725658655167, Val Loss: 0.5756364744100607, Val MCC: 0.6117545456465057
-Epoch 3, Batch 99, Train Loss: 0.63027912888441, Val Loss: 0.5534501494466512, Val MCC: 0.6294914222433288
-Epoch 3, Batch 199, Train Loss: 0.5972756960988045, Val Loss: 0.5169414585492336, Val MCC: 0.6727822034467613
-Epoch 4, Batch 99, Train Loss: 0.5714324170404727, Val Loss: 0.49664439667021243, Val MCC: 0.6893200126731094
-Epoch 4, Batch 199, Train Loss: 0.5588996490836143, Val Loss: 0.4926233239513595, Val MCC: 0.7068381030287829
-Epoch 5, Batch 99, Train Loss: 0.5373611189760603, Val Loss: 0.4967358731446973, Val MCC: 0.6941295091188829
-Epoch 5, Batch 199, Train Loss: 0.515971246957779, Val Loss: 0.46324746819392204, Val MCC: 0.7215524265397188
-Epoch 6, Batch 99, Train Loss: 0.5009659150162259, Val Loss: 0.49918518772282816, Val MCC: 0.6997922508591838
-Epoch 6, Batch 199, Train Loss: 0.4871812579035759, Val Loss: 0.43963251317059276, Val MCC: 0.7545459804743663
-Epoch 7, Batch 99, Train Loss: 0.4818192951314084, Val Loss: 0.445064961447075, Val MCC: 0.7334317169826818
-Epoch 7, Batch 199, Train Loss: 0.4637818658351898, Val Loss: 0.44373841545639126, Val MCC: 0.7411418515913545
-Epoch 8, Batch 99, Train Loss: 0.4639499183442142, Val Loss: 0.46254503854028456, Val MCC: 0.734882446858033
-Epoch 8, Batch 199, Train Loss: 0.4367222782969475, Val Loss: 0.42725496284701625, Val MCC: 0.7504049757519755
-Epoch 9, Batch 99, Train Loss: 0.4470308549232311, Val Loss: 0.4193887097169082, Val MCC: 0.7525846268728619
-Epoch 9, Batch 199, Train Loss: 0.44259108155965804, Val Loss: 0.4226583734496248, Val MCC: 0.7521362550250343
-Enhancer model saved to /Users/haekyungim/Downloads/gene46100-unit01/enhancer_classifier.pt</code></pre>
+<pre><code>Enhancer checkpoint found at /Users/haekyungim/Downloads/gene46100-unit01/enhancer_classifier.pt — loading saved model and metrics.
+Set force_retrain_enhancer=True to retrain from scratch.</code></pre>
 </div>
 </div>
 <p>Now that we’ve finished training, we can see that our training loss remains significantly higher for this task than our promoter prediction task, as expected. Note that we use a slightly different performance metric here as well (MCC), which gives us a single scalar value for classification performance (whereas using F1 again would not be so simple). In any case, let’s see how this model performs on the test data.</p>
-<div id="38473acc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;,&quot;height&quot;:1000}}" data-execution_count="30">
+<div id="be8eda99" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;,&quot;height&quot;:1000}}" data-execution_count="30">
 <div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>new_model.<span class="bu">eval</span>()  <span class="co"># Set the model to evaluation mode</span></span>
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> []</span>
@@ -1874,10 +1842,10 @@ Enhancer model saved to /Users/haekyungim/Downloads/gene46100-unit01/enhancer_cl
 </div>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>0</code></pre>
+<pre><code>1</code></pre>
 </div>
 </div>
-<div id="04e3664a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;}}" data-execution_count="31">
+<div id="894f7e81" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;colab&quot;,&quot;value&quot;:{&quot;base_uri&quot;:&quot;https://localhost:8080/&quot;}}" data-execution_count="31">
 <div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>correct <span class="op">=</span> <span class="dv">0</span></span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="bu">len</span>(predictions))</span>
 <span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> np.arange(<span class="bu">len</span>(predictions)) :</span>

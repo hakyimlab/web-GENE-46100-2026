@@ -3,7 +3,7 @@ title: "01 · Tokens, Embeddings & Softmax"
 subtitle: "GENE 46100 — Unit 01"
 author: "Haky Im, based on 3Blue1Brown's What is a GPT"
 date: 2026-04-16
-draft: true
+draft: false
 engine: knitr
 format:
   revealjs:

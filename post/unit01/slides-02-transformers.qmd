@@ -3,7 +3,7 @@ title: "02 · Transformers: From Attention to GPT"
 subtitle: "GENE 46100 — Unit 01"
 author: "Haky Im"
 date: 2026-04-21
-draft: true
+draft: false
 engine: knitr
 format:
   revealjs:

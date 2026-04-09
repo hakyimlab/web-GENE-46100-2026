@@ -2,7 +2,7 @@
 title: "Reference: 3Blue1Brown — Large Language Models Explained Briefly"
 subtitle: "Notes from https://www.3blue1brown.com/lessons/mini-llm"
 author: "3Blue1Brown (Grant Sanderson)"
-date: 2026-04-02
+date: 2026-04-14
 draft: true
 description: "Lesson notes from 3Blue1Brown's mini-LLM explainer — next-word prediction, training, transformers, attention, and emergence."
 ---

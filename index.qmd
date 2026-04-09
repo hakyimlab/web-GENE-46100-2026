@@ -4,6 +4,8 @@ listing:
   contents:
     - "post/unit00/*.qmd"
     - "!post/unit00/slides-*.qmd"
+    - "post/unit01/*.qmd"
+    - "!post/unit01/slides-*.qmd"
   sort: "date asc"
   type: table
   fields: [date, title, categories]

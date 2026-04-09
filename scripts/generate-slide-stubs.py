@@ -34,8 +34,9 @@ def process_slide(slide_path: str) -> None:
     desc = subtitle if subtitle else "Slides"
 
     # Prefix title with lecture number extracted from filename (e.g. slides-01-foo → "01 · ")
+    # Skip if title already starts with a number prefix (e.g. "01 · ")
     num_match = re.search(r"slides-(\d+)-", base)
-    if num_match:
+    if num_match and not re.match(r"^\d+\s*·", title):
         title = f"{num_match.group(1)} · {title}"
 
     draft_line = f"\ndraft: {draft}" if draft else ""
