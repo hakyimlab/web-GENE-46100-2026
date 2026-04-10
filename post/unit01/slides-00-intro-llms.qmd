@@ -1,7 +1,7 @@
 ---
 title: "00 · What Is a Large Language Model?"
 subtitle: "GENE 46100 — Unit 01"
-author: "Haky Im"
+author: "Haky Im based on 3Blue1Brown LLM Explained"
 date: 2026-04-14
 draft: false
 engine: knitr

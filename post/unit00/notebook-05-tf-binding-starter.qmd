@@ -4,7 +4,6 @@ date: '2026-04-08'
 author: Sofia Salazar
 categories:
   - gene46100
-  - project
   - notebook
 jupyter:
   kernelspec:

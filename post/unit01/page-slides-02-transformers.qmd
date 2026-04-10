@@ -1,7 +1,7 @@
 ---
 title: "02 · Transformers: From Attention to GPT"
 date: '2026-04-21'
-author: "Haky Im"
+author: "Haky Im based on Karpathy's nanoGPT"
 description: "GENE 46100 — Unit 01"
 categories: [slides]
 draft: false

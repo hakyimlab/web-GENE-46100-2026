@@ -5,7 +5,6 @@ date: 2026-04-06
 description: "Competition details for TF binding prediction challenge"
 categories:
   - gene46100
-  - project
 eval: false
 draft: false
 ---
