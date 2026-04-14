@@ -1,22 +1,22 @@
 <!DOCTYPE html>
 <html lang="en"><head>
-<script src="slides-01-gpt-deep_files/libs/clipboard/clipboard.min.js"></script>
-<script src="slides-01-gpt-deep_files/libs/quarto-html/tabby.min.js"></script>
-<script src="slides-01-gpt-deep_files/libs/quarto-html/popper.min.js"></script>
-<script src="slides-01-gpt-deep_files/libs/quarto-html/tippy.umd.min.js"></script>
-<link href="slides-01-gpt-deep_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="slides-01-gpt-deep_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="slides-01-gpt-deep_files/libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+<script src="slides-01-gpt-deep-v2_files/libs/clipboard/clipboard.min.js"></script>
+<script src="slides-01-gpt-deep-v2_files/libs/quarto-html/tabby.min.js"></script>
+<script src="slides-01-gpt-deep-v2_files/libs/quarto-html/popper.min.js"></script>
+<script src="slides-01-gpt-deep-v2_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="slides-01-gpt-deep-v2_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="slides-01-gpt-deep-v2_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="slides-01-gpt-deep-v2_files/libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
   <meta name="generator" content="quarto-1.7.31">
 
   <meta name="author" content="Haky Im, based on 3Blue1Brown’s What is a GPT">
   <meta name="dcterms.date" content="2026-04-16">
-  <title>01 · Tokens, Embeddings &amp; Softmax</title>
+  <title>01 · From Text to Probabilities</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
-  <link rel="stylesheet" href="slides-01-gpt-deep_files/libs/revealjs/dist/reset.css">
-  <link rel="stylesheet" href="slides-01-gpt-deep_files/libs/revealjs/dist/reveal.css">
+  <link rel="stylesheet" href="slides-01-gpt-deep-v2_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="slides-01-gpt-deep-v2_files/libs/revealjs/dist/reveal.css">
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
@@ -30,14 +30,14 @@
       vertical-align: middle;
     }
   </style>
-  <link rel="stylesheet" href="slides-01-gpt-deep_files/libs/revealjs/dist/theme/quarto-f563837468303362081e247dddd440d0.css">
+  <link rel="stylesheet" href="slides-01-gpt-deep-v2_files/libs/revealjs/dist/theme/quarto-f563837468303362081e247dddd440d0.css">
   <link rel="stylesheet" href="custom.css">
-  <link href="slides-01-gpt-deep_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
-  <link href="slides-01-gpt-deep_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
-  <link href="slides-01-gpt-deep_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
-  <link href="slides-01-gpt-deep_files/libs/revealjs/plugin/reveal-chalkboard/font-awesome/css/all.css" rel="stylesheet">
-  <link href="slides-01-gpt-deep_files/libs/revealjs/plugin/reveal-chalkboard/style.css" rel="stylesheet">
-  <link href="slides-01-gpt-deep_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <link href="slides-01-gpt-deep-v2_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="slides-01-gpt-deep-v2_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="slides-01-gpt-deep-v2_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="slides-01-gpt-deep-v2_files/libs/revealjs/plugin/reveal-chalkboard/font-awesome/css/all.css" rel="stylesheet">
+  <link href="slides-01-gpt-deep-v2_files/libs/revealjs/plugin/reveal-chalkboard/style.css" rel="stylesheet">
+  <link href="slides-01-gpt-deep-v2_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
   <style type="text/css">
     .reveal div.sourceCode {
       margin: 0;
@@ -131,7 +131,7 @@
     <div class="slides">
 
 <section id="title-slide" class="quarto-title-block center">
-  <h1 class="title">01 · Tokens, Embeddings &amp; Softmax</h1>
+  <h1 class="title">01 · From Text to Probabilities</h1>
   <p class="subtitle">GENE 46100 — Unit 01</p>
 
 <div class="quarto-title-authors">
@@ -153,6 +153,32 @@ Haky Im, based on 3Blue1Brown’s What is a GPT
 </ul>
 <div class="source-credit-linked">
 <p>Source: <a href="https://www.3blue1brown.com/lessons/gpt">3Blue1Brown — What is a GPT? Visual intro to transformers</a></p>
+</div>
+</section>
+<section id="the-transformer-pipeline" class="slide level2">
+<h2>The transformer pipeline</h2>
+<p>Before diving in: here is the full flow from text to prediction.</p>
+<div class="columns">
+<div class="column" style="width:60%;">
+<div class="quarto-figure quarto-figure-left">
+<figure>
+<p><img data-src="images/gpt/predict.png" class="quarto-figure quarto-figure-left" style="width:100.0%"></p>
+</figure>
+</div>
+</div><div class="column" style="width:40%;">
+<div style="font-size: 0.75em;">
+<ol type="1">
+<li>Text → <strong>tokens</strong></li>
+<li>Tokens → vectors via <strong>W_E</strong></li>
+<li>Vectors pass through <strong>Attention → MLP</strong> blocks, repeated</li>
+<li>Final vector → scores via <strong>W_U</strong></li>
+<li>Scores → probabilities via <strong>softmax</strong></li>
+<li>Sample next token</li>
+</ol>
+</div>
+</div></div>
+<div class="source-credit-linked">
+<p>Source: <a href="https://www.3blue1brown.com/lessons/gpt">3Blue1Brown — What is a GPT?</a></p>
 </div>
 </section>
 <section>
@@ -242,36 +268,53 @@ Haky Im, based on 3Blue1Brown’s What is a GPT
 </section>
 <section id="geography-works-too" class="slide level2">
 <h2>Geography works too</h2>
+<div class="columns">
+<div class="column" style="width:65%;">
+<div class="quarto-figure quarto-figure-left">
+<figure>
+<p><img data-src="images/gpt/italy.png" class="quarto-figure quarto-figure-left" style="width:100.0%"></p>
+</figure>
+</div>
+</div><div class="column" style="width:35%;">
 <p>The difference between country and capital vectors is consistent across examples.</p>
-
-<img data-src="images/gpt/italy.png" class="quarto-figure quarto-figure-left r-stretch" style="width:75.0%"><p>Subtracting “Germany” from “Italy” and adding to “Hitler” lands near “Mussolini.” Meaning lives in geometry.</p>
+<p>Subtracting “Germany” from “Italy” and adding to “Hitler” lands near “Mussolini.” Meaning lives in geometry.</p>
+</div></div>
 <div class="source-credit-linked">
 <p>Source: <a href="https://www.3blue1brown.com/lessons/gpt">3Blue1Brown — What is a GPT?</a></p>
 </div>
 </section></section>
 <section>
-<section id="part-3-dot-products-similarity" class="title-slide slide level1 center" data-background-color="#1e3a5f" style="color:white;">
-<h1>Part 3: Dot Products &amp; Similarity</h1>
+<section id="part-3-dot-products-context" class="title-slide slide level1 center" data-background-color="#1e3a5f" style="color:white;">
+<h1>Part 3: Dot Products &amp; Context</h1>
 
 </section>
 <section id="dot-product-measure-of-alignment" class="slide level2">
 <h2>Dot product = measure of alignment</h2>
 <p>The <strong>dot product</strong> is how the model asks: <em>how similar are these two vectors?</em></p>
-
-<img data-src="images/gpt/dotProduct.png" class="quarto-figure quarto-figure-left r-stretch" style="width:75.0%"><ul>
+<div class="columns">
+<div class="column" style="width:60%;">
+<p><img data-src="images/gpt/HowToDot.png" style="width:100.0%"></p>
+</div><div class="column" style="width:40%;">
+<ul>
 <li>Positive → vectors point in the same direction (similar)</li>
 <li>Zero → perpendicular (unrelated)</li>
 <li>Negative → opposite directions (different)</li>
 </ul>
+</div></div>
 <div class="source-credit-linked">
 <p>Source: <a href="https://www.3blue1brown.com/lessons/gpt">3Blue1Brown — What is a GPT?</a></p>
 </div>
 </section>
-<section id="how-to-compute-it" class="slide level2">
-<h2>How to compute it</h2>
-<p>Multiply corresponding components, then sum.</p>
-
-<img data-src="images/gpt/HowToDot.png" class="quarto-figure quarto-figure-left r-stretch" style="width:75.0%"><p>This simple operation is <strong>the core computation</strong> inside attention, inside every linear layer — it appears thousands of times per forward pass.</p>
+<section id="dot-products-detect-semantic-directions" class="slide level2">
+<h2>Dot products detect semantic directions</h2>
+<p>The <strong>plurality direction</strong> <code>plur = E(cats) − E(cat)</code> captures what “plural” means geometrically.</p>
+<div class="columns">
+<div class="column" style="width:60%;">
+<p><img data-src="images/gpt/dotProduct.png" style="width:100.0%"></p>
+</div><div class="column" style="width:40%;">
+<p>Octopodes / octopi / octopuses score high (plural); “one” scores negative (singular).</p>
+<p>This same principle drives attention: queries dot-producted with keys measure relevance.</p>
+</div></div>
 <div class="source-credit-linked">
 <p>Source: <a href="https://www.3blue1brown.com/lessons/gpt">3Blue1Brown — What is a GPT?</a></p>
 </div>
@@ -279,8 +322,18 @@ Haky Im, based on 3Blue1Brown’s What is a GPT
 <section id="context-window-what-the-model-sees" class="slide level2">
 <h2>Context window: what the model sees</h2>
 <p>The model processes a fixed window of tokens at once.</p>
-
-<img data-src="images/gpt/InitialContext.png" class="quarto-figure quarto-figure-left r-stretch" style="width:80.0%"><p>GPT-3 context = 2,048 tokens. Modern models extend this to 100k+. Everything outside the window is invisible to the model.</p>
+<div class="columns">
+<div class="column" style="width:60%;">
+<p><img data-src="images/gpt/InitialContext.png" style="width:100.0%"></p>
+</div><div class="column" style="width:40%;">
+<div style="font-size: 0.7em;">
+<ul>
+<li>GPT-3 context = 2,048 tokens</li>
+<li>Modern models extend this to 100k+</li>
+<li>Everything outside the window is invisible to the model</li>
+</ul>
+</div>
+</div></div>
 <div class="source-credit-linked">
 <p>Source: <a href="https://www.3blue1brown.com/lessons/gpt">3Blue1Brown — What is a GPT?</a></p>
 </div>
@@ -288,22 +341,56 @@ Haky Im, based on 3Blue1Brown’s What is a GPT
 <section id="same-word-different-meaning" class="slide level2">
 <h2>Same word, different meaning</h2>
 <p>Initial vectors encode the word alone. As vectors flow through the network, they absorb context.</p>
-
-<img data-src="images/gpt/Snape.png" class="quarto-figure quarto-figure-left r-stretch" style="width:75.0%"><p><em>“Snape”</em> in a sentence about potions → different final vector than <em>“Snape”</em> in a sentence about betrayal. Same starting point, different destination.</p>
+<div class="columns">
+<div class="column" style="width:60%;">
+<p><img data-src="images/gpt/Snape.png" style="width:100.0%"></p>
+</div><div class="column" style="width:40%;">
+<div style="font-size: 0.7em;">
+<ul>
+<li>Same word → same starting vector</li>
+<li>Context flows through the network, updating each vector</li>
+<li><em>“Snape”</em> near potions → shifts toward one region of meaning</li>
+<li><em>“Snape”</em> near betrayal → shifts toward another</li>
+<li>Same starting point, different destination</li>
+</ul>
+</div>
+</div></div>
 <div class="source-credit-linked">
 <p>Source: <a href="https://www.3blue1brown.com/lessons/gpt">3Blue1Brown — What is a GPT?</a></p>
 </div>
 </section></section>
 <section>
-<section id="part-4-softmax-unembedding" class="title-slide slide level1 center" data-background-color="#1e3a5f" style="color:white;">
-<h1>Part 4: Softmax &amp; Unembedding</h1>
+<section id="part-4-unembedding-output" class="title-slide slide level1 center" data-background-color="#1e3a5f" style="color:white;">
+<h1>Part 4: Unembedding &amp; Output</h1>
 
 </section>
 <section id="getting-back-to-words-w_u" class="slide level2">
 <h2>Getting back to words: W_U</h2>
 <p>After all transformer layers, the final vector must become a <strong>probability distribution</strong> over the vocabulary.</p>
-
-<img data-src="images/gpt/WU.png" class="quarto-figure quarto-figure-left r-stretch" style="width:80.0%"><p>The <strong>unembedding matrix W_U</strong> maps the final vector back to one score per vocabulary token. Same dimensions as W_E, transposed.</p>
+<div class="columns">
+<div class="column" style="width:60%;">
+<p><img data-src="images/gpt/WU.png" style="width:100.0%"></p>
+</div><div class="column" style="width:40%;">
+<p>The <strong>unembedding matrix W_U</strong> maps the final vector back to one score per vocabulary token. Same dimensions as W_E, transposed.</p>
+</div></div>
+<div class="source-credit-linked">
+<p>Source: <a href="https://www.3blue1brown.com/lessons/gpt">3Blue1Brown — What is a GPT?</a></p>
+</div>
+</section>
+<section id="logits-the-raw-scores" class="slide level2">
+<h2>Logits: the raw scores</h2>
+<p>The output of W_U is a vector of <strong>50,000+ raw scores</strong> — one per token in the vocabulary.</p>
+<div class="columns">
+<div class="column" style="width:55%;">
+<div class="quarto-figure quarto-figure-left">
+<figure>
+<p><img data-src="images/gpt/predict.png" class="quarto-figure quarto-figure-left" style="width:100.0%"></p>
+</figure>
+</div>
+</div><div class="column" style="width:45%;">
+<p>These scores are called <strong>logits</strong> — they can be any real number: negative, large, small.</p>
+<p>They are not yet probabilities. That is softmax’s job.</p>
+</div></div>
 <div class="source-credit-linked">
 <p>Source: <a href="https://www.3blue1brown.com/lessons/gpt">3Blue1Brown — What is a GPT?</a></p>
 </div>
@@ -311,20 +398,36 @@ Haky Im, based on 3Blue1Brown’s What is a GPT
 <section id="softmax-from-scores-to-probabilities" class="slide level2">
 <h2>Softmax: from scores to probabilities</h2>
 <p>Raw scores (logits) can be any number. <strong>Softmax</strong> converts them into a valid probability distribution.</p>
-
-<img data-src="images/gpt/SoftMax.png" class="quarto-figure quarto-figure-left r-stretch" style="width:75.0%"><ol type="1">
-<li>Raise <span class="math inline">\(e\)</span> to each score’s power (forces positive)</li>
-<li>Sum all values</li>
-<li>Divide each by the sum</li>
+<div class="columns">
+<div class="column" style="width:55%;">
+<p><img data-src="images/gpt/SoftMax.png" style="width:100.0%"></p>
+</div><div class="column" style="width:45%;">
+<p><span class="math display">\[\text{softmax}(x_i) = \frac{e^{x_i}}{\sum_j e^{x_j}}\]</span></p>
+<div style="font-size: 0.7em;">
+<ol type="1">
+<li><span class="math inline">\(e^{x_i}\)</span> — forces all values positive</li>
+<li><span class="math inline">\(\sum_j e^{x_j}\)</span> — normalisation constant</li>
+<li>Divide → outputs sum to 1</li>
 </ol>
+</div>
+</div></div>
 <div class="source-credit-linked">
 <p>Source: <a href="https://www.3blue1brown.com/lessons/gpt">3Blue1Brown — What is a GPT?</a></p>
 </div>
 </section>
 <section id="how-softmax-behaves" class="slide level2">
 <h2>How softmax behaves</h2>
-
-<img data-src="images/gpt/howsoftmax.png" class="quarto-figure quarto-figure-left r-stretch" style="width:80.0%"><p>Large differences between scores → one token dominates. Small differences → distribution spreads out.</p>
+<div class="columns">
+<div class="column" style="width:60%;">
+<div class="quarto-figure quarto-figure-left">
+<figure>
+<p><img data-src="images/gpt/howsoftmax.png" class="quarto-figure quarto-figure-left" style="width:100.0%"></p>
+</figure>
+</div>
+</div><div class="column" style="width:40%;">
+<p>Large differences between scores → one token dominates.</p>
+<p>Small differences → distribution spreads out.</p>
+</div></div>
 <div class="source-credit-linked">
 <p>Source: <a href="https://www.3blue1brown.com/lessons/gpt">3Blue1Brown — What is a GPT?</a></p>
 </div>
@@ -332,11 +435,19 @@ Haky Im, based on 3Blue1Brown’s What is a GPT
 <section id="temperature-dialing-confidence-up-or-down" class="slide level2">
 <h2>Temperature: dialing confidence up or down</h2>
 <p>Divide logits by temperature <span class="math inline">\(T\)</span> before softmax:</p>
-
-<img data-src="images/gpt/temperatureReal.png" class="quarto-figure quarto-figure-left r-stretch" style="width:80.0%"><table class="caption-top">
+<div class="columns">
+<div class="column" style="width:60%;">
+<div class="quarto-figure quarto-figure-left">
+<figure>
+<p><img data-src="images/gpt/temperatureReal.png" class="quarto-figure quarto-figure-left" style="width:100.0%"></p>
+</figure>
+</div>
+</div><div class="column" style="width:40%;">
+<div style="font-size: 0.7em;">
+<table class="caption-top">
 <thead>
 <tr class="header">
-<th>Temperature</th>
+<th><span class="math inline">\(T\)</span></th>
 <th>Effect</th>
 </tr>
 </thead>
@@ -359,52 +470,90 @@ Haky Im, based on 3Blue1Brown’s What is a GPT
 </tr>
 </tbody>
 </table>
+</div>
+</div></div>
 <div class="source-credit-linked">
 <p>Source: <a href="https://www.3blue1brown.com/lessons/gpt">3Blue1Brown — What is a GPT?</a></p>
 </div>
 </section>
 <section id="the-full-prediction-pipeline" class="slide level2">
 <h2>The full prediction pipeline</h2>
-
-<img data-src="images/gpt/predict.png" class="quarto-figure quarto-figure-left r-stretch" style="width:85.0%"><p>Token → W_E → transformer layers → W_U → softmax → sample next token.</p>
+<div class="columns">
+<div class="column" style="width:60%;">
+<div class="quarto-figure quarto-figure-left">
+<figure>
+<p><img data-src="images/gpt/predict.png" class="quarto-figure quarto-figure-left" style="width:100.0%"></p>
+</figure>
+</div>
+</div><div class="column" style="width:40%;">
+<p>Token → <strong>W_E</strong> → transformer layers → <strong>W_U</strong> → softmax → sample next token.</p>
+<p>Each pass produces one token. Repeat to generate text.</p>
+</div></div>
 <div class="source-credit-linked">
 <p>Source: <a href="https://www.3blue1brown.com/lessons/gpt">3Blue1Brown — What is a GPT?</a></p>
 </div>
 </section></section>
 <section>
-<section id="part-5-preview-attention" class="title-slide slide level1 center" data-background-color="#1e3a5f" style="color:white;">
-<h1>Part 5: Preview — Attention</h1>
+<section id="part-5-the-attention-block" class="title-slide slide level1 center" data-background-color="#1e3a5f" style="color:white;">
+<h1>Part 5: The Attention Block</h1>
 
 </section>
 <section id="what-attention-does" class="slide level2">
 <h2>What attention does</h2>
 <p>We have vectors. We have dot products. Attention uses both: each token’s vector <strong>queries</strong> other tokens’ <strong>keys</strong> to decide how much to attend.</p>
-
-<img data-src="images/gpt/attent.png" class="quarto-figure quarto-figure-left r-stretch" style="width:80.0%"><p>The result: vectors update each other based on relevance. <em>“bank”</em> near <em>“river”</em> shifts toward riverbank. This is the mechanism that makes transformers powerful.</p>
+<div class="columns">
+<div class="column" style="width:60%;">
+<div class="quarto-figure quarto-figure-left">
+<figure>
+<p><img data-src="images/gpt/attent.png" class="quarto-figure quarto-figure-left" style="width:100.0%"></p>
+</figure>
+</div>
+</div><div class="column" style="width:40%;">
+<p>Vectors update each other based on context. <em>“model”</em> in <em>“a machine learning model”</em> vs <em>“a fashion model”</em> — the Attention Block shifts the vector to reflect which meaning applies.</p>
+</div></div>
 <div class="source-credit-linked">
 <p>Source: <a href="https://www.3blue1brown.com/lessons/gpt">3Blue1Brown — What is a GPT?</a></p>
 </div>
 </section>
 <section id="multiple-heads-multiple-relationships" class="slide level2">
 <h2>Multiple heads, multiple relationships</h2>
-
-<img data-src="images/gpt/multi.png" class="quarto-figure quarto-figure-left r-stretch" style="width:80.0%"><p>Running many attention heads in parallel lets the model track different types of relationships simultaneously — syntactic, semantic, positional.</p>
-<p>Next deck: the full Q/K/V math and how this works in code.</p>
+<p>Running many attention heads in parallel lets the model track different types of relationships simultaneously — syntactic, semantic, positional.</p>
+<p>Each head learns a different kind of relevance: one might track subject–verb agreement, another coreference, another position.</p>
+<div class="source-credit-linked">
+<p>Source: <a href="https://www.3blue1brown.com/lessons/gpt">3Blue1Brown — What is a GPT?</a></p>
+</div>
+</section>
+<section id="the-mlp-asking-questions-about-each-vector" class="slide level2">
+<h2>The MLP: asking questions about each vector</h2>
+<div class="columns">
+<div class="column" style="width:60%;">
+<div class="quarto-figure quarto-figure-left">
+<figure>
+<p><img data-src="images/gpt/multi.png" class="quarto-figure quarto-figure-left" style="width:100.0%"></p>
+</figure>
+</div>
+</div><div class="column" style="width:40%;">
+<p>After attention, each vector passes independently through a <strong>Multilayer Perceptron</strong> — asking a long list of questions to update its value.</p>
+<p>This is where factual associations are thought to be stored.</p>
+</div></div>
 <div class="source-credit-linked">
 <p>Source: <a href="https://www.3blue1brown.com/lessons/gpt">3Blue1Brown — What is a GPT?</a></p>
 </div>
 </section>
 <section id="key-takeaways" class="slide level2">
 <h2>Key Takeaways</h2>
+<div style="font-size: 0.75em;">
 <ul>
 <li>Text → tokens → integer IDs → vectors via <strong>W_E</strong> (the embedding matrix)</li>
 <li>Embedding space has <strong>geometric structure</strong>: similar meanings cluster, directions encode properties</li>
 <li><strong>Dot products</strong> measure vector similarity — the fundamental operation throughout</li>
 <li>Initial vectors encode the word alone; transformer layers give them <strong>context</strong></li>
-<li><strong>W_U</strong> maps the final vector back to vocabulary scores; <strong>softmax</strong> converts to probabilities</li>
+<li><strong>W_U</strong> maps the final vector back to vocabulary scores (<strong>logits</strong>); <strong>softmax</strong> converts to probabilities</li>
 <li><strong>Temperature</strong> controls how peaked or flat the output distribution is</li>
-<li>Everything is matrix multiplication — attention next</li>
+<li>Transformer = <strong>[Attention → MLP] × N</strong> — attention communicates, MLP processes</li>
+<li>Next deck: the full Q/K/V math behind attention</li>
 </ul>
+</div>
 
 </section></section>
     </div>
@@ -415,20 +564,20 @@ Haky Im, based on 3Blue1Brown’s What is a GPT
 </div></div>
 
   <script>window.backupDefine = window.define; window.define = undefined;</script>
-  <script src="slides-01-gpt-deep_files/libs/revealjs/dist/reveal.js"></script>
+  <script src="slides-01-gpt-deep-v2_files/libs/revealjs/dist/reveal.js"></script>
   <!-- reveal.js plugins -->
-  <script src="slides-01-gpt-deep_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
-  <script src="slides-01-gpt-deep_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
-  <script src="slides-01-gpt-deep_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
-  <script src="slides-01-gpt-deep_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
-  <script src="slides-01-gpt-deep_files/libs/revealjs/plugin/reveal-chalkboard/plugin.js"></script>
-  <script src="slides-01-gpt-deep_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  <script src="slides-01-gpt-deep-v2_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="slides-01-gpt-deep-v2_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="slides-01-gpt-deep-v2_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="slides-01-gpt-deep-v2_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="slides-01-gpt-deep-v2_files/libs/revealjs/plugin/reveal-chalkboard/plugin.js"></script>
+  <script src="slides-01-gpt-deep-v2_files/libs/revealjs/plugin/quarto-support/support.js"></script>
   
 
-  <script src="slides-01-gpt-deep_files/libs/revealjs/plugin/notes/notes.js"></script>
-  <script src="slides-01-gpt-deep_files/libs/revealjs/plugin/search/search.js"></script>
-  <script src="slides-01-gpt-deep_files/libs/revealjs/plugin/zoom/zoom.js"></script>
-  <script src="slides-01-gpt-deep_files/libs/revealjs/plugin/math/math.js"></script>
+  <script src="slides-01-gpt-deep-v2_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="slides-01-gpt-deep-v2_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="slides-01-gpt-deep-v2_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="slides-01-gpt-deep-v2_files/libs/revealjs/plugin/math/math.js"></script>
   <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
 
   <script>

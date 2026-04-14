@@ -917,9 +917,9 @@
     "text": "Conclusion\nTo sum up everything we have gone through in this notebook, here are a few major points:\n\nLarge language models (LLMs) have become well-known for their popular use (i.e. ChatGPT), but they have strong potential for use as research tools in various fields as well.\nGenomic langauge models (gLMs) are a type of LLM that attempt to learn relationships between different of regions of DNA directly from DNA sequence.\nIn general, gLMs can be created similarly to any other type of language model (usually using the Attention mechanism), however strategies for tokenization can differ due to the simplified vocabulary of DNA sequence.\nOnce tokenization and embeddings are defined, a gLM can be trained just like any other language model.\ngLMs can be fine-tuned to perform specific tasks.\n\nThe applications of language modeling to functional genomic research is a very new field, and publications of high-performing models are just beginning to emerge. If you are interested in further investigation, we would highly recommend the DNABERT-2 and Nucleotide Transformer papers. These represent two distinctly different approaches to DNA language modeling, each with their own benefits and downsides."
   },
   {
-    "objectID": "post/unit01/page-slides-01-gpt-deep.html",
-    "href": "post/unit01/page-slides-01-gpt-deep.html",
-    "title": "01 · Tokens, Embeddings & Softmax",
+    "objectID": "post/unit01/page-slides-01-gpt-deep-v2.html",
+    "href": "post/unit01/page-slides-01-gpt-deep-v2.html",
+    "title": "01 · From Text to Probabilities",
     "section": "",
     "text": "Open slide deck\n\n\n\n\n\n© HakyImLab and Listed Authors - CC BY 4.0 License"
   },

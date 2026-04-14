@@ -22,3 +22,4 @@ Watch Karpathy's nanoGPT tutorial on youtube [link](https://www.youtube.com/watc
 
 
 list of questions in text format is [here](https://docs.google.com/document/d/1X4_tZEM4CeQUdcfxmfjBA8eNCpCf5RhBHqJvBliO0j0/edit?usp=sharing)
+

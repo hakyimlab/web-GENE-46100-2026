@@ -58,9 +58,9 @@ Source: [3Blue1Brown — Large Language Models Explained Briefly](https://www.3b
 
 ## Step 3: Predict one word
 
-The whole text so far is fed into the model. It predicts the most likely next word.
+The whole text so far is fed into the model. It predicts the most likely next word — here, **"used"**.
 
-![](images/mini-llm/user.png){fig-align="left" width="40%"}
+![](images/mini-llm/repeat.png){fig-align="left" width="40%"}
 
 ::: {.source-credit-linked}
 Source: [3Blue1Brown — Large Language Models Explained Briefly](https://www.3blue1brown.com/lessons/mini-llm)
@@ -70,9 +70,9 @@ Source: [3Blue1Brown — Large Language Models Explained Briefly](https://www.3b
 
 ## Step 4: Append and repeat
 
-That word is appended. Feed it all back in. Predict the next word. Repeat.
+"used" is appended to the script. Feed it all back in. The model now predicts **"to"**. Repeat.
 
-![](images/mini-llm/repeat.png){fig-align="left" width="40%"}
+![](images/mini-llm/repeat2.png){fig-align="left" width="40%"}
 
 ::: {.source-credit-linked}
 Source: [3Blue1Brown — Large Language Models Explained Briefly](https://www.3blue1brown.com/lessons/mini-llm)

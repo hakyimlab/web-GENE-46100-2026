@@ -18,9 +18,11 @@ draft: true
 # Homework 5
 
 1. Calculate expected cross entropy loss for an untrained classification model, i.e. random guess, as a function of the number of classes
+
 2. Replicate Henry's training of a DNA language model using nanoGPT
   - Choose at least one of the following 
   - Improve Henry's model to predict promoters by tweaking the model, or freezing the language model and adding more layers after the last layer of the model, etc
   - Predict DNA binding score using the data from project 1
-3. (extra credit) Re-train DNA based nano GPT keeping only ACGT characters. how does removing the lower case characters change performance, loss function values? how much of the training set is in lower case?
+
+3. Re-train DNA based nano GPT keeping only ACGT characters. how does removing the lower case characters change performance, loss function values? how much of the training set is in lower case?
 
