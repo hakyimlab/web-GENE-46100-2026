@@ -4,7 +4,6 @@ author: "Andrej Karpathy (annotated)"
 date: '2026-04-24'
 categories:
   - notebook
-  - gene46100
 description: "Companion notebook to Karpathy's nanoGPT video — build a character-level GPT on Tiny Shakespeare, step by step."
 jupyter:
   kernelspec:
@@ -19,6 +18,7 @@ format:
     code-overflow: wrap
 date-modified: last-modified
 draft: false
+eval: false
 ---
 
 ## Building a GPT
@@ -181,23 +181,22 @@ class BigramLanguageModel(nn.Module):
 
 ### cross entropy loss
 
-Loss = $-\sum_{i}(y_i * \log(p_i))$x
+$$\text{Loss} = -\sum_{i}(y_i \cdot \log(p_i))$$
 
 where:
 
-$y_i$ = actual probability (0 or 1 for the $i$-th class)
-$p_i$ = predicted probability for the $i$-th class
-$\sum$ = sum over all classes (characters)
+- $y_i$ = actual probability (0 or 1 for the $i$-th class)
+- $p_i$ = predicted probability for the $i$-th class
+- $\sum$ = sum over all classes (characters)
 
-This is the loss for a single token prediction. The total loss reported by F.cross_entropy is the average loss across all B*T tokens in the batch, where:
+This is the loss for a single token prediction. The total loss reported by `F.cross_entropy` is the average loss across all $B \times T$ tokens in the batch, where:
 
-B = batch_size
-T = block_size (sequence length)
+- $B$ = batch_size
+- $T$ = block_size (sequence length)
 
-Before training, we would expect the model to predict the next character from a uniform distribution (random guessing). The probability for the correct character would be $1 / \text{vocab_size}$.
+Before training, we would expect the model to predict the next character from a uniform distribution (random guessing). The probability for the correct character would be $1 / \text{vocab\_size}$.
 
-Expected initial loss $\approx - \log(1 / \text{vocab_size}) = \log(\text{vocab_size})$
-$\log(65) \approx 4.1744$
+Expected initial loss $\approx -\log(1 / \text{vocab\_size}) = \log(\text{vocab\_size}) = \log(65) \approx 4.1744$
 
 ### initialize the model and compute the loss
 
@@ -241,6 +240,14 @@ print(loss.item())
 ```{python}
 print(decode(m.generate(idx = torch.zeros((1, 1), dtype=torch.long), max_new_tokens=500)[0].tolist()))
 ```
+
+The output looks like random noise — no recognizable words, no structure. The bigram model isn't really learning anything useful. Why? Because it only looks at **one character at a time** to predict the next one. The context window is just 1 token.
+
+To do better, we need the model to look at **more of the past** — ideally all the previous characters in the context window — and use that broader context to predict what comes next.
+
+But aggregating over a variable-length history naively (with a for loop) is slow and inelegant. Before we build the full self-attention mechanism, let's learn a key trick: **how to express this aggregation as a matrix multiplication**. This will make the operation fast, parallelizable, and — crucially — generalizable to *learned*, data-dependent weights.
+
+> **Discuss:** Why would only looking at the previous character be insufficient for predicting the next word in a language like English? What kinds of long-range dependencies would a bigger context window capture?
 
 ### The mathematical trick in self-attention
 toy example illustrating how matrix multiplication can be used for a "weighted aggregation"
@@ -437,6 +444,18 @@ torch.softmax(torch.tensor([0.1, -0.2, 0.3, -0.2, 0.5]), dim=-1)
 torch.softmax(torch.tensor([0.1, -0.2, 0.3, -0.2, 0.5])*8, dim=-1) # gets too peaky, converges to one-hot
 ```
 
+### Dropout
+
+During training, dropout randomly zeros out a fraction of activations at each forward pass. This forces the network to learn redundant representations and prevents co-adaptation of neurons — a simple but effective way to reduce overfitting.
+
+![Srivastava et al. (2014). Left: standard network. Right: the same network after applying dropout — crossed units are dropped for that forward pass.](images/dropout-srivastava.png){width=70%}
+
+::: {.callout-note}
+**Source:** Srivastava et al., "Dropout: A Simple Way to Prevent Neural Networks from Overfitting," *JMLR* 15 (2014). <https://jmlr.csail.mit.edu/papers/volume15/srivastava14a/srivastava14a.pdf>
+:::
+
+In nanoGPT, `nn.Dropout(dropout)` is applied after the attention weights (in `Head`) and after the final projection in `MultiHeadAttention` and `FeedForward`. When `dropout = 0.0` (as in the toy demo above), it has no effect — it only activates when you set a non-zero rate for real training.
+
 ### LayerNorm1d
 
 ```{python}
@@ -503,6 +522,14 @@ x[0,:].mean(), x[0,:].std()
 # <--------- ENCODE ------------------><--------------- DECODE ----------------->
 # les réseaux de neurones sont géniaux! <START> neural networks are awesome!<END>
 ```
+
+### Full GPT Architecture
+
+Before diving into the complete code, here is the full architecture assembled end-to-end — from token + positional embeddings, through the repeated Attention → Add & Norm → Feed Forward → Add & Norm blocks, to the final Linear + Softmax head.
+
+![Full GPT architecture. The transformer block (center) repeats $N_x$ times. Each block contains multi-head self-attention, residual connections, layer norm, and a feed-forward network. Source: [Daniel Dugas, *GPT Architecture*](https://dugas.ch/artificial_curiosity/GPT_architecture.html)](images/fullarch-gpt-dugas-ch.png)
+
+> **Discuss:** Trace a single token through this diagram. Where does dropout apply? Where do the residual connections ("Add") help with training?
 
 ### Full finished code, for reference
 

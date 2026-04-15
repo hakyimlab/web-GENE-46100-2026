@@ -1,0 +1,1051 @@
+---
+title: "00 · Word Embeddings: From Tokens to Geometry"
+subtitle: "GPT-2 · Qwen3-0.8B · word2vec · nomic-embed"
+author: "Intro to LLMs"
+date: '2026-04-14'
+categories:
+  - notebook
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    code-fold: true
+    code-tools: true
+    theme: cosmo
+    highlight-style: github
+    embed-resources: true
+    fig-width: 10
+    fig-height: 6
+    callout-appearance: simple
+execute:
+  warning: false
+  message: false
+jupyter:
+  kernelspec:
+    name: "conda-env-nanogpt46100-py"
+    language: "python"
+    display_name: "nanogpt46100"
+---
+
+```{python}
+#| label: setup
+#| include: false
+
+%pip install -q gensim sentence-transformers
+
+import os, logging
+# Suppress HF Hub token warning and avoid hub checks when model is already cached
+os.environ["HF_HUB_DISABLE_IMPLICIT_TOKEN"] = "1"
+logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
+
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import seaborn as sns
+import plotly.express as px
+import plotly.graph_objects as go
+import warnings, math, itertools
+warnings.filterwarnings("ignore")
+
+plt.rcParams.update({
+    "font.family": "DejaVu Sans",
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+    "figure.dpi": 130,
+})
+PALETTE = px.colors.qualitative.Bold
+
+def cosine_similarity(a, b):
+    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-9))
+
+def angle_between(a, b):
+    c = np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-9)
+    return math.degrees(math.acos(float(np.clip(c, -1, 1))))
+
+def top_k_from_matrix(vec, W, decode_fn, k=20):
+    """Top-k tokens by cosine similarity to vec, deduplicating surface forms."""
+    unit_vec = vec / (np.linalg.norm(vec) + 1e-9)
+    W_unit   = W / (np.linalg.norm(W, axis=1, keepdims=True) + 1e-9)
+    sims     = W_unit @ unit_vec
+    idxs     = np.argsort(sims)[::-1][:k + 20]
+    results, seen = [], set()
+    for i in idxs:
+        tok = decode_fn(i).strip()
+        if tok and tok not in seen:
+            seen.add(tok)
+            results.append((tok, float(sims[i])))
+        if len(results) == k:
+            break
+    return results
+```
+
+## What is an Embedding?
+
+::: {.callout-note}
+**Core idea.** Every token in a language model is a high-dimensional vector of real numbers. These vectors are learned during training so that **semantically similar words end up geometrically close** to each other. Geometry encodes meaning.
+:::
+
+---
+
+## 1 · A Toy 2-D Embedding Space
+
+Before looking at a real model, let's build intuition with a tiny **2-dimensional** example. Imagine we train a vocabulary of 12 words on a text corpus; after training, each word has an (x, y) position. Words that appear in similar contexts cluster together.
+
+```{python}
+#| label: toy-2d
+#| fig-cap: "Toy 2-D embedding space. Colour = semantic category."
+
+words = [
+    "king",  "queen",  "man",   "woman",
+    "dog",   "cat",    "puppy", "kitten",
+    "Paris", "London", "Tokyo", "Berlin",
+]
+coords = np.array([
+    [ 0.95,  0.90], [ 0.85,  0.70], [ 0.75,  0.80], [ 0.65,  0.60],
+    [-0.80, -0.50], [-0.70, -0.65], [-0.90, -0.40], [-0.85, -0.75],
+    [ 0.10, -0.90], [ 0.30, -0.80], [ 0.50, -0.95], [ 0.20, -0.70],
+])
+categories = ["Royalty / People"] * 4 + ["Animals"] * 4 + ["Cities"] * 4
+cat_colors = {"Royalty / People": "#E63946", "Animals": "#2A9D8F", "Cities": "#E9C46A"}
+colors = [cat_colors[c] for c in categories]
+
+fig, ax = plt.subplots(figsize=(8, 6))
+ax.scatter(coords[:, 0], coords[:, 1], c=colors, s=180, zorder=3,
+           edgecolors="white", linewidths=1.2)
+for i, word in enumerate(words):
+    ax.annotate(word, coords[i], textcoords="offset points",
+                xytext=(8, 4), fontsize=10, fontweight="bold")
+legend_handles = [mpatches.Patch(color=v, label=k) for k, v in cat_colors.items()]
+ax.legend(handles=legend_handles, loc="lower right", framealpha=0.9)
+ax.set_title("Toy 2-D Embedding Space", fontsize=14, fontweight="bold", pad=12)
+ax.set_xlabel("Dimension 1");  ax.set_ylabel("Dimension 2")
+ax.axhline(0, color="lightgrey", lw=0.8);  ax.axvline(0, color="lightgrey", lw=0.8)
+plt.tight_layout();  plt.show()
+```
+
+The direction from **man → woman** is approximately the same as **king → queen** — the famous **word analogy** property.
+
+---
+
+## 2 · The Four Models
+
+| # | Model | Type | Dim | Training objective |
+|---|---|---|---|---|
+| 1 | **word2vec** (Google News, 2013) | Static word vectors | 300 | Predict surrounding words (skip-gram) |
+| 2 | **GPT-2** (117M, 2019) | LLM token embeddings | 768 | Next-token prediction |
+| 3 | **Qwen3-0.8B** (2025) | LLM token embeddings | 1024 | Next-token prediction |
+| 4 | **nomic-embed-text-v1.5** (2024) | Dedicated embedding model | 768 | Contrastive learning |
+
+**Key distinction:** word2vec and nomic-embed were *designed* for semantic vector arithmetic. GPT-2 and Qwen3 learned their token embeddings as a side effect of next-token prediction.
+
+### 2a · GPT-2
+
+```{python}
+#| label: load-gpt2
+
+import torch
+from transformers import GPT2Model, GPT2Tokenizer
+
+def _load(cls, name, **kw):
+    try:
+        return cls.from_pretrained(name, local_files_only=True, **kw)
+    except Exception:
+        return cls.from_pretrained(name, **kw)
+
+gpt2_tok   = _load(GPT2Tokenizer, "gpt2")
+gpt2_model = _load(GPT2Model, "gpt2")
+gpt2_model.eval()
+W_gpt2 = gpt2_model.wte.weight.detach().to(torch.float32).numpy()
+print(f"GPT-2:  vocab {W_gpt2.shape[0]:,}  dim {W_gpt2.shape[1]}  ({W_gpt2.nbytes/1e6:.0f} MB)")
+
+gpt2_decode = lambda i: gpt2_tok.decode([i])
+
+def gpt2_embed(word):
+    ids = gpt2_tok.encode(" " + word, add_special_tokens=False) or \
+          gpt2_tok.encode(word, add_special_tokens=False)
+    return W_gpt2[ids].mean(axis=0)
+```
+
+### 2b · Qwen3-0.8B
+
+```{python}
+#| label: load-qwen3
+
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+qwen_name  = "Qwen/Qwen3.5-0.8B"
+qwen_tok   = _load(AutoTokenizer, qwen_name)
+qwen_model = _load(AutoModelForCausalLM, qwen_name, dtype=torch.float32, device_map="cpu")
+qwen_model.eval()
+W_qwen = qwen_model.model.embed_tokens.weight.detach().to(torch.float32).numpy()
+print(f"Qwen3-0.8B:  vocab {W_qwen.shape[0]:,}  dim {W_qwen.shape[1]}  ({W_qwen.nbytes/1e6:.0f} MB)")
+
+qwen_decode = lambda i: qwen_tok.decode([i])
+
+def qwen_embed(word):
+    ids = qwen_tok.encode(" " + word, add_special_tokens=False) or \
+          qwen_tok.encode(word, add_special_tokens=False)
+    return W_qwen[ids].mean(axis=0)
+```
+
+::: {.callout-note collapse="true"}
+**Architecture note.** GPT-2 stores its embedding matrix at `model.wte.weight`; Qwen3 uses `model.model.embed_tokens.weight`. Both are lookup tables: row `i` is the 1-D vector for token `i` before the transformer sees it.
+:::
+
+### 2c · word2vec (Google News)
+
+```{python}
+#| label: load-word2vec
+
+import gensim.downloader as gensim_api
+
+print("Downloading word2vec-google-news-300 (~1.7 GB, cached after first run)…")
+wv    = gensim_api.load("word2vec-google-news-300")
+W_w2v = wv.vectors                           # shape (≈3 M, 300)
+print(f"word2vec:  vocab {len(wv):,}  dim {wv.vector_size}")
+
+def w2v_embed(word):
+    return wv[word]
+```
+
+### 2d · nomic-embed-text-v1.5
+
+```{python}
+#| label: load-nomic
+
+from sentence_transformers import SentenceTransformer
+
+try:
+    nomic = SentenceTransformer("nomic-ai/nomic-embed-text-v1.5",
+                                trust_remote_code=True, local_files_only=True)
+except Exception:
+    nomic = SentenceTransformer("nomic-ai/nomic-embed-text-v1.5", trust_remote_code=True)
+print(f"nomic-embed:  dim {nomic.get_sentence_embedding_dimension()}")
+
+def nomic_embed(word):
+    # nomic-embed uses a task prefix for best results; outputs unit-normalized vectors
+    return nomic.encode(f"search_document: {word}", normalize_embeddings=True)
+```
+
+---
+
+## 3 · Are Embedding Matrices Normalized?
+
+A natural question: does each token vector have unit length? Do dimensions have zero mean across the vocabulary? The answers matter for choosing between cosine similarity and Euclidean distance.
+
+```{python}
+#| label: normalization-check
+#| fig-cap: "Top row: L2 norm of each token vector. Bottom row: mean value per dimension across all tokens. Red dashed line = reference value (unit norm / zero mean)."
+#| fig-height: 9
+
+vocab_matrices = {
+    "word2vec":   W_w2v,
+    "GPT-2":      W_gpt2,
+    "Qwen3-0.8B": W_qwen,
+}
+
+fig, axes = plt.subplots(2, 3, figsize=(15, 9))
+
+for col, (name, W) in enumerate(vocab_matrices.items()):
+    norms     = np.linalg.norm(W, axis=1)
+    col_means = W.mean(axis=0)
+
+    ax = axes[0, col]
+    ax.hist(norms, bins=100, color="#457B9D", edgecolor="white", lw=0.4)
+    ax.axvline(1.0, color="#E63946", lw=1.5, ls="--", label="unit norm (1.0)")
+    ax.axvline(norms.mean(), color="#FFB703", lw=1.5, ls="-",
+               label=f"mean = {norms.mean():.2f}")
+    ax.set_title(f"{name}  ({W.shape[0]:,} × {W.shape[1]})", fontweight="bold")
+    ax.set_xlabel("L2 norm of token vector")
+    if col == 0:
+        ax.set_ylabel("token count  (row norms)")
+    ax.legend(fontsize=8)
+
+    ax = axes[1, col]
+    ax.hist(col_means, bins=60, color="#2A9D8F", edgecolor="white", lw=0.4)
+    ax.axvline(0, color="#E63946", lw=1.5, ls="--", label="zero mean")
+    ax.set_xlabel("per-dimension mean across vocab")
+    if col == 0:
+        ax.set_ylabel("# dimensions  (column means)")
+    ax.legend(fontsize=8)
+
+plt.suptitle("Are embedding matrices normalized?",
+             fontsize=14, fontweight="bold", y=1.01)
+plt.tight_layout();  plt.show()
+```
+
+```{python}
+#| label: normalization-table
+#| code-fold: false
+
+print(f"{'Model':15s}  {'norm mean':>10s}  {'norm std':>9s}  "
+      f"{'norm min':>9s}  {'norm max':>9s}  {'unit-norm?':>11s}  {'col-mean ≈ 0?':>14s}")
+print("-" * 85)
+for name, W in vocab_matrices.items():
+    norms     = np.linalg.norm(W, axis=1)
+    col_means = W.mean(axis=0)
+    is_unit   = np.allclose(norms, 1.0, atol=0.01)
+    is_zero   = np.allclose(col_means, 0.0, atol=0.05)
+    print(f"  {name:13s}  {norms.mean():>10.3f}  {norms.std():>9.3f}  "
+          f"{norms.min():>9.3f}  {norms.max():>9.3f}  {str(is_unit):>11s}  {str(is_zero):>14s}")
+
+# nomic-embed outputs unit-normalized vectors by construction
+v = nomic_embed("king")
+print(f"\n  nomic-embed  output norm = {np.linalg.norm(v):.6f}  (normalize_embeddings=True)")
+```
+
+::: {.callout-note}
+**Key findings:**
+
+- None of the three models with explicit vocabulary matrices store **unit-normalized** token vectors. Norms vary, sometimes substantially.
+- **Euclidean distance** between two tokens depends on both the *direction* of their vectors **and** their *magnitudes*. A high-norm token will be Euclidean-far from almost everything even if directionally similar.
+- **Cosine similarity** is immune to magnitude — it measures *direction only*. This is why it is the standard metric for semantic comparisons.
+- **nomic-embed** is an exception by design: `encode(..., normalize_embeddings=True)` always returns unit-norm vectors.
+:::
+
+---
+
+## 4 · Background Geometry: Random Token Pairs
+
+Before interpreting any similarity score, we need the baseline: **what does a typical random pair look like?** Any meaningful similarity must stand out from this background distribution.
+
+```{python}
+#| label: random-pair-distributions
+#| fig-cap: "Cosine similarity (left) and Euclidean distance (right) for 5,000 random token pairs in each model."
+#| fig-height: 11
+
+np.random.seed(42)
+N = 5_000
+
+fig, axes = plt.subplots(3, 2, figsize=(12, 11))
+
+for row, (name, W) in enumerate(vocab_matrices.items()):
+    idx_a  = np.random.choice(len(W), N, replace=False)
+    idx_b  = np.random.choice(len(W), N, replace=False)
+    A, B   = W[idx_a], W[idx_b]
+
+    A_u    = A / (np.linalg.norm(A, axis=1, keepdims=True) + 1e-9)
+    B_u    = B / (np.linalg.norm(B, axis=1, keepdims=True) + 1e-9)
+    cos    = np.sum(A_u * B_u, axis=1)
+    euclid = np.linalg.norm(A - B, axis=1)
+
+    ax = axes[row, 0]
+    ax.hist(cos, bins=80, color="#2A9D8F", edgecolor="white", lw=0.4)
+    ax.axvline(cos.mean(), color="#E63946", lw=1.5, ls="--",
+               label=f"mean = {cos.mean():.3f}")
+    ax.axvline(0, color="black", lw=0.8, ls=":")
+    ax.set_title(f"{name} — cosine similarity", fontweight="bold")
+    ax.set_xlabel("cosine similarity");  ax.set_ylabel("count")
+    ax.legend(fontsize=9)
+
+    ax = axes[row, 1]
+    ax.hist(euclid, bins=80, color="#457B9D", edgecolor="white", lw=0.4)
+    ax.axvline(euclid.mean(), color="#E63946", lw=1.5, ls="--",
+               label=f"mean = {euclid.mean():.1f}")
+    ax.set_title(f"{name} — Euclidean distance", fontweight="bold")
+    ax.set_xlabel("Euclidean distance");  ax.set_ylabel("count")
+    ax.legend(fontsize=9)
+
+plt.suptitle(f"Background: cosine similarity and Euclidean distance for {N:,} random token pairs",
+             fontsize=13, fontweight="bold", y=1.01)
+plt.tight_layout();  plt.show()
+```
+
+::: {.callout-important}
+**The curse of dimensionality.** In high dimensions (768-D for GPT-2, 1024-D for Qwen3), random vectors are nearly *orthogonal* — cosine ≈ 0. This means:
+
+- A cosine similarity of 0.2 between two tokens is already non-trivial; 0.5+ is strongly related.
+- word2vec (300-D) shows more spread and a slightly higher mean cosine.
+- Euclidean distances differ across models primarily because token norms differ (see Section 3), not because the geometry is fundamentally different — another reason to prefer cosine.
+:::
+
+---
+
+## 5 · Cosine Similarity Between Word Pairs
+
+```{python}
+#| label: similarity-pairs
+#| fig-cap: "Cosine similarity between hand-picked word pairs (GPT-2). Green = high, yellow = moderate, red = low."
+
+pairs = [
+    ("king",   "queen"),   ("dog",    "cat"),    ("Paris",  "London"),
+    ("happy",  "joyful"),  ("run",    "sprint"),
+    ("king",   "castle"),  ("dog",    "park"),   ("France", "Paris"),
+    ("king",   "banana"),  ("dog",    "algebra"),("happy",  "concrete"),
+]
+pair_labels  = [f"{a} ↔ {b}" for a, b in pairs]
+similarities = [cosine_similarity(gpt2_embed(a), gpt2_embed(b)) for a, b in pairs]
+colors_bar   = ["#2A9D8F" if s > 0.5 else ("#E9C46A" if s > 0.25 else "#E63946")
+                for s in similarities]
+
+fig, ax = plt.subplots(figsize=(9, 5))
+bars = ax.barh(pair_labels, similarities, color=colors_bar, edgecolor="white", height=0.65)
+ax.axvline(0, color="black", lw=0.8)
+ax.axvline(0.5,  color="#2A9D8F", lw=1, ls="--", alpha=0.5, label="High (> 0.5)")
+ax.axvline(0.25, color="#E9C46A", lw=1, ls="--", alpha=0.5, label="Moderate (> 0.25)")
+ax.set_xlim(-0.15, 1.0)
+ax.set_xlabel("Cosine Similarity")
+ax.set_title("Cosine Similarity Between Word Pairs (GPT-2)", fontweight="bold")
+ax.legend(fontsize=9)
+for bar, val in zip(bars, similarities):
+    ax.text(val + 0.01, bar.get_y() + bar.get_height() / 2,
+            f"{val:.3f}", va="center", fontsize=9)
+plt.tight_layout();  plt.show()
+```
+
+> **Discuss:** How do these cosine values compare to the random-pair background from Section 4? At what threshold does a similarity score become "meaningful"?
+
+---
+
+## 6 · Nearest Neighbours
+
+For any word, we can ask: which tokens live closest in embedding space?
+
+```{python}
+#| label: nearest-neighbours
+#| fig-cap: "Top-9 nearest neighbours for four seed words in GPT-2."
+
+probe_words = ["king", "dog", "Paris", "happy"]
+fig, axes   = plt.subplots(1, 4, figsize=(14, 5))
+fig.suptitle("Nearest Neighbours in GPT-2 Embedding Space", fontsize=14, fontweight="bold")
+
+for ax, word in zip(axes, probe_words):
+    neighbours = top_k_from_matrix(gpt2_embed(word), W_gpt2, gpt2_decode, k=9)
+    labels     = [n[0] for n in neighbours]
+    sims       = [n[1] for n in neighbours]
+    bar_colors = ["#E63946" if lbl.strip() == word else "#457B9D" for lbl in labels]
+    ax.barh(labels[::-1], sims[::-1], color=bar_colors[::-1], edgecolor="white")
+    ax.set_title(f'"{word}"', fontweight="bold", fontsize=11)
+    ax.set_xlabel("Cosine Sim");  ax.set_xlim(0.5, 1.02)
+
+plt.tight_layout();  plt.show()
+```
+
+---
+
+## 7 · Semantic Clusters
+
+### 7a · The Embedding Matrix
+
+A 40-token slice of GPT-2's embedding matrix. Different tokens activate different dimensions; similar tokens share similar activation patterns.
+
+```{python}
+#| label: matrix-heatmap
+#| fig-cap: "Heatmap of 40 random GPT-2 tokens × first 64 dimensions."
+#| fig-height: 8
+
+np.random.seed(42)
+sample_ids   = np.random.choice(W_gpt2.shape[0], 40, replace=False)
+sample_slice = W_gpt2[sample_ids, :64]
+sample_words = [gpt2_tok.decode([i]).strip() or f"<{i}>" for i in sample_ids]
+
+fig, ax = plt.subplots(figsize=(14, 8))
+sns.heatmap(sample_slice, ax=ax, cmap="RdBu_r", center=0,
+            xticklabels=[f"d{i}" for i in range(64)],
+            yticklabels=sample_words, linewidths=0.0,
+            cbar_kws={"label": "Value", "shrink": 0.6})
+ax.set_title("GPT-2 Embedding Matrix — 40 random tokens × first 64 dims",
+             fontweight="bold", pad=12)
+plt.tight_layout();  plt.show()
+```
+
+### 7b · Semantic Categories
+
+```{python}
+#| label: semantic-clusters
+#| fig-cap: "PCA / UMAP projection of GPT-2 embeddings coloured by semantic category."
+
+from sklearn.decomposition import PCA
+
+vocab_groups = {
+    "Royalty":  ["king", "queen", "prince", "princess", "throne", "crown", "noble", "lord"],
+    "Animals":  ["dog", "cat", "horse", "lion", "tiger", "wolf", "bear", "fox"],
+    "Cities":   ["Paris", "London", "Tokyo", "Berlin", "Rome", "Madrid", "Seoul", "Cairo"],
+    "Emotions": ["happy", "sad", "angry", "fear", "joy", "love", "hate", "calm"],
+    "Tech":     ["computer", "software", "internet", "data", "algorithm", "neural", "code", "model"],
+    "Food":     ["apple", "bread", "soup", "pizza", "coffee", "sugar", "salt", "rice"],
+    "Sports":   ["football", "tennis", "swim", "run", "race", "goal", "team", "ball"],
+    "Science":  ["physics", "biology", "chemistry", "atom", "gene", "planet", "force", "energy"],
+}
+
+all_words, all_groups, all_vecs = [], [], []
+for group, words in vocab_groups.items():
+    for w in words:
+        all_words.append(w);  all_groups.append(group)
+        all_vecs.append(gpt2_embed(w))
+X = np.array(all_vecs)
+
+try:
+    import umap
+    reducer = umap.UMAP(n_components=2, random_state=42, n_neighbors=6, min_dist=0.3)
+    X_2d    = reducer.fit_transform(X);  method = "UMAP"
+except ImportError:
+    pca2  = PCA(n_components=2, random_state=42)
+    X_2d  = pca2.fit_transform(X);  method = "PCA"
+
+fig = px.scatter(
+    x=X_2d[:, 0], y=X_2d[:, 1],
+    text=all_words, color=all_groups,
+    color_discrete_sequence=PALETTE,
+    title=f"{method} Projection of GPT-2 Embeddings by Semantic Category",
+    labels={"x": f"{method} 1", "y": f"{method} 2", "color": "Category"},
+    width=860, height=580,
+)
+fig.update_traces(textposition="top center",
+                  marker=dict(size=10, opacity=0.85, line=dict(width=1, color="white")))
+fig.show()
+```
+
+::: {.callout-note}
+Semantically related words cluster together even though the model **never received explicit category labels** — structure emerges entirely from predicting the next token.
+:::
+
+---
+
+## 8 · The Analogy: king − man + woman ≈ ?
+
+$$\vec{\text{king}} - \vec{\text{man}} + \vec{\text{woman}} \approx \vec{\text{queen}}$$
+
+### 8a · Top-20 Nearest Neighbors
+
+We compute `king − man + woman` in three models and find the closest tokens by cosine similarity.
+
+```{python}
+#| label: analogy-ranking
+#| fig-cap: "Top-20 tokens nearest to (king − man + woman). Red = queen, gold = source words, blue = other."
+#| fig-height: 12
+
+source_words = {"king", "man", "woman"}
+
+lm_models_list = [
+    ("word2vec",   w2v_embed,  W_w2v,  lambda i: wv.index_to_key[i]),
+    ("GPT-2",      gpt2_embed, W_gpt2, gpt2_decode),
+    ("Qwen3-0.8B", qwen_embed, W_qwen, qwen_decode),
+]
+
+fig, axes = plt.subplots(1, 3, figsize=(16, 12))
+
+for ax, (name, embed_fn, W, decode_fn) in zip(axes, lm_models_list):
+    result   = embed_fn("king") - embed_fn("man") + embed_fn("woman")
+    neighbors = top_k_from_matrix(result, W, decode_fn, k=20)
+    labels    = [n[0] for n in neighbors]
+    sims      = [n[1] for n in neighbors]
+
+    bar_colors = []
+    for lbl in labels:
+        l = lbl.lower().strip()
+        if l == "queen":
+            bar_colors.append("#E63946")
+        elif l in source_words:
+            bar_colors.append("#FFB703")
+        else:
+            bar_colors.append("#457B9D")
+
+    ax.barh(labels[::-1], sims[::-1], color=bar_colors[::-1], edgecolor="white")
+    ax.set_title(f"{name}", fontweight="bold", fontsize=13)
+    ax.set_xlabel("cosine similarity to analogy vector")
+
+    queen_rank = next((i + 1 for i, lbl in enumerate(labels)
+                       if lbl.lower().strip() == "queen"), "—")
+    cos_q = cosine_similarity(result, embed_fn("queen"))
+    cos_k = cosine_similarity(result, embed_fn("king"))
+    ax.text(0.02, 0.02,
+            f"queen rank: {queen_rank}\ncos(queen) = {cos_q:.3f}\ncos(king)  = {cos_k:.3f}",
+            transform=ax.transAxes, fontsize=9, va="bottom",
+            bbox=dict(facecolor="white", alpha=0.75, edgecolor="lightgrey"))
+
+legend_handles = [
+    mpatches.Patch(color="#E63946", label="queen"),
+    mpatches.Patch(color="#FFB703", label="source words  (king / man / woman)"),
+    mpatches.Patch(color="#457B9D", label="other tokens"),
+]
+fig.legend(handles=legend_handles, loc="lower center", ncol=3,
+           fontsize=10, frameon=False, bbox_to_anchor=(0.5, -0.02))
+plt.suptitle("Top-20 nearest tokens to (king − man + woman)",
+             fontsize=14, fontweight="bold", y=1.01)
+plt.tight_layout();  plt.show()
+```
+
+### 8b · Full-Vocabulary Cosine Histograms
+
+Where does the analogy vector land relative to *every token* in each model's vocabulary?
+
+```{python}
+#| label: analogy-vocab-histograms
+#| fig-cap: "Cosine similarity of the analogy vector to every vocab token. Vertical lines mark annotated landmark words."
+#| fig-width: 18
+#| fig-height: 6
+
+landmark_cats = [
+    ("source",    ["king", "man", "woman"],                                    "#FFB703"),
+    ("royalty",   ["queen", "princess", "prince", "empress", "emperor",
+                   "monarch", "duchess", "duke"],                              "#E63946"),
+    ("power",     ["ruler", "sovereign", "lord", "leader", "chief"],           "#6A0572"),
+    ("unrelated", ["dog", "computer"],                                         "#888888"),
+]
+
+def log_y_ax(frac, ax):
+    lo = math.log10(max(ax.get_ylim()[0], 0.5))
+    hi = math.log10(ax.get_ylim()[1])
+    return 10 ** (lo + frac * (hi - lo))
+
+row_fracs = [0.88, 0.65, 0.42, 0.22]
+
+fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+
+for ax, (name, embed_fn, W, _) in zip(axes, lm_models_list):
+    result_v = embed_fn("king") - embed_fn("man") + embed_fn("woman")
+    result_u = result_v / (np.linalg.norm(result_v) + 1e-9)
+    W_u      = W / (np.linalg.norm(W, axis=1, keepdims=True) + 1e-9)
+    all_sims = W_u @ result_u
+
+    ax.hist(all_sims, bins=120, color="#CCCCCC", edgecolor="white", log=True)
+    ax.set_xlabel("cosine similarity to (king − man + woman)")
+    ax.set_ylabel("tokens  (log scale)")
+    ax.set_title(f"{name}  —  {len(all_sims):,} tokens", fontweight="bold", pad=8)
+
+    all_lm = []
+    for _cat, words, color in landmark_cats:
+        for w in words:
+            try:
+                sim = cosine_similarity(result_v, embed_fn(w))
+                all_lm.append((w, sim, color))
+            except Exception:
+                pass
+    all_lm.sort(key=lambda t: t[1])
+
+    for i, (w, sim, color) in enumerate(all_lm):
+        ax.axvline(sim, color=color, lw=1.5, alpha=0.9)
+        ax.annotate(f"{w}\n{sim:.3f}",
+                    xy=(sim, log_y_ax(row_fracs[i % len(row_fracs)], ax)),
+                    xytext=(4, 0), textcoords="offset points",
+                    fontsize=8, fontweight="bold", color=color, va="center")
+
+legend_handles = [
+    mpatches.Patch(color="#FFB703", label="source words"),
+    mpatches.Patch(color="#E63946", label="royalty"),
+    mpatches.Patch(color="#6A0572", label="power"),
+    mpatches.Patch(color="#888888", label="unrelated"),
+]
+fig.legend(handles=legend_handles, loc="lower center", ncol=4,
+           fontsize=9, frameon=False, bbox_to_anchor=(0.5, -0.06))
+plt.suptitle("Cosine similarity of (king − man + woman) to full vocabulary",
+             fontsize=13, fontweight="bold", y=1.02)
+plt.tight_layout();  plt.show()
+```
+
+::: {.callout-tip}
+**What to look for.** In word2vec, royalty words (red) cluster tightly at the right tail and queen typically sits above king — the analogy "works." In GPT-2 and Qwen3, king dominates (the analogy vector still points mostly toward king). Qwen3 narrows the king–queen gap substantially, but king still wins.
+:::
+
+### 8c · Cosine vs. Euclidean Scatter
+
+Plotting both metrics simultaneously reveals where they agree and where they diverge.
+
+```{python}
+#| label: analogy-cos-euclid-scatter
+#| fig-cap: "Each grey dot is one vocab token. Highlighted landmarks show where cosine and Euclidean rankings diverge."
+#| fig-height: 7
+
+landmark_colors = {
+    "queen":    "#E63946",
+    "king":     "#FFB703", "woman": "#FFB703", "man": "#FFB703",
+    "emperor":  "#6A0572", "empress": "#6A0572",
+    "princess": "#457B9D", "prince":  "#457B9D",
+    "dog":      "#888888", "computer": "#888888",
+}
+landmarks = list(landmark_colors)
+
+fig, axes = plt.subplots(1, 2, figsize=(16, 7))
+
+for ax, (name, embed_fn, W, _) in zip(axes, lm_models_list[1:]):   # GPT-2, Qwen3
+    result_v = embed_fn("king") - embed_fn("man") + embed_fn("woman")
+    result_u = result_v / (np.linalg.norm(result_v) + 1e-9)
+    W_u      = W / (np.linalg.norm(W, axis=1, keepdims=True) + 1e-9)
+    all_sims  = W_u @ result_u
+    all_dists = np.linalg.norm(W - result_v, axis=1)
+
+    ax.scatter(all_sims, all_dists, s=3, color="#CCCCCC", alpha=0.3,
+               edgecolors="none", rasterized=True)
+    for w in landmarks:
+        try:
+            v = embed_fn(w)
+            s = cosine_similarity(result_v, v)
+            d = float(np.linalg.norm(v - result_v))
+            c = landmark_colors[w]
+            ax.scatter(s, d, s=90, color=c, edgecolor="white", lw=1.2, zorder=5)
+            ax.annotate(f"{w}\ncos={s:.2f}  d={d:.1f}",
+                        xy=(s, d), xytext=(7, 5), textcoords="offset points",
+                        fontsize=9, fontweight="bold", color=c)
+        except Exception:
+            pass
+    ax.set_xlabel("cosine similarity to analogy vector")
+    ax.set_ylabel("Euclidean distance to analogy vector")
+    ax.set_title(f"{name}", fontweight="bold", pad=10)
+    ax.axvline(0, color="#EEEEEE", lw=0.8)
+
+plt.suptitle("Cosine vs. Euclidean — every vocab token",
+             fontsize=14, fontweight="bold")
+plt.tight_layout();  plt.show()
+```
+
+::: {.callout-tip}
+**When cosine and Euclidean disagree.** A token with high cosine but large Euclidean distance points in the *right direction* but has a different *magnitude*. Because LLM embedding norms vary widely (Section 3), Euclidean distance can penalise or reward a token just for having an unusual norm — this is why cosine is preferred for semantic retrieval.
+:::
+
+### 8d · Semantic-Axis Projection (GPT-2)
+
+Project words onto two interpretable axes: **royalty** (commoner → royalty) and **gender** (male → female).
+
+```{python}
+#| label: semantic-axis
+#| fig-cap: "Left: raw vector projections. Right: unit-normalized (cosine geometry only). The ★ is the analogy result king−man+woman."
+
+man_v   = gpt2_embed("man");   woman_v = gpt2_embed("woman")
+king_v  = gpt2_embed("king");  queen_v = gpt2_embed("queen")
+
+gender_axis  = woman_v - man_v;  gender_axis /= np.linalg.norm(gender_axis)
+royalty_raw  = (king_v + queen_v) / 2 - (man_v + woman_v) / 2
+royalty_axis = royalty_raw - np.dot(royalty_raw, gender_axis) * gender_axis
+royalty_axis /= np.linalg.norm(royalty_axis)
+
+def proj(vec):
+    return np.dot(vec, royalty_axis), np.dot(vec, gender_axis)
+def proj_norm(word):
+    v = gpt2_embed(word);  return proj(v / (np.linalg.norm(v) + 1e-9))
+
+focus_words  = ["man", "woman", "king", "queen", "prince", "princess", "emperor", "empress"]
+neg_controls = ["dog", "Paris", "computer", "banana", "happy", "physics"]
+focus_colors = {
+    "man": "#457B9D", "woman": "#457B9D",
+    "king": "#E63946", "queen": "#E63946",
+    "prince": "#E63946", "princess": "#E63946",
+    "emperor": "#6A0572", "empress": "#6A0572",
+}
+result_vec = king_v - man_v + woman_v
+cos_q = cosine_similarity(result_vec, queen_v)
+print(f"cos(king−man+woman, queen) = {cos_q:.4f}")
+
+fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+for ax, use_norm, title in zip(
+    axes,
+    [False, True],
+    ["Euclidean projection\n(raw vectors)", "Cosine projection\n(unit-normalized)"],
+):
+    pf  = (lambda w: proj(gpt2_embed(w))) if not use_norm else proj_norm
+    rp  = proj(result_vec) if not use_norm else proj(result_vec / (np.linalg.norm(result_vec) + 1e-9))
+
+    for w in neg_controls:
+        x, y = pf(w)
+        ax.scatter(x, y, color="#CCCCCC", s=80, zorder=2)
+        ax.annotate(w, (x, y), textcoords="offset points", xytext=(6, 3),
+                    fontsize=9, color="#999999")
+    for w in focus_words:
+        x, y = pf(w)
+        ax.scatter(x, y, color=focus_colors[w], s=120, zorder=3)
+        ax.annotate(w, (x, y), textcoords="offset points", xytext=(6, 3),
+                    fontsize=11, fontweight="bold", color=focus_colors[w])
+    ax.scatter(*rp, color="#FFB703", s=220, zorder=5, marker="*")
+    ax.annotate("king−man+woman", rp, textcoords="offset points",
+                xytext=(8, 3), fontsize=10, fontweight="bold", color="#FFB703")
+    for w1, w2 in [("man", "king"), ("woman", "queen")]:
+        ax.annotate("", xy=pf(w2), xytext=pf(w1),
+                    arrowprops=dict(arrowstyle="->", color="#BBBBBB", lw=1.2))
+    ax.axhline(0, color="#EEEEEE", lw=0.8);  ax.axvline(0, color="#EEEEEE", lw=0.8)
+    ax.set_xlabel("Royalty axis  →", fontsize=11)
+    ax.set_ylabel("Gender axis  →", fontsize=11)
+    ax.set_title(title, fontweight="bold", pad=10)
+
+plt.suptitle("Royalty × Gender projection — raw vs. unit-normalized (GPT-2)",
+             fontsize=13, fontweight="bold", y=1.02)
+plt.tight_layout();  plt.show()
+```
+
+::: {.callout-note}
+The raw projection (left) overshoots queen on the gender axis because the analogy adds the *full* man → woman vector. After unit-normalization (right), magnitude is stripped out — the ★ lands much closer to queen. This is why cosine geometry is the right frame for semantic similarity.
+:::
+
+---
+
+## 9 · Plural and Number Directions
+
+If embeddings encode grammar as geometry, we should find a consistent **"plural direction"**: the vector `cats − cat` should point roughly the same way as `dogs − dog`, `kings − king`, and so on. Similarly, number words (one, two, three …) should form a structured sequence.
+
+```{python}
+#| label: plural-direction
+#| fig-cap: "Plural direction vectors for GPT-2 embeddings. Each arrow is `plural − singular`; consistent direction = grammar is geometry."
+
+# --- plural pairs ---
+plural_pairs = [
+    ("cat",    "cats"),
+    ("dog",    "dogs"),
+    ("king",   "kings"),
+    ("queen",  "queens"),
+    ("word",   "words"),
+    ("token",  "tokens"),
+    ("city",   "cities"),
+    ("country","countries"),
+    ("man",    "men"),
+    ("woman",  "women"),
+]
+
+# plural direction vectors (unit-normalised)
+def unit(v):
+    return v / (np.linalg.norm(v) + 1e-9)
+
+plural_vecs = []
+for sing, plur in plural_pairs:
+    try:
+        d = gpt2_embed(plur) - gpt2_embed(sing)
+        plural_vecs.append((sing, plur, unit(d)))
+    except Exception:
+        pass
+
+# mean plural direction
+mean_plural = unit(np.mean([v for *_, v in plural_vecs], axis=0))
+
+# cosine of each pair's direction with the mean
+print("Cosine similarity of each plural direction with the mean plural direction:")
+print(f"  {'singular → plural':22s}  {'cosine':>8s}")
+print("  " + "-" * 34)
+for sing, plur, d in plural_vecs:
+    c = float(np.dot(d, mean_plural))
+    print(f"  {sing + ' → ' + plur:22s}  {c:8.4f}")
+```
+
+```{python}
+#| label: plural-heatmap-all-models
+#| fig-cap: "Pairwise cosine similarity between plural direction vectors across four models. Each cell is cos( (plural−singular)_i , (plural−singular)_j ). Higher = more consistent plural direction."
+
+all_embed_fns = {
+    "word2vec":    w2v_embed,
+    "GPT-2":       gpt2_embed,
+    "Qwen3-0.8B":  qwen_embed,
+    "nomic-embed": nomic_embed,
+}
+labels = [f"{s}→{p}" for s, p in plural_pairs]
+
+fig, axes = plt.subplots(2, 2, figsize=(18, 16))
+axes = axes.flatten()
+mean_scores = {}
+
+for ax, (model_name, embed_fn) in zip(axes, all_embed_fns.items()):
+    vecs = []
+    valid_labels = []
+    for sing, plur in plural_pairs:
+        try:
+            d = embed_fn(plur) - embed_fn(sing)
+            vecs.append(unit(d))
+            valid_labels.append(f"{sing}→{plur}")
+        except Exception:
+            pass
+    mat = np.array(vecs) @ np.array(vecs).T
+    n = len(vecs)
+    # mean off-diagonal = consistency score
+    off_diag = mat[np.triu_indices(n, k=1)]
+    score = float(off_diag.mean())
+    mean_scores[model_name] = score
+
+    im = ax.imshow(mat, cmap="RdYlGn", vmin=-0.2, vmax=1.0)
+    ax.set_xticks(range(n)); ax.set_xticklabels(valid_labels, rotation=45, ha="right", fontsize=8)
+    ax.set_yticks(range(n)); ax.set_yticklabels(valid_labels, fontsize=8)
+    for i in range(n):
+        for j in range(n):
+            ax.text(j, i, f"{mat[i,j]:.2f}", ha="center", va="center", fontsize=7,
+                    color="white" if abs(mat[i,j]) > 0.6 else "black")
+    ax.set_title(f"{model_name}  (mean off-diag = {score:.3f})", fontweight="bold", pad=10)
+    plt.colorbar(im, ax=ax, label="Cosine sim", shrink=0.75)
+
+plt.suptitle("Plural direction similarity — do all models agree on what 'plural' means geometrically?",
+             fontsize=13, fontweight="bold", y=1.01)
+plt.tight_layout();  plt.show()
+```
+
+```{python}
+#| label: plural-consistency-bar
+#| fig-cap: "Mean off-diagonal cosine similarity of plural direction vectors — a single 'plural consistency score' per model."
+
+fig, ax = plt.subplots(figsize=(7, 4))
+colors = [f"C{i}" for i in range(len(mean_scores))]
+bars = ax.barh(list(mean_scores.keys()), list(mean_scores.values()), color=colors, height=0.5)
+ax.bar_label(bars, fmt="%.3f", padding=4, fontsize=11)
+ax.set_xlim(0, max(mean_scores.values()) * 1.25)
+ax.set_xlabel("Mean pairwise cosine similarity of (plural − singular) vectors", fontsize=11)
+ax.set_title("Plural direction consistency by model", fontweight="bold", pad=10)
+plt.tight_layout();  plt.show()
+```
+
+> **Discuss:** Which model has the most consistent plural direction? Does the ranking match your intuition from the analogy results? What does it say about each model's training objective?
+
+```{python}
+#| label: number-direction
+#| fig-cap: "Cosine similarity between consecutive number-word steps in GPT-2 embedding space."
+
+# number words — are they ordered?
+number_words = ["one", "two", "three", "four", "five",
+                "six", "seven", "eight", "nine", "ten"]
+
+num_vecs = np.array([gpt2_embed(w) for w in number_words])
+
+# pairwise cosine similarity
+num_unit = num_vecs / (np.linalg.norm(num_vecs, axis=1, keepdims=True) + 1e-9)
+num_sim  = num_unit @ num_unit.T
+
+fig, ax = plt.subplots(figsize=(8, 7))
+im2 = ax.imshow(num_sim, cmap="Blues", vmin=0, vmax=1.0)
+ax.set_xticks(range(len(number_words))); ax.set_xticklabels(number_words, rotation=30, ha="right", fontsize=10)
+ax.set_yticks(range(len(number_words))); ax.set_yticklabels(number_words, fontsize=10)
+for i in range(len(number_words)):
+    for j in range(len(number_words)):
+        ax.text(j, i, f"{num_sim[i,j]:.2f}", ha="center", va="center", fontsize=8,
+                color="white" if num_sim[i,j] > 0.6 else "black")
+plt.colorbar(im2, ax=ax, label="Cosine similarity", shrink=0.8)
+ax.set_title("Number-word cosine similarity (GPT-2)", fontweight="bold", pad=12)
+plt.tight_layout();  plt.show()
+```
+
+> **Discuss:** Are adjacent numbers more similar to each other than to distant ones (e.g. `two`–`three` vs. `two`–`nine`)? Does the similarity matrix reveal any groupings (small vs. large numbers, or even vs. odd)?
+
+---
+
+## 10 · Cross-Model Summary
+
+```{python}
+#| label: cross-model-summary
+#| code-fold: false
+
+all_models = {
+    "word2vec":    w2v_embed,
+    "GPT-2":       gpt2_embed,
+    "Qwen3-0.8B":  qwen_embed,
+    "nomic-embed": nomic_embed,
+}
+candidates = ["queen", "king", "princess", "prince", "empress", "emperor",
+              "woman", "man", "girl", "boy", "lady", "dog", "computer", "Paris"]
+
+print(f"{'Model':15s}  {'cos(analogy,queen)':>20s}  {'cos(analogy,king)':>19s}  "
+      f"{'queen rank†':>12s}  {'angle°(Δking,Δqueen)':>22s}")
+print("-" * 95)
+
+for name, embed_fn in all_models.items():
+    try:
+        king_v  = embed_fn("king");  man_v   = embed_fn("man")
+        woman_v = embed_fn("woman"); queen_v = embed_fn("queen")
+        analogy = king_v - man_v + woman_v
+
+        cos_q = cosine_similarity(analogy, queen_v)
+        cos_k = cosine_similarity(analogy, king_v)
+        cand_sims = sorted(
+            [(w, cosine_similarity(analogy, embed_fn(w))) for w in candidates],
+            key=lambda t: t[1], reverse=True
+        )
+        queen_rank = next((i + 1 for i, (w, _) in enumerate(cand_sims) if w == "queen"), "?")
+        d1  = king_v  - man_v
+        d2  = queen_v - woman_v
+        ang = angle_between(d1, d2)
+        print(f"  {name:13s}  {cos_q:>20.4f}  {cos_k:>19.4f}  {queen_rank:>12}  {ang:>22.1f}°")
+    except Exception as e:
+        print(f"  {name:13s}  error: {e}")
+
+print("\n† rank among curated candidates: queen, king, princess, prince, empress, emperor, "
+      "woman, man, girl, boy, lady, dog, computer, Paris")
+```
+
+::: {.callout-note}
+**Reading the table:**
+
+- **word2vec** — skip-gram optimizes directly for analogy arithmetic. Queen typically ranks #1 or #2; the angle between (king−man) and (queen−woman) is the smallest.
+- **GPT-2** — cos(analogy, queen) ≈ 0.28; king dominates at ≈ 0.78; angle ≈ 76°.
+- **Qwen3-0.8B** — cos(analogy, queen) improves to ≈ 0.58; king shrinks to ≈ 0.68. Better, but king still wins.
+- **nomic-embed** — trained explicitly for cosine similarity via contrastive learning. Expect queen at rank #1 with a clear margin.
+
+**The core lesson:** training objective shapes geometry more than model size. A 2013 model (word2vec) outperforms a 2019 117M-parameter model (GPT-2) on analogy arithmetic — because skip-gram was optimized for exactly that geometry. Scale and better recipes improve things (GPT-2 → Qwen3), but the objective is the dominant factor.
+:::
+
+---
+
+## 11 · Category Similarity Heatmap
+
+How similar are whole *categories* of words to each other on average?
+
+```{python}
+#| label: category-heatmap
+#| fig-cap: "Mean cosine similarity between all pairs of semantic categories (GPT-2 embeddings)."
+
+groups_list = list(vocab_groups.keys())
+group_mats  = {g: np.array([gpt2_embed(w) for w in ws]) for g, ws in vocab_groups.items()}
+
+sim_matrix = np.zeros((len(groups_list), len(groups_list)))
+for i, g1 in enumerate(groups_list):
+    for j, g2 in enumerate(groups_list):
+        M1 = group_mats[g1] / (np.linalg.norm(group_mats[g1], axis=1, keepdims=True) + 1e-9)
+        M2 = group_mats[g2] / (np.linalg.norm(group_mats[g2], axis=1, keepdims=True) + 1e-9)
+        sim_matrix[i, j] = (M1 @ M2.T).mean()
+
+fig, ax = plt.subplots(figsize=(8, 7))
+im = ax.imshow(sim_matrix, cmap="YlOrRd", vmin=0.0, vmax=sim_matrix.max())
+ax.set_xticks(range(len(groups_list))); ax.set_yticks(range(len(groups_list)))
+ax.set_xticklabels(groups_list, rotation=35, ha="right", fontsize=11)
+ax.set_yticklabels(groups_list, fontsize=11)
+for i, j in itertools.product(range(len(groups_list)), repeat=2):
+    ax.text(j, i, f"{sim_matrix[i,j]:.3f}", ha="center", va="center", fontsize=9,
+            color="white" if sim_matrix[i,j] > 0.5 * sim_matrix.max() else "black")
+plt.colorbar(im, ax=ax, label="Mean Cosine Similarity", shrink=0.8)
+ax.set_title("Inter-Category Cosine Similarity (GPT-2)", fontweight="bold", pad=12)
+plt.tight_layout();  plt.show()
+```
+
+> **Discuss:** Which pairs of categories are more similar than you'd expect? Can you explain why from the model's training data?
+
+---
+
+## Key Takeaways
+
+::: {.callout-note appearance="minimal"}
+### Summary
+
+| Concept | What we saw |
+|---------|-------------|
+| **Embedding matrix W_E** | A (vocab × d_model) lookup table — GPT-2 is 50,257 × 768; Qwen3 is larger |
+| **Not normalized** | Raw token embeddings have variable L2 norms — cosine similarity removes this |
+| **Background distribution** | Random pairs have cosine ≈ 0 in high dims; anything > 0.2 is already meaningful |
+| **Cosine vs. Euclidean** | Agree on direction; diverge when norms vary — prefer cosine for semantic comparisons |
+| **Semantic clustering** | Similar words cluster without explicit labels — emerges from next-token prediction |
+| **Analogy arithmetic** | Training objective matters more than model size: word2vec > GPT-2 for analogies |
+| **Plural direction** | `cats−cat ≈ dogs−dog` — grammar encodes as a consistent vector direction |
+| **Number words** | Similar numbers cluster; adjacency in meaning ≈ proximity in embedding space |
+| **Scale helps** | Qwen3-0.8B improves over GPT-2; modern training recipes push toward cleaner geometry |
+| **Dedicated models** | nomic-embed is explicitly trained for cosine similarity — it wins on retrieval tasks |
+:::
+
+### Suggested extensions
+
+- **Token frequency vs. norm** — scatter token rank (by frequency) against L2 norm: common tokens often have larger norms in word2vec and GPT-2.
+- **PCA scree plot per model** — compare how many principal components capture 90% of variance: reveals the effective dimensionality of each embedding space.
+- **Cross-model neighbor overlap** — compute the Jaccard similarity of the top-20 neighbor sets across models for the same query word: which models agree on semantic proximity?
+- **Hubness analysis** — count how often each token appears in other tokens' top-K neighbors: high-hubness tokens signal geometry collapse in high dimensions.
+
+### What Happens Next in the Model?
+
+```
+Input tokens
+    │
+    ▼
+ Embedding Lookup (W_E)          ← explored in this notebook
+    │
+    ▼
+ Positional Encoding  +  Residual Stream
+    │
+    ▼
+ Self-Attention Layers  (Q, K, V)
+    │
+    ▼
+ Feed-Forward Layers
+    │
+    ▼
+ Un-embedding  (W_E^T)  →  Logits  →  Next-token probabilities
+```
+
+The embedding matrix is both the **first** and **last** layer in most transformer architectures (weight tying).
