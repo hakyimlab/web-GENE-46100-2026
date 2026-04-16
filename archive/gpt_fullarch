@@ -1,0 +1,94 @@
+// GPT Full Architecture
+digraph {
+	nodesep=0.4 rankdir=LR ranksep=0.6 splines=spline
+	node [fontsize=11 shape=box style=filled]
+	edge [fontcolor="#555555" fontsize=9]
+	Tokens [label="Token IDs
+(T,)" fillcolor="#fff9e6" shape=box]
+	PosIdx [label="Position IDs
+(T,)" fillcolor="#fff9e6" shape=box]
+	TokEmb [label="Token Embedding
+We  (V, d)" color="#cc4444" fillcolor="#ffd6d6" shape=box]
+	PosEmb [label="Position Embedding
+Wpe  (T, d)" color="#cc4444" fillcolor="#ffd6d6" shape=box]
+	EmbSum [label="+" fillcolor=white shape=circle]
+	Tokens -> TokEmb [label="(T,)"]
+	PosIdx -> PosEmb [label="(T,)"]
+	TokEmb -> EmbSum [label="(T, d)"]
+	PosEmb -> EmbSum [label="(T, d)"]
+	subgraph cluster_nx {
+		color=orange fontcolor=orange fontsize=14 label="× N" labeljust=r labelloc=t style="rounded,dashed"
+		LN1 [label="Layer Norm" fillcolor="#e8f4e8"]
+		subgraph cluster_attn {
+			color="#aaaaaa" fontcolor="#666666" fontsize=10 label="× h  (each head)" labeljust=l style=rounded
+			subgraph cluster_h2 {
+				color="#aaaaaa" fillcolor="#f0f7ff" fontsize=9 label="Head 2" style=filled
+				h2q [label="Wq₂
+(d, d/h)" color="#cc4444" fillcolor="#ffd6d6"]
+				h2k [label="Wk₂
+(d, d/h)" color="#cc4444" fillcolor="#ffd6d6"]
+				h2v [label="Wv₂
+(d, d/h)" color="#cc4444" fillcolor="#ffd6d6"]
+				h2a [label="softmax(Q₂K₂ᵀ/√(d/h))V₂
+(T, d/h)" fillcolor="#bbdefb"]
+				h2q -> h2a [label="Q₂"]
+				h2k -> h2a [label="K₂"]
+				h2v -> h2a [label="V₂"]
+			}
+			subgraph cluster_h1 {
+				color="#aaaaaa" fillcolor="#f0f7ff" fontsize=9 label="Head 1" style=filled
+				h1q [label="Wq₁
+(d, d/h)" color="#cc4444" fillcolor="#ffd6d6"]
+				h1k [label="Wk₁
+(d, d/h)" color="#cc4444" fillcolor="#ffd6d6"]
+				h1v [label="Wv₁
+(d, d/h)" color="#cc4444" fillcolor="#ffd6d6"]
+				h1a [label="softmax(Q₁K₁ᵀ/√(d/h))V₁
+(T, d/h)" fillcolor="#bbdefb"]
+				h1q -> h1a [label="Q₁"]
+				h1k -> h1a [label="K₁"]
+				h1v -> h1a [label="V₁"]
+			}
+			dots [label="⋮" fillcolor=white fontsize=16 shape=plaintext]
+			Concat [label="Concat
+(T, d)" fillcolor="#c8e6c9"]
+			Wo [label="Wo
+(d, d)" color="#cc4444" fillcolor="#ffd6d6"]
+			h1a -> dots [style=invis]
+			dots -> h2a [style=invis]
+			h1a -> Concat [label="(T, d/h)"]
+			h2a -> Concat [label="(T, d/h)"]
+			dots -> Concat [color="#aaaaaa" style=dashed]
+			Concat -> Wo [label="(T, d)"]
+		}
+		Add1 [label="+  (residual)" fillcolor=white shape=ellipse]
+		LN2 [label="Layer Norm" fillcolor="#e8f4e8"]
+		FFN [label="Feed Forward
+d → 4d → d" color="#cc4444" fillcolor="#ffd6d6"]
+		Add2 [label="+  (residual)" fillcolor=white shape=ellipse]
+		LN1 -> h1q [label="(T, d)"]
+		LN1 -> h1k
+		LN1 -> h1v
+		LN1 -> h2q
+		LN1 -> h2k
+		LN1 -> h2v
+		Wo -> Add1 [label="(T, d)"]
+		Add1 -> LN2 [label="(T, d)"]
+		LN2 -> FFN [label="(T, d)"]
+		FFN -> Add2 [label="(T, d)"]
+	}
+	EmbSum -> LN1 [label="(T, d)"]
+	EmbSum -> Add1 [label=residual color="#aaaaaa" constraint=false style=dashed]
+	Add1 -> Add2 [label=residual color="#aaaaaa" constraint=false style=dashed]
+	LNf [label="Layer Norm" fillcolor="#e8f4e8"]
+	Linear [label="Linear  Weᵀ
+(d, V)" color="#cc4444" fillcolor="#ffd6d6"]
+	Softmax [label="Softmax
+(T, V)" fillcolor="#f8bbd0"]
+	TopK [label="Top-k sample
+→ next token" fillcolor="#fff9e6" shape=ellipse]
+	Add2 -> LNf [label="(T, d)"]
+	LNf -> Linear [label="(T, d)"]
+	Linear -> Softmax [label="(T, V)"]
+	Softmax -> TopK [label="(T, V)"]
+}

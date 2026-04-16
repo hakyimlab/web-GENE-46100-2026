@@ -1,0 +1,28 @@
+// GPT Decoder
+digraph {
+	rankdir=TB
+	node [fillcolor=lightblue shape=box style=filled]
+	edge [fontcolor="#555555" fontsize=10]
+	Tokens [label="Token Indices" fillcolor=lightyellow]
+	Input [label="Input Embedding" fillcolor=lightyellow]
+	PosEnc [label="Positional Encoding" fillcolor=lightyellow]
+	AddNorm1 [label="Add & Norm" fillcolor=white shape=ellipse]
+	MHA_Self [label="Masked Multi-Head Self-Attention
+Q, K, V split → (T, h, d/h) each
+scores: (h, T, T)" fillcolor=lightgreen]
+	AddNorm2 [label="Add & Norm" fillcolor=white shape=ellipse]
+	FFN [label="Feed-Forward Network
+expand: d → 4d → d" fillcolor=lightcoral]
+	Linear [label="Linear Projection" fillcolor=pink]
+	Softmax [label=Softmax fillcolor=pink]
+	Output [label="Next Token Prediction" fillcolor=orange shape=ellipse]
+	Tokens -> Input [label="(T,)"]
+	Input -> AddNorm1 [label="(T, d)"]
+	PosEnc -> AddNorm1 [label="(T, d)"]
+	AddNorm1 -> MHA_Self [label="(T, d)"]
+	MHA_Self -> AddNorm2 [label="(T, d)"]
+	AddNorm2 -> FFN [label="(T, d)"]
+	FFN -> Linear [label="(T, d)"]
+	Linear -> Softmax [label="(T, V)"]
+	Softmax -> Output [label="(T, V)"]
+}

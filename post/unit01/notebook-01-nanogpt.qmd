@@ -18,12 +18,34 @@ format:
     code-overflow: wrap
 date-modified: last-modified
 draft: false
-eval: false
+eval: true
 ---
 
 ## Building a GPT
 
-Companion notebook to the [Zero To Hero](https://karpathy.ai/zero-to-hero.html) video on GPT. Downloaded from [here](https://colab.research.google.com/drive/1JMLa53HDuA-i7ZBmqV7ZnA3c_fvtXnx-?usp=sharing)
+We will build a tiny GPT using Karpathy's nanoGPT model. It has all the components of an LLM. GPT-3 and later models use the same architecture, just with many more parameters and more optimized training.
+
+## Attention is all you need
+
+$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
+
+| Symbol | Meaning |
+|--------|---------|
+| $B$ | batch size |
+| $T$ | sequence length (tokens) |
+| $d$ | embedding dimension (`n_embd`) |
+| $h$ | number of attention heads |
+| $d/h$ | head size (per-head embedding dim) |
+| $V$ | vocabulary size |
+
+The original paper's goal was translation. For next token generation, we will use only the decoder portion of the original model.
+
+![One decoder block (repeated $N$ times in a full GPT): token and positional embeddings feed into masked multi-head self-attention, followed by Add & Norm and a feed-forward network. After $N$ such blocks, a final linear + softmax head produces next-token predictions.](images/decoder_architecture.png)
+
+
+
+
+Below is a slightly modified version of the companion notebook to the [Zero To Hero](https://karpathy.ai/zero-to-hero.html) video on GPT. Downloaded from [here](https://colab.research.google.com/drive/1JMLa53HDuA-i7ZBmqV7ZnA3c_fvtXnx-?usp=sharing)
 
 (https://github.com/karpathy/nanoGPT)
 
@@ -151,7 +173,7 @@ class BigramLanguageModel(nn.Module):
 
     def forward(self, idx, targets=None):
         # idx and targets are both (B,T) tensor of integers
-        logits = self.token_embedding_table(idx) # (B,T,C)
+        logits = self.token_embedding_table(idx) # (B,T,V)
 
         if targets is None:
             loss = None
@@ -169,9 +191,9 @@ class BigramLanguageModel(nn.Module):
             # get the predictions
             logits, loss = self(idx)
             # focus only on the last time step
-            logits = logits[:, -1, :] # becomes (B, C)
+            logits = logits[:, -1, :] # becomes (B, V)
             # apply softmax to get probabilities
-            probs = F.softmax(logits, dim=-1) # (B, C)
+            probs = F.softmax(logits, dim=-1) # (B, V)
             # sample from the distribution
             idx_next = torch.multinomial(probs, num_samples=1) # (B, 1)
             # append sampled index to the running sequence
@@ -203,7 +225,7 @@ Expected initial loss $\approx -\log(1 / \text{vocab\_size}) = \log(\text{vocab\
 ```{python}
 m = BigramLanguageModel(vocab_size)
 logits, loss = m(xb, yb) # xb/yb are from the previous cell (B=4, T=8)
-print(logits.shape) # Expected: (B, T, C) = (4, 8, 65)
+print(logits.shape) # Expected: (B, T, V) = (4, 8, 65)
 print(loss) # Expected: Around 4.17
 ```
 
@@ -247,8 +269,6 @@ To do better, we need the model to look at **more of the past** — ideally all 
 
 But aggregating over a variable-length history naively (with a for loop) is slow and inelegant. Before we build the full self-attention mechanism, let's learn a key trick: **how to express this aggregation as a matrix multiplication**. This will make the operation fast, parallelizable, and — crucially — generalizable to *learned*, data-dependent weights.
 
-> **Discuss:** Why would only looking at the previous character be insufficient for predicting the next word in a language like English? What kinds of long-range dependencies would a bigger context window capture?
-
 ### The mathematical trick in self-attention
 toy example illustrating how matrix multiplication can be used for a "weighted aggregation"
 
@@ -271,7 +291,7 @@ print(c)
 ```{python}
 # consider the following toy example:
 torch.manual_seed(1337)
-B,T,C = 4,8,2 # batch, time, channels
+B,T,C = 4,8,2 # batch, time, embedding dim (d)
 x = torch.randn(B,T,C)
 x.shape
 ```
@@ -283,7 +303,7 @@ x.shape
 xbow = torch.zeros((B,T,C)) # x bag-of-words (running average)
 for b in range(B):
     for t in range(T):
-        xprev = x[b,:t+1] # Select vectors from start up to time t: shape (t+1, C)
+        xprev = x[b,:t+1] # Select vectors from start up to time t: shape (t+1, d)
         xbow[b,t] = torch.mean(xprev, 0) # Compute mean along the time dimension (dim 0)
 ```
 
@@ -294,7 +314,7 @@ for b in range(B):
 wei = torch.tril(torch.ones(T, T))
 wei = wei / wei.sum(1, keepdim=True) # Normalize rows to sum to 1
 # Perform batched matrix multiplication
-xbow2 = wei @ x # (T, T) @ (B, T, C) -> (B, T, C) via broadcasting
+xbow2 = wei @ x # (T, T) @ (B, T, d) -> (B, T, d) via broadcasting
 torch.allclose(xbow, xbow2) # Check if results are identical
 ```
 
@@ -319,7 +339,7 @@ softmax($z_i$) = $\frac{e^{z_i}}{\sum_j e^{z_j}}$
 
 ```{python}
 torch.manual_seed(1337)
-B,T,C = 4,8,32 # batch, time, channels (embedding dimension)
+B,T,C = 4,8,32 # batch, time, embedding dim (d)
 x = torch.randn(B,T,C)
 
 # let's see a single Head perform self-attention
@@ -327,10 +347,10 @@ head_size = 16
 key = nn.Linear(C, head_size, bias=False)
 query = nn.Linear(C, head_size, bias=False)
 value = nn.Linear(C, head_size, bias=False)
-k = key(x)   # (B, T, head_size)
-q = query(x) # (B, T, head_size)
+k = key(x)   # (B, T, d/h)
+q = query(x) # (B, T, d/h)
 # Compute attention scores ("affinities")
-wei = q @ k.transpose(-2, -1) # (B, T, hs) @ (B, hs, T) ---> (B, T, T)
+wei = q @ k.transpose(-2, -1) # (B, T, d/h) @ (B, d/h, T) ---> (B, T, T)
 
 # Scale the scores
 # Note: Karpathy uses C**-0.5 here (sqrt(embedding_dim)). Standard Transformer uses sqrt(head_size).
@@ -345,11 +365,11 @@ wei = wei.masked_fill(tril == 0, float('-inf')) # Mask future tokens
 wei = F.softmax(wei, dim=-1) # (B, T, T)
 
 # Perform weighted aggregation of Values
-v = value(x) # (B, T, head_size)
-out = wei @ v # (B, T, T) @ (B, T, hs) ---> (B, T, hs)
+v = value(x) # (B, T, d/h)
+out = wei @ v # (B, T, T) @ (B, T, d/h) ---> (B, T, d/h)
 #out = wei @ x # This would aggregate original x, not the projected values 'v'
 
-out.shape # Expected: (B, T, head_size) = (4, 8, 16)
+out.shape # Expected: (B, T, d/h) = (4, 8, 16)
 ```
 
 ```{python}
@@ -491,10 +511,10 @@ x.shape # Should be (32, 100)
 
 Explanation of layernorm
 
-Input shape: (B, T, C) where:
+Input shape: (B, T, d) where:
 B = batch size
 T = sequence length (number of tokens)
-C = embedding dimension (features of each token)
+d = embedding dimension (features of each token)
 For each token in the sequence (each position T), LayerNorm:
 Takes its embedding vector of size C
 Calculates the mean and standard deviation of just that vector
@@ -527,7 +547,7 @@ x[0,:].mean(), x[0,:].std()
 
 Before diving into the complete code, here is the full architecture assembled end-to-end — from token + positional embeddings, through the repeated Attention → Add & Norm → Feed Forward → Add & Norm blocks, to the final Linear + Softmax head.
 
-![Full GPT architecture. The transformer block (center) repeats $N_x$ times. Each block contains multi-head self-attention, residual connections, layer norm, and a feed-forward network. Source: [Daniel Dugas, *GPT Architecture*](https://dugas.ch/artificial_curiosity/GPT_architecture.html)](images/fullarch-gpt-dugas-ch.png)
+![Full GPT architecture showing tensor shapes throughout — from token and position embeddings, through multi-head self-attention and feed-forward blocks, to the final linear + softmax head.](images/gpt_fullarch.png)
 
 > **Discuss:** Trace a single token through this diagram. Where does dropout apply? Where do the residual connections ("Add") help with training?
 
@@ -542,7 +562,7 @@ from torch.nn import functional as F
 # ===== HYPERPARAMETERS =====
 batch_size = 16       # Number of sequences per batch (Smaller than Bigram training)
 block_size = 32       # Context length (Larger than Bigram demo)
-max_iters = 5000      # Total training iterations (More substantial training) TODO change to 5000 later
+max_iters = 500      # Total training iterations (More substantial training) TODO change to 5000 later
 eval_interval = 100   # How often to check validation loss
 learning_rate = 1e-3  # Optimizer learning rate
 eval_iters = 200      # Number of batches to average for validation loss estimate
@@ -631,10 +651,10 @@ class Head(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
-        B,T,C = x.shape # C here is n_embd
+        B,T,C = x.shape # C = d (n_embd)
         # Project input to K, Q, V
-        k = self.key(x)   # (B,T,head_size)
-        q = self.query(x) # (B,T,head_size)
+        k = self.key(x)   # (B,T,d/h)
+        q = self.query(x) # (B,T,d/h)
         # Compute attention scores, scale, mask, softmax
         # Note the scaling by C**-0.5 (sqrt(n_embd)) as discussed before
         wei = q @ k.transpose(-2,-1) * C**-0.5   # (B, T, T)
@@ -642,8 +662,8 @@ class Head(nn.Module):
         wei = F.softmax(wei, dim=-1)   # (B, T, T)
         wei = self.dropout(wei) # Apply dropout to attention weights
         # Weighted aggregation of values
-        v = self.value(x) # (B,T,head_size)
-        out = wei @ v # (B, T, T) @ (B, T, head_size) -> (B, T, head_size)
+        v = self.value(x) # (B,T,d/h)
+        out = wei @ v # (B, T, T) @ (B, T, d/h) -> (B, T, d/h)
         return out
 # ========================================
 
@@ -660,7 +680,7 @@ class MultiHeadAttention(nn.Module):
 
     def forward(self, x):
         # Compute attention for each head and concatenate results
-        out = torch.cat([h(x) for h in self.heads], dim=-1) # Shape (B, T, num_heads * head_size) = (B, T, n_embd)
+        out = torch.cat([h(x) for h in self.heads], dim=-1) # (B, T, h * d/h) = (B, T, d)
         # Apply final projection and dropout
         out = self.dropout(self.proj(out))
         return out
@@ -727,8 +747,8 @@ class BigramLanguageModel(nn.Module):
         # Get position embeddings: Create indices 0..T-1, look up embeddings -> (T, n_embd)
         pos_emb = self.position_embedding_table(torch.arange(T, device=device))
         # Combine token and position embeddings by addition: (B, T, n_embd). Broadcasting handles the addition.
-        x = tok_emb + pos_emb   # (B,T,C)
-        # Pass through Transformer blocks: (B, T, n_embd) -> (B, T, n_embd)
+        x = tok_emb + pos_emb   # (B,T,d)
+        # Pass through Transformer blocks: (B, T, d) -> (B, T, d)
         x = self.blocks(x)
         # Apply final LayerNorm
         x = self.ln_f(x)
@@ -739,7 +759,7 @@ class BigramLanguageModel(nn.Module):
         if targets is None:
             loss = None
         else:
-            # Reshape for cross_entropy: (B*T, vocab_size) and (B*T)
+            # Reshape for cross_entropy: (B*T, V) and (B*T)
             B, T, C = logits.shape
             logits = logits.view(B*T, C)
             targets = targets.view(B*T)
@@ -754,10 +774,10 @@ class BigramLanguageModel(nn.Module):
             idx_cond = idx[:, -block_size:]
             # Get predictions (logits) from the model
             logits, loss = self(idx_cond)
-            # Focus on the logits for the *last* time step: (B, C)
+            # Focus on the logits for the *last* time step: (B, V)
             logits = logits[:, -1, :]
             # Convert logits to probabilities via softmax
-            probs = F.softmax(logits, dim=-1)   # (B, C)
+            probs = F.softmax(logits, dim=-1)   # (B, V)
             # Sample next token index from the probability distribution
             idx_next = torch.multinomial(probs, num_samples=1)   # (B, 1)
             # Append the sampled index to the running sequence

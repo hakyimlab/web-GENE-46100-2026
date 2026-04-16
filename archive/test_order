@@ -1,0 +1,23 @@
+
+digraph {
+    newrank=true
+    nodesep=0.4 rankdir=LR ranksep=0.6 splines=spline
+    node [fontsize=11 shape=box style=filled]
+    subgraph cluster_attn {
+        color="#aaaaaa" label="× h" style=rounded
+        subgraph cluster_h1 {
+            color="#aaaaaa" fillcolor="#f0f7ff" label="Head 1" style=filled
+            h1q [label="Wq1" fillcolor="#ffd6d6"]
+            h1k [label="Wk1" fillcolor="#ffd6d6"]
+            h1v [label="Wv1" fillcolor="#ffd6d6"]
+            h1a [label="Attn1" fillcolor="#bbdefb" ordering=in]
+            h1q -> h1a [label=Q]
+            h1k -> h1a [label=K]
+            h1v -> h1a [label=V]
+        }
+    }
+    LN [label="Layer Norm" fillcolor="#e8f4e8" ordering=out]
+    LN -> h1q
+    LN -> h1k
+    LN -> h1v
+}

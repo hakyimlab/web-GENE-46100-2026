@@ -1,0 +1,75 @@
+---
+title: "GPT Decoder Architecture Diagram"
+format: html
+jupyter:
+  kernelspec:
+    name: "conda-env-gene46100-py"
+    language: "python"
+    display_name: "gene46100"
+---
+
+```{python}
+from graphviz import Digraph
+from IPython.display import Image
+
+def create_decoder_diagram():
+    # Create a directed graph
+    # Dimensions: T = sequence length, d = d_model (embedding dim),
+    #             h = n_heads, d/h = per-head dim, V = vocab size
+    dot = Digraph(comment='GPT Decoder', format='png')
+    dot.attr(rankdir='TB')  # Top to Bottom layout
+    dot.attr('node', shape='box', style='filled', fillcolor='lightblue')
+    dot.attr('edge', fontsize='10', fontcolor='#555555')
+
+    # --- Layers ---
+
+    # Input Section
+    dot.node('Tokens', 'Token Indices', fillcolor='lightyellow')
+    dot.node('Input', 'Input Embedding', fillcolor='lightyellow')
+    dot.node('PosEnc', 'Positional Encoding', fillcolor='lightyellow')
+
+    # Add & Norm 1 (after input + positional encoding)
+    dot.node('AddNorm1', 'Add & Norm', shape='ellipse', fillcolor='white')
+
+    # Masked Multi-Head Self Attention — show internal head split and score shape
+    dot.node('MHA_Self',
+             'Masked Multi-Head Self-Attention\n'
+             'Q, K, V split → (T, h, d/h) each\n'
+             'scores: (h, T, T)',
+             fillcolor='lightgreen')
+
+    # Add & Norm 2 (after attention)
+    dot.node('AddNorm2', 'Add & Norm', shape='ellipse', fillcolor='white')
+
+    # Feed Forward Network — show internal expansion
+    dot.node('FFN',
+             'Feed-Forward Network\n'
+             'expand: d → 4d → d',
+             fillcolor='lightcoral')
+
+    # Output Section
+    dot.node('Linear', 'Linear Projection', fillcolor='pink')
+    dot.node('Softmax', 'Softmax', fillcolor='pink')
+    dot.node('Output', 'Next Token Prediction', shape='ellipse', fillcolor='orange')
+
+    # --- Connections (edge labels show tensor shape on the wire) ---
+
+    dot.edge('Tokens', 'Input', label='(T,)')
+    dot.edge('Input', 'AddNorm1', label='(T, d)')
+    dot.edge('PosEnc', 'AddNorm1', label='(T, d)')
+    dot.edge('AddNorm1', 'MHA_Self', label='(T, d)')
+    dot.edge('MHA_Self', 'AddNorm2', label='(T, d)')
+    dot.edge('AddNorm2', 'FFN', label='(T, d)')
+    dot.edge('FFN', 'Linear', label='(T, d)')
+    dot.edge('Linear', 'Softmax', label='(T, V)')
+    dot.edge('Softmax', 'Output', label='(T, V)')
+
+    # Render the diagram
+    output_filename = 'decoder_architecture'
+    dot.render(output_filename, view=False, cleanup=False)
+    print(f"Diagram saved as {output_filename}.png")
+    return output_filename + '.png'
+
+png_path = create_decoder_diagram()
+Image(png_path)
+```

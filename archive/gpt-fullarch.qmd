@@ -1,0 +1,124 @@
+---
+title: "GPT Full Architecture Diagram"
+format: html
+jupyter:
+  kernelspec:
+    name: "conda-env-gene46100-py"
+    language: "python"
+    display_name: "gene46100"
+---
+
+```{python}
+from graphviz import Digraph
+from IPython.display import Image
+
+def create_gpt_fullarch():
+    dot = Digraph(comment='GPT Full Architecture', format='png')
+    dot.attr(rankdir='LR', splines='spline', nodesep='0.4', ranksep='0.6')
+    dot.attr('node', shape='box', style='filled', fontsize='11')
+    dot.attr('edge', fontsize='9', fontcolor='#555555')
+
+    # ── Encoding ──────────────────────────────────────────────
+    dot.node('Tokens',   'Token IDs\n(T,)',           fillcolor='#fff9e6', shape='box')
+    dot.node('PosIdx',   'Position IDs\n(T,)',         fillcolor='#fff9e6', shape='box')
+
+    # ── Embedding ─────────────────────────────────────────────
+    dot.node('TokEmb',   'Token Embedding\nWe  (V, d)', fillcolor='#ffd6d6', color='#cc4444', shape='box')
+    dot.node('PosEmb',   'Position Embedding\nWpe  (T, d)', fillcolor='#ffd6d6', color='#cc4444', shape='box')
+    dot.node('EmbSum',   '+',                           fillcolor='white',   shape='circle')
+
+    dot.edge('Tokens',  'TokEmb',  label='(T,)')
+    dot.edge('PosIdx',  'PosEmb',  label='(T,)')
+    dot.edge('TokEmb',  'EmbSum',  label='(T, d)')
+    dot.edge('PosEmb',  'EmbSum',  label='(T, d)')
+
+    # ── Nx Block (cluster) ────────────────────────────────────
+    with dot.subgraph(name='cluster_nx') as nx:
+        nx.attr(label='× N', style='rounded,dashed', color='orange',
+                fontcolor='orange', fontsize='14', labeljust='r', labelloc='t')
+
+        nx.node('LN1', 'Layer Norm', fillcolor='#e8f4e8')
+
+        # ── Per-head attention (show 2 explicit heads + ellipsis) ──
+        with nx.subgraph(name='cluster_attn') as attn:
+            attn.attr(label='× h  (each head)', style='rounded', color='#aaaaaa',
+                      fontcolor='#666666', fontsize='10', labeljust='l')
+
+            # Head 2 defined first so Graphviz places it on bottom
+            with attn.subgraph(name='cluster_h2') as h2:
+                h2.attr(label='Head 2', style='filled', fillcolor='#f0f7ff',
+                        color='#aaaaaa', fontsize='9')
+                h2.node('h2q', 'Wq₂\n(d, d/h)', fillcolor='#ffd6d6', color='#cc4444')
+                h2.node('h2k', 'Wk₂\n(d, d/h)', fillcolor='#ffd6d6', color='#cc4444')
+                h2.node('h2v', 'Wv₂\n(d, d/h)', fillcolor='#ffd6d6', color='#cc4444')
+                h2.node('h2a', 'softmax(Q₂K₂ᵀ/√(d/h))V₂\n(T, d/h)', fillcolor='#bbdefb')
+                h2.edge('h2q', 'h2a', label='Q₂')
+                h2.edge('h2k', 'h2a', label='K₂')
+                h2.edge('h2v', 'h2a', label='V₂')
+
+            # Head 1 defined second so Graphviz places it on top
+            with attn.subgraph(name='cluster_h1') as h1:
+                h1.attr(label='Head 1', style='filled', fillcolor='#f0f7ff',
+                        color='#aaaaaa', fontsize='9')
+                h1.node('h1q', 'Wq₁\n(d, d/h)', fillcolor='#ffd6d6', color='#cc4444')
+                h1.node('h1k', 'Wk₁\n(d, d/h)', fillcolor='#ffd6d6', color='#cc4444')
+                h1.node('h1v', 'Wv₁\n(d, d/h)', fillcolor='#ffd6d6', color='#cc4444')
+                h1.node('h1a', 'softmax(Q₁K₁ᵀ/√(d/h))V₁\n(T, d/h)', fillcolor='#bbdefb')
+                h1.edge('h1q', 'h1a', label='Q₁')
+                h1.edge('h1k', 'h1a', label='K₁')
+                h1.edge('h1v', 'h1a', label='V₁')
+
+            attn.node('dots', '⋮', shape='plaintext', fillcolor='white', fontsize='16')
+            attn.node('Concat', 'Concat\n(T, d)', fillcolor='#c8e6c9')
+            attn.node('Wo', 'Wo\n(d, d)', fillcolor='#ffd6d6', color='#cc4444')
+
+            # invisible edges keep Head 1 above ⋮ above Head 2
+            attn.edge('h1a', 'dots', style='invis')
+            attn.edge('dots', 'h2a', style='invis')
+            attn.edge('h1a',   'Concat', label='(T, d/h)')
+            attn.edge('h2a',   'Concat', label='(T, d/h)')
+            attn.edge('dots',  'Concat', style='dashed', color='#aaaaaa')
+            attn.edge('Concat','Wo',     label='(T, d)')
+
+        nx.node('Add1', '+  (residual)', fillcolor='white', shape='ellipse')
+        nx.node('LN2',  'Layer Norm',    fillcolor='#e8f4e8')
+        nx.node('FFN',  'Feed Forward\nd → 4d → d', fillcolor='#ffd6d6', color='#cc4444')
+        nx.node('Add2', '+  (residual)', fillcolor='white', shape='ellipse')
+
+        nx.edge('LN1',  'h1q', label='(T, d)')
+        nx.edge('LN1',  'h1k')
+        nx.edge('LN1',  'h1v')
+        nx.edge('LN1',  'h2q')
+        nx.edge('LN1',  'h2k')
+        nx.edge('LN1',  'h2v')
+        nx.edge('Wo',   'Add1', label='(T, d)')
+        nx.edge('Add1', 'LN2',  label='(T, d)')
+        nx.edge('LN2',  'FFN',  label='(T, d)')
+        nx.edge('FFN',  'Add2', label='(T, d)')
+
+    dot.edge('EmbSum', 'LN1',  label='(T, d)')
+    # residual skip connections: constraint=false keeps them from distorting layout
+    dot.edge('EmbSum', 'Add1', label='residual', style='dashed', color='#aaaaaa',
+             constraint='false')
+    dot.edge('Add1',   'Add2', label='residual', style='dashed', color='#aaaaaa',
+             constraint='false')
+
+    # ── Output head ───────────────────────────────────────────
+    dot.node('LNf',     'Layer Norm',          fillcolor='#e8f4e8')
+    dot.node('Linear',  'Linear  Weᵀ\n(d, V)', fillcolor='#ffd6d6', color='#cc4444')
+    dot.node('Softmax', 'Softmax\n(T, V)',      fillcolor='#f8bbd0')
+    dot.node('TopK',    'Top-k sample\n→ next token', fillcolor='#fff9e6', shape='ellipse')
+
+    dot.edge('Add2',    'LNf',    label='(T, d)')
+    dot.edge('LNf',     'Linear', label='(T, d)')
+    dot.edge('Linear',  'Softmax',label='(T, V)')
+    dot.edge('Softmax', 'TopK',   label='(T, V)')
+
+    output_filename = 'gpt_fullarch'
+    dot.render(output_filename, view=False, cleanup=False)
+    print(f"Saved {output_filename}.png")
+    return output_filename + '.png'
+
+png_path = create_gpt_fullarch()
+Image(png_path)
+```
