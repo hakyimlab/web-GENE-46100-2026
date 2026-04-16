@@ -29,6 +29,16 @@ We will build a tiny GPT using Karpathy's nanoGPT model. It has all the componen
 
 $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
 
+![Figure 1: The Transformer - model architecture](images/transformer-architecture.png)
+
+<!-- original image(https://arxiv.org/html/1706.03762v7/Figures/ModalNet-21.png) -->
+
+The original paper's goal was translation. For next token generation, we will use only the decoder portion of the original model.
+
+
+
+![One decoder block (repeated $N$ times in a full GPT): token and positional embeddings feed into masked multi-head self-attention, followed by Add & Norm and a feed-forward network. After $N$ such blocks, a final linear + softmax head produces next-token predictions.](images/decoder_architecture.png)
+
 | Symbol | Meaning |
 |--------|---------|
 | $B$ | batch size |
@@ -38,12 +48,7 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)
 | $d/h$ | head size (per-head embedding dim) |
 | $V$ | vocabulary size |
 
-The original paper's goal was translation. For next token generation, we will use only the decoder portion of the original model.
-
-![One decoder block (repeated $N$ times in a full GPT): token and positional embeddings feed into masked multi-head self-attention, followed by Add & Norm and a feed-forward network. After $N$ such blocks, a final linear + softmax head produces next-token predictions.](images/decoder_architecture.png)
-
-
-
+## nanoGPT notebook
 
 Below is a slightly modified version of the companion notebook to the [Zero To Hero](https://karpathy.ai/zero-to-hero.html) video on GPT. Downloaded from [here](https://colab.research.google.com/drive/1JMLa53HDuA-i7ZBmqV7ZnA3c_fvtXnx-?usp=sharing)
 
@@ -57,8 +62,22 @@ Below is a slightly modified version of the companion notebook to the [Zero To H
 ```
 
 ```{python}
+from pathlib import Path
+
+def _find_repo_root():
+    p = Path.cwd()
+    while p != p.parent:
+        if (p / '.git').exists():
+            return p
+        p = p.parent
+    return Path.cwd()
+
+_input = _find_repo_root() / 'post/unit01/input.txt'
+```
+
+```{python}
 # read it in to inspect it
-with open('input.txt', 'r', encoding='utf-8') as f:
+with open(_input, 'r', encoding='utf-8') as f:
     text = f.read()
 ```
 
@@ -549,9 +568,11 @@ Before diving into the complete code, here is the full architecture assembled en
 
 ![Full GPT architecture showing tensor shapes throughout — from token and position embeddings, through multi-head self-attention and feed-forward blocks, to the final linear + softmax head.](images/gpt_fullarch.png)
 
+*Adapted from the original hand-drawn diagram by [Daniel Dugas](https://dugas.ch/artificial_curiosity/GPT_architecture.html); regenerated with Graphviz to reflect the nanoGPT tensor shapes used in this notebook.*
+
 > **Discuss:** Trace a single token through this diagram. Where does dropout apply? Where do the residual connections ("Add") help with training?
 
-### Full finished code, for reference
+### Full finished code
 
 ```{python}
 # Import necessary PyTorch modules
@@ -588,8 +609,8 @@ if device.type == 'cuda':
 elif device.type == 'mps':
     torch.mps.manual_seed(1337)
 
-# Load and read the training text (assuming input.txt is available)
-with open('input.txt', 'r', encoding='utf-8') as f:
+# Load and read the training text
+with open(_input, 'r', encoding='utf-8') as f:
     text = f.read()
 
 # ===== DATA PREPROCESSING =====
