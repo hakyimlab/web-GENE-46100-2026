@@ -4,7 +4,6 @@ author: Haky Im
 date: 2026-12-01
 description: setting up conda environment and installing packages
 categories:
-  - gene46100
   - how-to
 eval: false
 draft: false

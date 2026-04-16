@@ -2,7 +2,7 @@
 title: "01 · From Text to Probabilities"
 subtitle: "GENE 46100 — Unit 01"
 author: "Haky Im, based on 3Blue1Brown's What is a GPT"
-date: 2026-04-16
+date: 2026-04-12
 draft: false
 engine: knitr
 format:

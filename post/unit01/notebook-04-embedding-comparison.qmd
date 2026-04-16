@@ -1,0 +1,404 @@
+---
+title: "04 · Embedding Models: A Geometry Comparison"
+subtitle: "word2vec · GPT-2 · Qwen3-0.8B · nomic-embed — who learns the best semantic structure?"
+author: "Intro to LLMs"
+date: '2026-04-16'
+draft: true
+categories:
+  - notebook
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    code-fold: true
+    code-tools: true
+    theme: cosmo
+    highlight-style: github
+    embed-resources: true
+    fig-width: 10
+    fig-height: 6
+    callout-appearance: simple
+execute:
+  warning: false
+  message: false
+jupyter:
+  kernelspec:
+    name: "conda-env-nanogpt46100-py"
+    language: "python"
+    display_name: "nanogpt46100"
+---
+
+::: {.callout-note}
+**Series context.** Notebooks 00–03 probed GPT-2 and Qwen3-0.8B embeddings individually. Here we run the same analogy test — `king − man + woman ≈ queen` — across four model families side by side, to understand what drives good semantic geometry.
+:::
+
+## Setup
+
+```{python}
+#| label: setup
+#| include: false
+
+%pip install -q gensim sentence-transformers
+
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+plt.rcParams.update({"figure.dpi": 130, "axes.spines.top": False,
+                     "axes.spines.right": False})
+
+def cosine_similarity(a, b):
+    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-9))
+
+def angle_between(a, b):
+    import math
+    c = np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-9)
+    return math.degrees(math.acos(float(np.clip(c, -1, 1))))
+```
+
+## 1 · The Four Models
+
+| # | Model | Type | Dim | Training objective |
+|---|---|---|---|---|
+| 1 | **word2vec** (Google News) | Static word vectors | 300 | Predict surrounding words (skip-gram); nearby context → similar vectors |
+| 2 | **GPT-2** (117M) | LLM token embeddings | 768 | Next-token prediction; embeddings learned as input lookup table |
+| 3 | **Qwen3-0.8B** | LLM token embeddings | varies | Same as GPT-2 but modern architecture, far more training data |
+| 4 | **nomic-embed-text-v1.5** | Dedicated embedding model | 768 | Contrastive learning — explicitly trained to make cosine similarity meaningful |
+
+**The key distinction:** word2vec and nomic-embed were *designed* to make vector arithmetic and cosine similarity work. GPT-2 and Qwen3 were not — their token embeddings are a byproduct of language modeling.
+
+## 2 · Load All Models
+
+### 2a · word2vec
+
+```{python}
+#| label: load-word2vec
+
+import gensim.downloader as gensim_api
+
+print("Downloading word2vec-google-news-300 (~1.7 GB, cached after first run)…")
+wv = gensim_api.load("word2vec-google-news-300")
+print(f"word2vec loaded — vocab: {len(wv):,}  dim: {wv.vector_size}")
+
+def w2v_embed(word):
+    return wv[word]
+```
+
+::: {.callout-note collapse="true"}
+**What is word2vec?**
+Released by Google in 2013, word2vec trains a shallow neural network to predict a word from its context (or vice versa). As a side effect, words used in similar contexts end up with similar vectors. It was the first model to clearly demonstrate the `king − man + woman ≈ queen` analogy, and it remains the canonical benchmark for embedding geometry.
+:::
+
+### 2b · GPT-2
+
+```{python}
+#| label: load-gpt2
+
+import torch
+from transformers import GPT2Model, GPT2Tokenizer
+
+gpt2_tok = GPT2Tokenizer.from_pretrained("gpt2")
+gpt2_model = GPT2Model.from_pretrained("gpt2")
+gpt2_model.eval()
+W_gpt2 = gpt2_model.wte.weight.detach().to(torch.float32).numpy()
+print(f"GPT-2 loaded — vocab: {W_gpt2.shape[0]:,}  dim: {W_gpt2.shape[1]}")
+
+def gpt2_embed(word):
+    ids = gpt2_tok.encode(" " + word, add_special_tokens=False)
+    if len(ids) == 0:
+        ids = gpt2_tok.encode(word, add_special_tokens=False)
+    return W_gpt2[ids].mean(axis=0)
+```
+
+::: {.callout-note collapse="true"}
+**What is GPT-2?**
+GPT-2 (2019, OpenAI, 117M–1.5B parameters) is an autoregressive language model trained to predict the next token. Its token embedding matrix — a lookup table of vectors, one per vocabulary entry — is learned incidentally to support that task. Semantic structure emerges as a side effect, not a design goal.
+:::
+
+### 2c · Qwen3-0.8B
+
+```{python}
+#| label: load-qwen3
+
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+qwen_name = "Qwen/Qwen3.5-0.8B"
+qwen_tok = AutoTokenizer.from_pretrained(qwen_name)
+qwen_model = AutoModelForCausalLM.from_pretrained(
+    qwen_name, dtype=torch.float32, device_map="cpu"
+)
+qwen_model.eval()
+W_qwen = qwen_model.model.embed_tokens.weight.detach().to(torch.float32).numpy()
+print(f"Qwen3-0.8B loaded — vocab: {W_qwen.shape[0]:,}  dim: {W_qwen.shape[1]}")
+
+def qwen_embed(word):
+    ids = qwen_tok.encode(" " + word, add_special_tokens=False)
+    if len(ids) == 0:
+        ids = qwen_tok.encode(word, add_special_tokens=False)
+    return W_qwen[ids].mean(axis=0)
+```
+
+::: {.callout-note collapse="true"}
+**What is Qwen3?**
+Qwen3 (2025, Alibaba) is a modern open-weight LLM family trained on trillions of tokens with improved architecture and training recipes. Like GPT-2, its token embeddings are a lookup table — but the embeddings benefit from far more training signal and a larger, more diverse corpus.
+:::
+
+### 2d · nomic-embed-text-v1.5
+
+```{python}
+#| label: load-nomic
+
+from sentence_transformers import SentenceTransformer
+
+nomic_model = SentenceTransformer("nomic-ai/nomic-embed-text-v1.5", trust_remote_code=True)
+print(f"nomic-embed loaded — dim: {nomic_model.get_sentence_embedding_dimension()}")
+
+def nomic_embed(word):
+    # nomic-embed expects a task prefix for best results
+    return nomic_model.encode(f"search_document: {word}", normalize_embeddings=True)
+```
+
+::: {.callout-note collapse="true"}
+**What is nomic-embed-text?**
+nomic-embed-text-v1.5 (2024, Nomic AI) is a dedicated text embedding model trained with *contrastive learning*: pairs of semantically similar texts are pulled together in vector space, dissimilar pairs pushed apart. This makes cosine similarity directly meaningful by construction. It is not a language model — it cannot generate text — but it excels at semantic similarity, search, and clustering.
+:::
+
+## 3 · The Analogy Test
+
+```{python}
+#| label: analogy-test
+
+models = {
+    "word2vec":    w2v_embed,
+    "GPT-2":       gpt2_embed,
+    "Qwen3-0.8B":  qwen_embed,
+    "nomic-embed": nomic_embed,
+}
+
+words = ["king", "man", "woman", "queen"]
+
+results = {}
+print(f"{'Model':15s}  {'cos(analogy, queen)':>20s}  {'cos(analogy, king)':>20s}  {'queen rank*':>12s}")
+print("-" * 75)
+
+for name, embed_fn in models.items():
+    king_v  = embed_fn("king")
+    man_v   = embed_fn("man")
+    woman_v = embed_fn("woman")
+    queen_v = embed_fn("queen")
+    analogy = king_v - man_v + woman_v
+
+    cos_queen = cosine_similarity(analogy, queen_v)
+    cos_king  = cosine_similarity(analogy, king_v)
+
+    # For word2vec: check rank; for others: approximate via a curated candidate list
+    candidates = ["queen", "king", "princess", "prince", "empress", "emperor",
+                  "woman", "man", "girl", "boy", "lady", "dog", "computer", "Paris"]
+    cand_sims = sorted(
+        [(w, cosine_similarity(analogy, embed_fn(w))) for w in candidates],
+        key=lambda t: t[1], reverse=True
+    )
+    queen_rank = next((i + 1 for i, (w, _) in enumerate(cand_sims) if w == "queen"), "?")
+
+    results[name] = {
+        "analogy": analogy, "king": king_v, "man": man_v,
+        "woman": woman_v, "queen": queen_v,
+        "cos_queen": cos_queen, "cos_king": cos_king,
+        "cand_sims": cand_sims,
+    }
+    print(f"  {name:13s}  {cos_queen:>20.4f}  {cos_king:>20.4f}  {queen_rank:>12}")
+
+print("\n* rank among curated candidates: queen, king, princess, prince, empress, emperor, woman, man, girl, boy, lady, dog, computer, Paris")
+```
+
+## 4 · Parallel-Arrows View: Does gender offset generalize from commoners to royalty?
+
+If `king − man ≈ queen − woman`, the analogy is geometrically clean. We plot both difference vectors as arrows from a common origin, in the 2D plane they span.
+
+```{python}
+#| label: parallel-arrows-grid
+#| fig-cap: "The (king−man) and (queen−woman) difference vectors for each model. Perfect analogy = overlapping arrows."
+#| fig-width: 12
+#| fig-height: 10
+
+fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+
+for ax, (name, r) in zip(axes.flat, results.items()):
+    d1 = r["king"]  - r["man"]
+    d2 = r["queen"] - r["woman"]
+
+    e1 = d1 / np.linalg.norm(d1)
+    d2_perp = d2 - np.dot(d2, e1) * e1
+    norm_perp = np.linalg.norm(d2_perp)
+    e2 = d2_perp / (norm_perp + 1e-9) if norm_perp > 1e-9 else np.zeros_like(e1)
+
+    p_d1 = np.array([np.dot(d1, e1), np.dot(d1, e2)])
+    p_d2 = np.array([np.dot(d2, e1), np.dot(d2, e2)])
+
+    ang  = angle_between(d1, d2)
+    cos  = cosine_similarity(d1, d2)
+    lrat = np.linalg.norm(d2) / (np.linalg.norm(d1) + 1e-9)
+
+    ax.annotate("", xy=p_d1, xytext=(0, 0),
+                arrowprops=dict(arrowstyle="->", color="#E63946", lw=2.2))
+    ax.annotate("king − man", p_d1, textcoords="offset points",
+                xytext=(6, 3), fontsize=10, fontweight="bold", color="#E63946")
+
+    ax.annotate("", xy=p_d2, xytext=(0, 0),
+                arrowprops=dict(arrowstyle="->", color="#457B9D", lw=2.2))
+    ax.annotate("queen − woman", p_d2, textcoords="offset points",
+                xytext=(6, 3), fontsize=10, fontweight="bold", color="#457B9D")
+
+    ax.plot([p_d1[0], p_d2[0]], [p_d1[1], p_d2[1]],
+            linestyle="--", color="#CCCCCC", lw=1)
+
+    ax.axhline(0, color="#EEEEEE", lw=0.7)
+    ax.axvline(0, color="#EEEEEE", lw=0.7)
+    ax.set_aspect("equal", adjustable="datalim")
+    ax.set_title(
+        f"{name}\nangle = {ang:.1f}°  ·  cos = {cos:.3f}  ·  length ratio = {lrat:.2f}",
+        fontweight="bold", pad=8,
+    )
+    ax.set_xlabel("e₁  (along king − man)", fontsize=9)
+    ax.set_ylabel("e₂  (⊥ component)", fontsize=9)
+
+plt.suptitle("How parallel are (king − man) and (queen − woman)?",
+             fontsize=14, fontweight="bold", y=1.01)
+plt.tight_layout()
+plt.show()
+```
+
+## 5 · Full-Vocabulary Cosine Distribution
+
+Where does the analogy vector `king − man + woman` land relative to *every* token in each model's vocabulary? Plotting the full distribution — with royalty and power words annotated — shows not just whether queen wins, but how cleanly it stands out.
+
+```{python}
+#| label: analogy-vocab-histogram-comparison
+#| fig-cap: "Cosine similarity of the analogy vector to every vocabulary token in word2vec, GPT-2, and Qwen3. Vertical lines mark royalty (red), power (purple), source words (gold), and unrelated words (grey)."
+#| fig-width: 18
+#| fig-height: 5.5
+
+import math
+
+# ── analogy vectors ──────────────────────────────────────────────────────────
+analogy_vecs = {
+    "word2vec":   w2v_embed("king")  - w2v_embed("man")  + w2v_embed("woman"),
+    "GPT-2":      gpt2_embed("king") - gpt2_embed("man") + gpt2_embed("woman"),
+    "Qwen3-0.8B": qwen_embed("king") - qwen_embed("man") + qwen_embed("woman"),
+}
+
+# ── full vocab matrices ───────────────────────────────────────────────────────
+vocab_matrices = {
+    "word2vec":   wv.vectors,   # (≈3M, 300)
+    "GPT-2":      W_gpt2,       # (50 257, 768)
+    "Qwen3-0.8B": W_qwen,       # (vocab_size, dim)
+}
+
+embed_fns = {
+    "word2vec":   w2v_embed,
+    "GPT-2":      gpt2_embed,
+    "Qwen3-0.8B": qwen_embed,
+}
+
+# ── landmark categories ───────────────────────────────────────────────────────
+landmark_cats = [
+    ("source",    ["king", "man", "woman"],                                    "#FFB703"),
+    ("royalty",   ["queen", "princess", "prince", "empress", "emperor",
+                   "monarch", "duchess", "duke"],                              "#E63946"),
+    ("power",     ["ruler", "sovereign", "lord", "leader", "chief",
+                   "authority", "master"],                                     "#6A0572"),
+    ("unrelated", ["dog", "computer"],                                         "#888888"),
+]
+
+def log_y_ax(frac, ax):
+    lo = math.log10(max(ax.get_ylim()[0], 0.5))
+    hi = math.log10(ax.get_ylim()[1])
+    return 10 ** (lo + frac * (hi - lo))
+
+row_fracs = [0.88, 0.65, 0.42, 0.22]
+
+fig, axes = plt.subplots(1, 3, figsize=(18, 5.5))
+
+for ax, (model_name, W) in zip(axes, vocab_matrices.items()):
+    embed_fn = embed_fns[model_name]
+    result_v = analogy_vecs[model_name]
+    result_u = result_v / (np.linalg.norm(result_v) + 1e-9)
+
+    W_u      = W / (np.linalg.norm(W, axis=1, keepdims=True) + 1e-9)
+    all_sims = W_u @ result_u
+
+    ax.hist(all_sims, bins=120, color="#CCCCCC", edgecolor="white", log=True)
+    ax.set_xlabel("cosine similarity to (king − man + woman)")
+    ax.set_ylabel("number of tokens  (log scale)")
+    ax.set_title(f"{model_name}  —  {len(all_sims):,} tokens",
+                 fontweight="bold", pad=8)
+
+    # collect landmark sims, sort left → right for staggered annotation
+    all_lm = []
+    for _cat, words, color in landmark_cats:
+        for w in words:
+            try:
+                sim = cosine_similarity(result_v, embed_fn(w))
+                all_lm.append((w, sim, color))
+            except (KeyError, Exception):
+                pass
+    all_lm.sort(key=lambda t: t[1])
+
+    for i, (w, sim, color) in enumerate(all_lm):
+        ax.axvline(sim, color=color, lw=1.5, alpha=0.9)
+        ax.annotate(
+            f"{w}\n{sim:.3f}",
+            xy=(sim, log_y_ax(row_fracs[i % len(row_fracs)], ax)),
+            xytext=(4, 0), textcoords="offset points",
+            fontsize=8, fontweight="bold", color=color, va="center",
+        )
+
+# shared legend
+legend_handles = [
+    mpatches.Patch(color="#FFB703", label="source  (king / man / woman)"),
+    mpatches.Patch(color="#E63946", label="royalty  (queen, princess, emperor …)"),
+    mpatches.Patch(color="#6A0572", label="power  (ruler, sovereign, lord …)"),
+    mpatches.Patch(color="#888888", label="unrelated  (dog, computer)"),
+]
+fig.legend(handles=legend_handles, loc="lower center", ncol=4,
+           fontsize=9, frameon=False, bbox_to_anchor=(0.5, -0.06))
+
+plt.suptitle("Cosine similarity of (king − man + woman) to full vocabulary",
+             fontsize=13, fontweight="bold", y=1.02)
+plt.tight_layout()
+plt.show()
+```
+
+::: {.callout-note}
+**nomic-embed** is a sentence encoder — it has no fixed token lookup table to iterate over, so a full-vocabulary histogram isn't directly comparable. Its analogy quality is best read from the ranked candidate table in section 3.
+:::
+
+::: {.callout-tip}
+**What to look for.** Each histogram shows where a *random* token lands. The royalty landmarks (red) should cluster at the right tail — especially in word2vec, where skip-gram was explicitly trained for this geometry. Power words (purple) sit nearby but slightly lower, reflecting semantic proximity without identity. In GPT-2 and Qwen3, the distributions are broader and `king` (gold) tends to dominate, because the analogy vector still inherits much of king's direction.
+:::
+
+## 6 · Summary
+
+```{python}
+#| label: summary-table
+
+print(f"{'Model':15s}  {'cos(analogy,queen)':>20s}  {'cos(analogy,king)':>19s}  {'angle (king-man, queen-woman)':>30s}")
+print("-" * 90)
+for name, r in results.items():
+    d1  = r["king"] - r["man"]
+    d2  = r["queen"] - r["woman"]
+    ang = angle_between(d1, d2)
+    print(f"  {name:13s}  {r['cos_queen']:>20.3f}  {r['cos_king']:>19.3f}  {ang:>30.1f}°")
+```
+
+::: {.callout-note}
+**Reading the results across models:**
+
+- **word2vec** — designed for analogy arithmetic via skip-gram training. Expect the smallest angle and queen ranking at or near #1 among candidates (excluding source words).
+- **GPT-2** — token embeddings are a byproduct of next-token prediction. cos(analogy, queen) ≈ 0.28; king still dominates at ≈ 0.78; angle ≈ 76°.
+- **Qwen3-0.8B** — same structure as GPT-2 but trained on far more data with modern recipes. cos(analogy, queen) improves to ≈ 0.58; king shrinks to ≈ 0.68. Better, but king still wins.
+- **nomic-embed** — trained explicitly to make cosine similarity meaningful. Expect queen to rank #1 and the angle between difference vectors to be substantially smaller.
+
+**The core lesson:** what a model is *trained to do* shapes its geometry more than model size. word2vec (a tiny 2013 model) outperforms GPT-2 (2019, 117M) on analogy arithmetic — because that's precisely what skip-gram optimizes for. nomic-embed takes this further with modern contrastive training. LLM token embeddings improve with scale and better recipes (GPT-2 → Qwen3), but they will never be fully optimized for analogy geometry as long as next-token prediction is the objective.
+:::

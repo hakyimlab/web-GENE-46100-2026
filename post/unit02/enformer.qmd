@@ -3,7 +3,6 @@ title: Enformer Architecture
 author: Haky Im
 date: 2025-05-01
 categories:
-  - gene46100
 eval: false
 jupyter: 
   kernelspec:

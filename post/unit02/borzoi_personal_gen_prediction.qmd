@@ -13,7 +13,6 @@ editor_options:
   chunk_output_type: console
 eval: false
 categories:
-  - gene46100
   - notebook
 jupyter: python3
 draft: true

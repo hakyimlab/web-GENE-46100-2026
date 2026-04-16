@@ -6,3 +6,24 @@ __pycache__/
 *.pyc
 *.pyo
 .Rhistory
+
+# Model weights and checkpoints
+*.pt
+*.pth
+*.bin
+*.ckpt
+*.safetensors
+
+# Large data files
+*.fa
+*.fasta
+*.fa.gz
+*.fasta.gz
+*.bam
+*.vcf
+*.bed
+
+# Notebook training outputs
+train.bin
+val.bin
+meta.pkl

@@ -2,7 +2,6 @@
 title: homework 1 - suggestions
 date: 2026-03-27
 categories:
-  - gene46100
   - homework
 format:
   html:

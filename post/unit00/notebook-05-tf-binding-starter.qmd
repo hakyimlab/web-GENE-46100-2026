@@ -3,7 +3,6 @@ title: "05 · TF Binding Prediction — Starter Code"
 date: '2026-04-08'
 author: Sofia Salazar
 categories:
-  - gene46100
   - notebook
 jupyter:
   kernelspec:

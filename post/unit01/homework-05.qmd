@@ -2,7 +2,6 @@
 title: homework 5
 date: 2026-04-28
 categories:
-  - gene46100
   - homework
 format:
   html:

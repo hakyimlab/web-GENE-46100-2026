@@ -1,0 +1,10 @@
+---
+title: "03 · Training a Language Model"
+date: '2026-04-23'
+author: "Haky Im based on Karpathy's nanoGPT"
+description: "GENE 46100 — Unit 01"
+categories: [slides]
+draft: false
+---
+
+[Open slide deck](slides-03-llm-training.html){.btn .btn-primary .btn-lg}

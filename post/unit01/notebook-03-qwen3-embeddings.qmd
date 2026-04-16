@@ -1,0 +1,324 @@
+---
+title: "03 · Word Embeddings: Qwen3-0.8B"
+subtitle: "Does a modern LLM learn cleaner semantic geometry than GPT-2?"
+author: "Intro to LLMs"
+date: '2026-04-15'
+draft: true
+categories:
+  - notebook
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    code-fold: true
+    code-tools: true
+    theme: cosmo
+    highlight-style: github
+    embed-resources: true
+    fig-width: 9
+    fig-height: 6
+    callout-appearance: simple
+execute:
+  warning: false
+  message: false
+jupyter:
+  kernelspec:
+    name: "conda-env-nanogpt46100-py"
+    language: "python"
+    display_name: "nanogpt46100"
+---
+
+::: {.callout-note}
+**Prerequisite:** This notebook extends **notebook-00 · Word Embeddings (GPT-2)**. The analyses here are identical — we're asking whether a modern LLM learns the same structure better. Read notebook-00 first for the conceptual background.
+:::
+
+## Setup
+
+```{python}
+#| label: setup
+#| include: false
+
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+plt.rcParams.update({"figure.dpi": 130, "axes.spines.top": False,
+                     "axes.spines.right": False})
+```
+
+## 1 · Load Qwen3-0.8B and Extract the Embedding Matrix
+
+```{python}
+#| label: load-model
+
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+model_name = "Qwen/Qwen3.5-0.8B"
+
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    dtype=torch.float32,
+    device_map="cpu",
+)
+model.eval()
+
+# Token embedding matrix: rows = tokens, cols = embedding dimensions
+# Cast to float32 in case weights were stored as bfloat16 (numpy doesn't support bf16)
+W_E = model.model.embed_tokens.weight.detach().to(torch.float32).numpy()
+
+vocab_size, embed_dim = W_E.shape
+print(f"Model:      {model_name}")
+print(f"Vocab size: {vocab_size:,}")
+print(f"Embed dim:  {embed_dim}")
+print(f"Matrix:     {W_E.shape}  ({W_E.nbytes / 1e6:.1f} MB)")
+```
+
+::: {.callout-note}
+**Architecture note.** GPT-2 stores its embedding matrix as `model.wte.weight`. Qwen3 (like most modern LLMs) uses a `model.model.embed_tokens.weight` — the same concept, different attribute path. The embedding matrix is still just a lookup table: row `i` is the 1-D vector that represents token `i` before the transformer sees it.
+:::
+
+## 2 · Helper Functions
+
+```{python}
+#| label: helpers
+
+def get_token_ids(word: str) -> list[int]:
+    """Return token IDs for a word, trying with and without a leading space."""
+    ids = tokenizer.encode(" " + word, add_special_tokens=False)
+    if len(ids) == 0:
+        ids = tokenizer.encode(word, add_special_tokens=False)
+    return ids
+
+def get_token_embedding(word: str) -> np.ndarray:
+    """Return the embedding for a word.
+    Single-token words return their exact embedding.
+    Multi-token words return the mean of their subword embeddings (with a note).
+    """
+    ids = get_token_ids(word)
+    if len(ids) > 1:
+        print(f"  note: '{word}' → {len(ids)} subword tokens {[tokenizer.decode([i]) for i in ids]}; using mean embedding")
+    return W_E[ids].mean(axis=0)
+
+def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
+    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-9))
+
+def top_k_similar(vec: np.ndarray, k: int = 20) -> list[tuple[str, float]]:
+    unit_vec = vec / (np.linalg.norm(vec) + 1e-9)
+    W_unit   = W_E / (np.linalg.norm(W_E, axis=1, keepdims=True) + 1e-9)
+    sims     = W_unit @ unit_vec
+    idxs     = np.argsort(sims)[::-1][:k]
+    return [(tokenizer.decode([i]).strip(), float(sims[i])) for i in idxs]
+
+# Sanity-check: show tokenization for key words
+for w in ["man", "woman", "king", "queen", "emperor", "empress", "princess", "prince"]:
+    ids = get_token_ids(w)
+    decoded = [tokenizer.decode([i]) for i in ids]
+    n = "single-token" if len(ids) == 1 else f"{len(ids)} subwords"
+    print(f"  '{w}'  →  {n}: {decoded}")
+```
+
+## 3 · Basic Geometry Check
+
+Before the analogy, verify that Qwen3-0.8B's embedding space at least clusters similar words together.
+
+```{python}
+#| label: basic-geometry
+
+pairs = [
+    ("man",    "woman"),
+    ("king",   "queen"),
+    ("man",    "king"),
+    ("man",    "dog"),
+    ("dog",    "cat"),
+    ("Paris",  "France"),
+    ("Tokyo",  "Japan"),
+]
+
+print(f"{'Pair':30s}  cosine sim")
+print("-" * 45)
+for a, b in pairs:
+    sim = cosine_similarity(get_token_embedding(a), get_token_embedding(b))
+    print(f"  {a:12s} ↔  {b:12s}   {sim:.4f}")
+```
+
+## 4 · The Analogy: king − man + woman ≈ ?
+
+```{python}
+#| label: analogy-ranking
+
+man_v   = get_token_embedding("man")
+woman_v = get_token_embedding("woman")
+king_v  = get_token_embedding("king")
+queen_v = get_token_embedding("queen")
+
+result_vec = king_v - man_v + woman_v
+
+cos_result_queen = cosine_similarity(result_vec, queen_v)
+print(f"cos(king−man+woman, queen) = {cos_result_queen:.4f}")
+print()
+print("Top-20 nearest neighbors of (king − man + woman):")
+for rank, (tok, sim) in enumerate(top_k_similar(result_vec, k=20), 1):
+    skip = " ← source word" if tok in {"king", "man", "woman"} else ""
+    print(f"  Rank {rank:2d}:  {tok:20s}  (cos = {sim:.4f}){skip}")
+```
+
+## 5 · Full-Vocabulary Histograms
+
+### 5a · Cosine Similarity
+
+```{python}
+#| label: analogy-vocab-histogram-cos
+
+result_unit = result_vec / (np.linalg.norm(result_vec) + 1e-9)
+W_unit      = W_E / (np.linalg.norm(W_E, axis=1, keepdims=True) + 1e-9)
+all_sims    = W_unit @ result_unit
+
+landmarks = ["queen", "king", "woman", "man", "emperor", "empress",
+             "princess", "prince", "dog", "computer"]
+
+landmark_colors = {
+    "queen":    "#E63946",
+    "king":     "#FFB703", "woman": "#FFB703", "man": "#FFB703",
+    "emperor":  "#6A0572", "empress": "#6A0572",
+    "princess": "#457B9D", "prince":  "#457B9D",
+    "dog":      "#888888", "computer": "#888888",
+}
+
+landmark_sims = sorted(
+    [(w, cosine_similarity(result_vec, get_token_embedding(w))) for w in landmarks],
+    key=lambda t: t[1],
+)
+
+row_fracs = [0.85, 0.55, 0.30, 0.12]
+
+def log_y(frac, ax):
+    import math
+    lo = math.log10(max(ax.get_ylim()[0], 0.5))
+    hi = math.log10(ax.get_ylim()[1])
+    return 10 ** (lo + frac * (hi - lo))
+
+fig, ax = plt.subplots(figsize=(11, 5.5))
+ax.hist(all_sims, bins=120, color="#CCCCCC", edgecolor="white", log=True)
+ax.set_xlabel("cosine similarity to (king − man + woman)")
+ax.set_ylabel("number of vocab tokens  (log scale)")
+ax.set_title(
+    f"Cosine similarity distribution — all {len(all_sims):,} Qwen3-0.8B tokens",
+    fontweight="bold", pad=10,
+)
+ax.set_xlim(min(all_sims.min(), -0.05), max(all_sims.max(), 0.82))
+for i, (w, sim) in enumerate(landmark_sims):
+    color = landmark_colors[w]
+    ax.axvline(sim, color=color, lw=1.5, alpha=0.9)
+    ax.annotate(
+        f"{w}\n{sim:.3f}",
+        xy=(sim, log_y(row_fracs[i % len(row_fracs)], ax)),
+        xytext=(4, 0), textcoords="offset points",
+        fontsize=9, fontweight="bold", color=color, va="center",
+    )
+plt.tight_layout()
+plt.show()
+```
+
+
+### 5b · Cosine vs. Euclidean Scatter
+
+```{python}
+#| label: analogy-cos-vs-euclid-scatter
+
+all_dists = np.linalg.norm(W_E - result_vec, axis=1)
+
+fig, ax = plt.subplots(figsize=(10, 7))
+ax.scatter(all_sims, all_dists, s=4, color="#CCCCCC", alpha=0.35,
+           edgecolors="none", rasterized=True)
+
+for w in landmarks:
+    v = get_token_embedding(w)
+    s = cosine_similarity(result_vec, v)
+    d = float(np.linalg.norm(v - result_vec))
+    color = landmark_colors[w]
+    ax.scatter(s, d, s=90, color=color, edgecolor="white", lw=1.2, zorder=5)
+    ax.annotate(
+        f"{w}\ncos={s:.2f}  d={d:.1f}",
+        xy=(s, d), xytext=(7, 5), textcoords="offset points",
+        fontsize=9, fontweight="bold", color=color,
+    )
+
+ax.set_xlabel("cosine similarity to (king − man + woman)")
+ax.set_ylabel("Euclidean distance to (king − man + woman)")
+ax.set_title(
+    "Cosine vs. Euclidean — every Qwen3-0.8B token",
+    fontweight="bold", pad=10,
+)
+ax.axvline(0, color="#EEEEEE", lw=0.8)
+plt.tight_layout()
+plt.show()
+```
+
+## 6 · Parallel-Arrows View
+
+```{python}
+#| label: analogy-parallel-arrows
+
+d1 = king_v  - man_v
+d2 = queen_v - woman_v
+
+e1 = d1 / np.linalg.norm(d1)
+d2_perp = d2 - np.dot(d2, e1) * e1
+e2 = d2_perp / (np.linalg.norm(d2_perp) + 1e-9)
+
+def plane_coords(v):
+    return np.array([np.dot(v, e1), np.dot(v, e2)])
+
+p_d1 = plane_coords(d1)
+p_d2 = plane_coords(d2)
+
+cos_angle = np.dot(d1, d2) / (np.linalg.norm(d1) * np.linalg.norm(d2))
+angle_deg = np.degrees(np.arccos(np.clip(cos_angle, -1, 1)))
+len_ratio = np.linalg.norm(d2) / np.linalg.norm(d1)
+
+fig, ax = plt.subplots(figsize=(7, 7))
+ax.annotate("", xy=p_d1, xytext=(0, 0),
+            arrowprops=dict(arrowstyle="->", color="#E63946", lw=2.5))
+ax.annotate("king − man", p_d1, textcoords="offset points",
+            xytext=(8, 4), fontsize=11, fontweight="bold", color="#E63946")
+
+ax.annotate("", xy=p_d2, xytext=(0, 0),
+            arrowprops=dict(arrowstyle="->", color="#457B9D", lw=2.5))
+ax.annotate("queen − woman", p_d2, textcoords="offset points",
+            xytext=(8, 4), fontsize=11, fontweight="bold", color="#457B9D")
+
+ax.plot([p_d1[0], p_d2[0]], [p_d1[1], p_d2[1]],
+        linestyle="--", color="#AAAAAA", lw=1)
+
+ax.axhline(0, color="#EEEEEE", lw=0.8)
+ax.axvline(0, color="#EEEEEE", lw=0.8)
+ax.set_aspect("equal", adjustable="datalim")
+ax.set_xlabel("e₁  (along king − man)")
+ax.set_ylabel("e₂  (⊥ component of queen − woman)")
+ax.set_title(
+    f"If the analogy holds, arrows should be parallel\n"
+    f"angle = {angle_deg:.1f}°   ·   length ratio = {len_ratio:.2f}   ·   cos = {cos_angle:.3f}",
+    fontweight="bold", pad=10,
+)
+plt.tight_layout()
+plt.show()
+```
+
+::: {.callout-note}
+**What the numbers tell us — Qwen3-0.8B vs. GPT-2**
+
+| Metric | GPT-2 (117M) | Qwen3-0.8B |
+|---|---|---|
+| cos(analogy, **queen**) | 0.278 | **0.58** |
+| cos(analogy, **king**) | 0.775 | **0.68** |
+| queen rank among all tokens | ~7th | closer to top |
+
+The improvement is real: Qwen3-0.8B more than doubles queen's cosine similarity (0.278 → 0.58), and the gap between king and queen has shrunk substantially (0.497 → 0.10). The analogy is meaningfully better.
+
+But **king is still the closest token** (0.68 > 0.58). This is expected — `king − man + woman` is dominated by the `king` vector regardless of model quality. The analogy works as a *retrieval heuristic* (queen is now the clear runner-up among semantically plausible candidates) even though the arithmetic never perfectly cancels king out.
+
+**Take-away:** Modern training recipes and scale do push token embeddings toward cleaner semantic geometry — but raw token embeddings are still not optimized for analogy arithmetic the way word2vec was. The right tool for analogy benchmarks is a dedicated embedding model; the right tool for understanding what an LLM has learned is exactly this kind of probe.
+:::

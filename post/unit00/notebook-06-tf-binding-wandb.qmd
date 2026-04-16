@@ -3,7 +3,6 @@ title: "06 · Calibrating hyperparameters with weights and biases"
 date: '2026-04-09'
 author: Sofia Salazar
 categories:
-  - gene46100
   - notebook
 jupyter:
   kernelspec:

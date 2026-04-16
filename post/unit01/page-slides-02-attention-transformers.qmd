@@ -1,0 +1,10 @@
+---
+title: "02 · Attention, Transformers & Genomics"
+date: '2026-04-21'
+author: "Haky Im based on Karpathy's nanoGPT"
+description: "GENE 46100 — Unit 01"
+categories: [slides]
+draft: false
+---
+
+[Open slide deck](slides-02-attention-transformers.html){.btn .btn-primary .btn-lg}

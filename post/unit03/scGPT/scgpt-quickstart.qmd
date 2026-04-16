@@ -6,7 +6,6 @@ author: Haky Im based on cziscience page
 date: 2025-05-13
 categories: 
     - notebook
-    - gene46100
 draft: true
 ---
 

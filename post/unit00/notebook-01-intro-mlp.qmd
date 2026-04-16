@@ -4,7 +4,6 @@ author: Haky Im (based on earlier version by Boxiang Liu)
 date: '2026-03-26'
 date-modified: last-modified
 categories:
-  - gene46100
   - notebook
 execute:
   eval: true

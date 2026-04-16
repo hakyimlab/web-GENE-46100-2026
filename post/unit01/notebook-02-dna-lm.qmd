@@ -4,11 +4,10 @@ author: "Henry Raeder"
 date: '2026-04-25'
 categories:
   - notebook
-  - gene46100
 description: "Pretrain a character-level GPT on the human reference genome, then fine-tune for promoter activity and TF binding prediction."
 date-modified: last-modified
 draft: false
-eval: true
+eval: false
 jupyter:
   kernelspec:
     name: "conda-env-nanogpt46100-py"

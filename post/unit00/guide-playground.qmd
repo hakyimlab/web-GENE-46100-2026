@@ -3,7 +3,6 @@ title: Neural Network Playground Guide
 author: Haky Im
 date: '2026-03-26'
 categories:
-  - gene46100
   - how-to
 ---
 

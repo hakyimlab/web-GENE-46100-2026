@@ -4,7 +4,6 @@ date: '2025-05-05'
 author: Sofia Salazar
 categories:
   - notebook
-  - gene46100
 jupyter: python3
 draft: true
 ---

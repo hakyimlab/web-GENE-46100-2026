@@ -4,7 +4,6 @@ author: Erin Wilson
 date: '2026-04-02'
 date-modified: last-modified
 categories:
-  - gene46100
   - notebook
 execute:
   eval: true

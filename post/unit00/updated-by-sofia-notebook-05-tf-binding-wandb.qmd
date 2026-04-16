@@ -3,7 +3,6 @@ title: "DRAFT - DELETE - 05 · Calibrating hyperparameters with weights and bias
 date: '2026-04-10'
 author: Sofia Salazar
 categories:
-  - gene46100
   - notebook
 jupyter: python3
 draft: true

@@ -1,6 +1,6 @@
 ---
 title: "01 · From Text to Probabilities"
-date: '2026-04-16'
+date: '2026-04-12'
 author: "Haky Im, based on 3Blue1Brown's What is a GPT"
 description: "GENE 46100 — Unit 01"
 categories: [slides]

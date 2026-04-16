@@ -9,7 +9,6 @@ jupyter:
     display_name: "enformer46100"
 eval: false
 categories:
-  - gene46100
   - notebook
 draft: true
 ---

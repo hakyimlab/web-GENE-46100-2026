@@ -4,7 +4,6 @@ author: Haky Im
 date: '2026-04-01'
 date-modified: last-modified
 categories:
-  - gene46100
   - notebook
 execute:
   eval: true

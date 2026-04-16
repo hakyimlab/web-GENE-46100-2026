@@ -10,7 +10,6 @@ jupyter:
 eval: false
 freeze: true
 categories:
-  - gene46100
   - notebook
 draft: true
 ---

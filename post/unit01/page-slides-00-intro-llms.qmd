@@ -1,6 +1,6 @@
 ---
 title: "00 · What Is a Large Language Model?"
-date: '2026-04-14'
+date: '2026-04-11'
 author: "Haky Im based on 3Blue1Brown LLM Explained"
 description: "GENE 46100 — Unit 01"
 categories: [slides]

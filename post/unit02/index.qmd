@@ -3,7 +3,6 @@ title: unit 03
 author: Haky Im
 date: 2025-05-01
 categories:
-  - gene46100
 eval: false
 draft: true
 ---

@@ -7,11 +7,19 @@ set -e
 echo "=== Generating slide stub pages ==="
 python3 scripts/generate-slide-stubs.py
 
-# 1. Render the website (pages, notebooks — excludes slides via _quarto.yml)
+# 1. Remove stale HTML artifacts from source directories
+# (quarto render copies any .html it finds in post/ to docs/, so old renamed files pollute output)
+echo "=== Cleaning stale HTML from post/ ==="
+find post -name "*.html" \
+  -not -path "*/alt_out/*" \
+  -not -name "speaker-view.html" \
+  -delete
+
+# 2. Render the website (pages, notebooks — excludes slides via _quarto.yml)
 echo "=== Rendering site ==="
 quarto render
 
-# 2. Copy CSS files not handled by quarto render
+# 3. Copy CSS files not handled by quarto render
 echo "=== Copying CSS assets ==="
 for css in post/**/custom.css; do
   dest="docs/$(dirname "$css")"
@@ -20,7 +28,7 @@ for css in post/**/custom.css; do
   echo "  → $dest/$(basename "$css")"
 done
 
-# 3. Render each slide deck and copy output to docs/
+# 4. Render each slide deck and copy output to docs/
 for slide in post/**/slides-*.qmd; do
   dir=$(dirname "$slide")
   base=$(basename "$slide" .qmd)
