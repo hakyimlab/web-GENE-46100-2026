@@ -21,14 +21,11 @@ eval: false
 ## Where we are
 
 - **notebook-01** — built nanoGPT from scratch; understood tokens, embeddings, attention, training
-- **notebook-02** — trained a tiny GPT on DNA; generated DNA-looking sequences
-- **This deck** — what happens when you scale that exact idea to the whole tree of life
+- **notebook-02** — trained a tiny GPT on DNA; finetuned to classify promoters and enhancers
+- **This deck** — Evo2 scales that exact idea to the whole tree of life
 
----
 
 # Part 1: What Scaling Gets You {background-color="#1e3a5f" style="color:white;"}
-
----
 
 ## Our nanoGPT on DNA — what it could do
 
@@ -61,7 +58,7 @@ eval: false
 | | nanoGPT on DNA | Evo 2 |
 |---|---|---|
 | **Parameters** | ~7M | 7B – 40B |
-| **Training data** | 1 chromosome | 9.3T nucleotides |
+| **Training data** | 3B nucleotides | 9.3T nucleotides |
 | **Context length** | ~1K tokens | up to 1M bases |
 | **Organisms** | human | bacteria, archaea, yeast, humans, phage |
 | **Architecture** | Transformer | StripedHyena 2 |
@@ -69,11 +66,8 @@ eval: false
 Same core idea — next-token prediction on DNA — just much larger and across all domains of life.
 :::
 
----
 
 # Part 2: Why Not Just a Bigger Transformer? {background-color="#1e3a5f" style="color:white;"}
-
----
 
 ## The attention bottleneck
 
@@ -86,13 +80,11 @@ Transformer attention is **O(n²)** in sequence length.
 | 128K tokens | 16,384× | ⚠️ (needs FlashAttention) |
 | **1M bases** | **10⁶×** | ❌ transformer alone |
 
-To model gene regulation (enhancers hundreds of kb from their target genes), you need 1M+ context. A pure transformer can't get there.
+To model gene regulation (enhancers hundreds of kb from their target genes), you need 1M+ context. A pure transformer is too costly.
 
 ---
 
-## Biology's multi-scale structure
-
-DNA function operates at many scales simultaneously:
+## DNA function operates at many scales simultaneously
 
 | Scale | Feature |
 |---|---|
@@ -139,36 +131,27 @@ Result: **up to 3× faster** than a full Transformer at 1M context — making ge
 Arc Institute / Evo 2 (2026)
 :::
 
----
 
 # Part 3: Three Things Evo 2 Can Do That nanoGPT Couldn't {background-color="#1e3a5f" style="color:white;"}
 
----
-
 ## 1. Zero-shot variant effect prediction
 
-Evo 2 assigns a **likelihood** to every DNA sequence. A lower score for a mutant → the model predicts the mutation disrupts function.
+Evo 2 assigns a **likelihood** to every DNA sequence — a lower score for a mutant means the model predicts disrupted function. **No fine-tuning. No labeled examples.**
 
-**No fine-tuning. No labeled examples.**
-
-:::: {.columns}
-
-::: {.column width="55%"}
 On the BRCA1 gene (experimentally measured variants):
 
 - Zero-shot: outperforms all models on noncoding SNVs
 - Embeddings + ridge regression → AUROC = 0.95
 - Works on **indels** too — not just SNPs
+
+::: {.takehome}
+Most clinical variants are rare and unlabeled — Evo 2 can prioritize them immediately, zero-shot.
 :::
 
-::: {.column width="45%"}
-::: {style="font-size: 0.8em;"}
-**Why this matters**: most clinical variants are rare and unlabeled. A zero-shot model can prioritize them immediately.
+:::{.notes}
+For each position in the sequence, it calculates the probability of the actual token given all   
+ the tokens before it, then averages those probabilities (log-probabilities) across the whole sequence.20
 :::
-:::
-
-::::
-
 ---
 
 ## 2. Generate genomes at scale
@@ -198,17 +181,13 @@ Evo 2 acts as a **proposal model**: it generates candidate sequences; external m
 Evo 2 can generate DNA sequences with **programmable regulatory activity** — validated in living cells.
 :::
 
----
 
 # Part 4: What Did It Learn? {background-color="#1e3a5f" style="color:white;"}
 
----
-
 ## Interpretability: Sparse Autoencoders
 
-To look inside the model, researchers trained a **Sparse Autoencoder (SAE)** on layer 26 activations — no labels, no supervision.
-
-Features that emerged:
+::: {style="font-size: 0.85em;"}
+Trained a **Sparse Autoencoder (SAE)** on layer 26 activations — no labels, no supervision.
 
 | SAE Feature | What it activates on |
 |---|---|
@@ -217,8 +196,11 @@ Features that emerged:
 | f/25666 | Last base of exon (splice end) |
 | f/15680 | Coding regions (bacteria too) |
 | various | TF binding motifs, α-helices, β-sheets |
+:::
 
+::: {.takehome}
 The model learned **gene structure, regulatory elements, and protein properties** from sequence alone — no annotation used.
+:::
 
 ---
 
@@ -226,9 +208,9 @@ The model learned **gene structure, regulatory elements, and protein properties*
 
 1. **Same training objective, different scale** — next-token prediction on DNA, but 9.3T nucleotides across all life
 
-2. **Architecture matters at genome scale** — StripedHyena 2 replaces most attention with fast convolutions to reach 1M-token context
+2. **Architecture changes to handle large context** — StripedHyena 2 replaces most attention with fast convolutions to reach 1M-token context
 
-3. **Zero-shot = useful** — likelihood scores predict variant pathogenicity without any task-specific training
+3. **Zero-shot** — likelihood scores predict variant pathogenicity without any task-specific training
 
 4. **Generation + guidance = design** — Evo 2 can be steered to produce DNA with programmable function
 
