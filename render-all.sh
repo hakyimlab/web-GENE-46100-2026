@@ -19,14 +19,9 @@ find post -name "*.html" \
 echo "=== Rendering site ==="
 quarto render
 
-# 3. Copy CSS files not handled by quarto render
-echo "=== Copying CSS assets ==="
-for css in post/**/custom.css; do
-  dest="docs/$(dirname "$css")"
-  mkdir -p "$dest"
-  cp "$css" "$dest/"
-  echo "  → $dest/$(basename "$css")"
-done
+# 3. Copy root-level custom.css to docs/ (slides reference it as ../../custom.css relative to docs/post/unitXX/)
+echo "=== Copying custom.css to docs/ ==="
+cp custom.css docs/custom.css
 
 # 4. Render each slide deck and copy output to docs/
 for slide in post/**/slides-*.qmd; do
