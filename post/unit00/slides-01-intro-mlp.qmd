@@ -18,7 +18,7 @@ format:
     width: 1280
     height: 720
     chalkboard: true
-    css: custom.css
+    css: ../../custom.css
     footer: "GENE 46100 · Deep Learning in Genomics"
 eval: false
 ---

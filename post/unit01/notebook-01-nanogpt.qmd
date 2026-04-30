@@ -31,6 +31,8 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)
 
 ![Figure 1: The Transformer - model architecture](images/transformer-architecture.png)
 
+*Source: [Vaswani et al. (2017), "Attention Is All You Need"](https://arxiv.org/abs/1706.03762)*
+
 <!-- original image(https://arxiv.org/html/1706.03762v7/Figures/ModalNet-21.png) -->
 
 The original paper's goal was translation. For next token generation, we will use only the decoder portion of the original model.

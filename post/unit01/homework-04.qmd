@@ -11,7 +11,7 @@ format:
     code-tools: true
     code-overflow: wrap
 date-modified: last-modified
-draft: true
+draft: false
 ---
 
 # Homework 4
@@ -20,5 +20,7 @@ Watch Karpathy's nanoGPT tutorial on youtube [link](https://www.youtube.com/watc
 
 
 
-list of questions in text format is [here](https://docs.google.com/document/d/1X4_tZEM4CeQUdcfxmfjBA8eNCpCf5RhBHqJvBliO0j0/edit?usp=sharing)
+<!-- list of questions in text format is [here](https://docs.google.com/document/d/1X4_tZEM4CeQUdcfxmfjBA8eNCpCf5RhBHqJvBliO0j0/edit?usp=sharing) -->
 
+
+Run the nanoGPT notebook and turn in the output
