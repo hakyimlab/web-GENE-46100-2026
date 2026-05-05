@@ -6,6 +6,8 @@ listing:
     - "!post/unit00/slides-*.qmd"
     - "post/unit01/*.qmd"
     - "!post/unit01/slides-*.qmd"
+    - "post/unit02/*.qmd"
+    - "!post/unit02/slides-*.qmd"
   sort: "date asc"
   type: table
   fields: [date, title, categories]
@@ -26,4 +28,6 @@ title-block-banner: false
 - Edit github source [here](https://github.com/hakyimlab/web-GENE-46100)
 
 ## Unit 00 — Introduction
+
+## Unit 02 — DNA Sequence to Epigenome Prediction
 

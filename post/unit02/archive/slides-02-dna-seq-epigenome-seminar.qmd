@@ -1,0 +1,772 @@
+---
+title: "Leveraging DNA Sequence to Epigenome Prediction Models to Inform the Biology of Complex Traits"
+subtitle: "GENE 46100 — Unit 02"
+author: "Haky Im"
+date: "2026-05-05"
+draft: true
+engine: knitr
+format:
+  revealjs:
+    theme: default
+    slide-number: true
+    transition: none
+    width: 1280
+    height: 720
+    chalkboard: true
+    css: ../../custom.css
+    footer: "GENE 46100 · Deep Learning in Genomics"
+eval: false
+---
+
+## Leveraging DNA Sequence to Epigenome Prediction Models to Inform the Biology of Complex Traits
+
+## Genome Sciences Seminar Series - University of Virginia
+Hae Kyung Im - 2025-12-03
+
+## Optimism at completion of the Human Genome Project
+* In year 2000, president Clinton announced the completion of the first draft of the human genome, which would
+  * "revolutionize the diagnosis, prevention, and treatment of most, if not all, human diseases”.
+  * "it is now conceivable that our children's children will know the term cancer only as a constellation of stars."
+* Francis Collins predicted that diagnosis of genetic diseases would be accomplished by 2010 and that treatments would start to roll out perhaps by 2015.
+* In year 2000, president Clinton announced the completion of the first draft of the human genome, which would
+  * "revolutionize the diagnosis, prevention, and treatment of most, if not all, human diseases”.
+  * "it is now conceivable that our children's children will know the term cancer only as a constellation of stars."
+* Francis Collins predicted that diagnosis of genetic diseases would be accomplished by 2010 and that treatments would start to roll out perhaps by 2015.
+Charlotte Clinton Mezvinsky: Born in September 2014
+* In year 2000, president Clinton announced the completion of the first draft of the human genome, which would
+  * "revolutionize the diagnosis, prevention, and treatment of most, if not all, human diseases”.
+  * "it is now conceivable that our children's children will know the term cancer only as a constellation of stars."
+* Francis Collins predicted that diagnosis of genetic diseases would be accomplished by 2010 and that treatments would start to roll out perhaps by 2015.
+
+## Why was the prediction so off?
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_0.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_1.png)
+https://www.ebi.ac.uk/training/online/courses/gwas-catalogue-exploring-snp-trait-associations/what-is-gwas-catalog/
+
+## Unfortunately, most discoveries did not bring insight
+
+## Most GWAS loci are outside of gene coding regions
+We don’t know which genes are causing the disease
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_2.png)
+
+## GWAS loci are thought to act by altering TF binding
+Albert, F., Kruglyak, L. The role of regulatory variation in complex traits and disease.
+Nat Rev Genet 16, 197–212 (2015). https://doi.org/10.1038/nrg3891
+
+## PrediXcan 1.0
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_3.png)
+SNP-level Results
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_4.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_5.png)
+
+## GWAS in a nutshell
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_6.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_7.png)
+<span style="color:#a7aaa9">Predicted</span>  Transcriptome
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_8.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_9.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_10.png)
+SNP-level Results
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_11.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_12.png)
+Gene-level Results
+
+## Observed Transcriptome-wide Association TWAS
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_13.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_14.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_15.png)
+Predicted Transcriptome
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_16.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_17.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_18.png)
+SNP-level Results
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_19.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_20.png)
+Gene-level Results
+
+## Issues with observed TWAS
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_21.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_22.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_23.png)
+RNA-Seq is too expensive
+Many tissues such has brain, pancreas, etc are not accessible
+Differentially expressed genes can be consequence of disease status
+Predicted Transcriptome
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_24.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_25.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_26.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_27.png)
+SNP-level Results
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_28.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_29.png)
+Gene-level Results
+
+## Predicted TWAS proposed
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_30.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_31.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_32.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_33.png)
+Reference Genotype and Transcriptome
+
+## Reference transcriptome data used to train predictors
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_34.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_35.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_36.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_37.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_38.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_39.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_40.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_41.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_42.png)
+
+## Some Genes Are Very Well Predicted
+
+## Accuracy of Prediction Depends on Heritability
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_43.png)
+
+## Advantages of Gene Level Associations
+Reduced multiple testing burden (from 10e6 to 10e4)
+The function of genes are much better annotated than SNPs
+Validation in other model systems is possible
+Reverse causality issues is less problematic because disease status doesn’t affect germline genetic markers
+It provides the direction of effects, i.e. whether up or down regulation of a gene increases the risk of a disease
+The candidate causal gene is a good target for drug development
+
+## PrediXcan Results Identify Drug Repositioning Candidates
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_44.png)
+So et al, Nature Neuroscience 2017
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_45.png)
+Successful Targets
+
+## PrediXcan Association Results Predict Drug Target Success
+
+## We can extend TWAS idea to other omics
+
+## Limitations of Current TWAS
+* Not very good at predicting low heritability genes
+  * which are more likely to be disease relevant
+* Predictions don’t transfer well across ancestries
+* Effect of rare variation is missed
+* Large sample sizes are needed
+* Steady state expression regulation may not be disease relevant
+
+## Can we leverage deep learning methods to build PrediXcan 2.0?
+
+## Enformer predicts thousands of epigenomic tracks
+DNase-Seq
+ATAC-Seq
+(684)
+histone
+modif.
+(1,860)
+TF
+ChIP-Seq
+(2,131)
+…AGTTC…TAGTTCC… (896*128 bp)
+5313 epigenomic tracks
+Avsec, Ž et al  _Nat Methods _ (2021). https://doi.org/10.1038/s41592-021-01252-x
+
+## AlphaGenome - Successor to Enformer
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_50.png)
+Avsec, Ž et al  _bioRxiv (2025) _ AlphaGenome: advancing regulatory variant effect prediction with a unified DNA sequence model _ _
+
+## Enformer trained to perform well across the genome
+genomic dimension
+AGTTCTAGTTCCAGCGTA
+Predicted epigenetic track
+Observed epigenetic track
+
+## But we are interested in variation across people
+genomic dimension
+AGTTC <span style="color:#be133a">T</span> AGTT <span style="color:#be133a">C</span> CA <span style="color:#be133a">G</span> CG <span style="color:#be133a">TA</span>
+Predicted epigenetic track
+Observed epigenetic track
+
+## We are interested in the population dimension
+population dimension
+genomic dimension
+AGTTC <span style="color:#be133a">T</span> AGTT <span style="color:#be133a">C</span> CA <span style="color:#be133a">G</span> CG <span style="color:#be133a">TA</span>
+Predicted epigenetic track
+Observed epigenetic track
+
+## For some genes, prediction across people is quite good
+Enformer predicted expression
+Observed expression
+Temidayo Adeluwa & Saideep Gona
+
+## For other genes, it correlates well but …
+Enformer predicted expression
+Observed expression
+Temidayo Adeluwa & Saideep Gona
+
+## Current tools struggle to capture genetic variation
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_51.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_52.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_53.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_54.png)
+
+## Mean Correlation Across Genes vs. Across Individuals
+Huang et al 2023 NG
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_55.png)
+
+## Taking averages can be misleading
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_56.png)
+Huang et al 2023 NG
+
+## Is the glass half full or half empty?
+https://what-if.xkcd.com/6/
+
+## Can we use this predictive ability to our advantage?
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_57.png)
+
+## Identify the TF being altered in this model
+Albert, F., Kruglyak, L. The role of regulatory variation in complex traits and disease.
+Nat Rev Genet 16, 197–212 (2015). https://doi.org/10.1038/nrg3891
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_58.jpg)
+
+## Enable discovery of context-specific disease genes using single cell data
+Xu, Q., Halle, L., Hediyeh-zadeh, S.  _et al._  An integrated transcriptomic cell atlas of human endoderm-derived organoids.  _Nat Genet_   __57__ , 1201–1212 (2025). https
+
+## Enable the discovery of developmental disease genes
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_59.jpg)
+
+## TFXcan
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_60.png)
+
+## Contributors
+Tiffany Amariuta
+Temidayo Adeluwa
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_61.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_62.png)
+
+## GWAS loci are thought to act by altering TF binding
+Albert, F., Kruglyak, L. The role of regulatory variation in complex traits and disease.
+Nat Rev Genet 16, 197–212 (2015). https://doi.org/10.1038/nrg3891
+Predicted Transcriptome
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_63.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_64.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_65.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_66.png)
+SNP-level Results
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_67.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_68.png)
+TFBS-level Results
+
+## Try TWAS like approach with predicted binding
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_69.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_70.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_71.png)
+then correlate with the phenotype
+Predict Transcription Factor Binding from Genotype
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_72.png)
+
+## Has nobody tried this yet?
+
+## CWAS: predicted androgen receptor binding
+and correlated with prostate cancer risk
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_73.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_74.png)
+TF Binding Sites
+Baca et al. Genetic determinants of chromatin reveal prostate
+cancer risk mediated by context-dependent gene regulation.
+Nat Genet (2022)
+
+## This covered AR in prostate only
+But we want to test thousands of TF/tissue pairs
+
+## But we want to test thousands of TF/tissues
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_75.png)
+
+## Running ChiP-Seq for many samples is too expensive
+Traditional population approach requires at least 100 samples
+ChIP-Seq experiments cost several thousands of $ per sample
+Scaling up to thousands of transcription factor/tissue pairs would be prohibitive
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_76.png)
+
+## IMPACT predicts TF binding from epigenetic features
+Tiffany Amariuta
+Amariuta et al. AJHG (2019)
+Amariuta  _et al._  NG (2020)
+
+## DNA sequence to epigenome prediction
+5313 epigenomic tracks
+
+## Enformer
+DNase-Seq
+ATAC-Seq
+(684)
+histone
+modif.
+(1,860)
+TF
+ChIP-Seq
+(2,131)
+…AGTTC…TAGTTCC… (896*128 bp)
+DNase - CD14-positive monocyte female
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_77.png)
+
+## Enformer predicts thousands of epigenomic tracks
+DNase - keratinocyte female
+CHIP Histone H3K27ac - keratinocyte female
+CAGE/keratinocyte - epidermal
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_78.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_79.png)
+Chr11:35,082,742-35,197,430
+Modified from Avsec, Ž et al  _Nat Methods _ (2021).
+https://doi.org/10.1038/s41592-021-01252-x
+
+## Enpact method
+5313 epigenomic tracks
+
+## Enpact = Enformer + IMPACT
+DNase-Seq
+ATAC-Seq
+(684)
+histone
+modif.
+(1,860)
+TF
+ChIP-Seq
+(2,131)
+Temidayo Adeluwa
+…AGTTC…TAGTTCC… (896*128 bp)
+To learn the weights, we need one ChIP-Seq experiment data
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_80.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_81.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_82.png)
+
+## Enpact logistic regression trained with ChIP-seq Peaks
+Temidayo Adeluwa
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_83.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_84.png)
+
+## How well does ENPACT predict TF binding?
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_85.png)
+
+## Performance across the genome is very good
+Temidayo Adeluwa
+Enpact predictions
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_86.png)
+Temidayo Adeluwa
+
+## TF Binding tracks contribute the most to prediction
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_87.png)
+Temidayo Adeluwa
+
+## What about prediction across individuals?
+
+## Enformer trained to perform well across the genome
+genomic dimension
+AGTTCTAGTTCCAGCGTA
+Predicted epigenetic track
+Observed epigenetic track
+
+## But we are interested in variation across people
+genomic dimension
+AGTTC <span style="color:#be133a">T</span> AGTT <span style="color:#be133a">C</span> CA <span style="color:#be133a">G</span> CG <span style="color:#be133a">TA</span>
+Predicted epigenetic track
+Observed epigenetic track
+
+## We are interested in the population dimension
+population dimension
+genomic dimension
+AGTTC <span style="color:#be133a">T</span> AGTT <span style="color:#be133a">C</span> CA <span style="color:#be133a">G</span> CG <span style="color:#be133a">TA</span>
+Predicted epigenetic track
+Observed epigenetic track
+
+## We use CWAS study data to validate
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_88.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_89.png)
+TF Binding Sites
+Baca et al. Genetic determinants of chromatin reveal prostate
+cancer risk mediated by context-dependent gene regulation.
+Nat Genet (2022)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_90.png)
+
+## Example of performance across individuals
+Temidayo Adeluwa
+Enpact Prediction
+
+## Enpact predictions significantly associated with observed binding at 18,000 ARBS
+Temidayo Adeluwa
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_91.png)
+
+## Enpact performance is comparable to CWAS performance
+Temidayo Adeluwa
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_92.png)
+
+## Another way to validate Enpact predictors is to compare to the genetic component of TF binding
+We use genetically predicted binding trained in an orthogonal source as a proxy for the genetic component of TF binding
+
+## How similar are Enpact and CWAS predictions?
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_93.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_94.png)
+Temidayo Adeluwa
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_95.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_96.png)
+P-values of correlation between Enpact and CWAS predictors
+
+## Enpact and CWAS predictors are significantly  correlated for most of the 18K sites tested
+Temidayo Adeluwa
+
+## Enpact and CWAS predictors correlation significantly larger than expected under null
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_97.png)
+Temidayo Adeluwa
+
+## Validated predictor of AR in prostate
+Predicted TF Binding
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_98.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_99.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_100.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_101.png)
+SNP-level Results
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_102.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_103.png)
+
+## Next, we want to run association with phenotype
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_104.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_105.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_106.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_107.png)
+Predicted TF Binding
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_108.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_109.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_110.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_111.png)
+SNP-level Results
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_112.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_113.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_114.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_115.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_116.png)
+Current GWAS sample sizes make the computation infeasible
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_117.png)
+Predicted TF Binding
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_118.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_119.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_120.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_121.png)
+SNP-level Results
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_122.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_123.png)
+
+## We need SNP-based predictors of TF binding
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_124.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_125.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_126.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_127.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_128.png)
+
+## How do we train SNP predictors?
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_129.png)
+
+## Use ENPACT to generate in silico TF binding and train SNP-based predictors using elastic net
+Temidayo Adeluwa
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_130.png)
+
+## Linear Enpact correlate highly with full Enpact
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_131.png)
+Temidayo Adeluwa
+Full Enpact prediction
+Linear Enpact prediction
+
+## TFXcan and CWAS yield concordant AR binding sites linked to prostate cancer risk
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_132.png)
+Temidayo Adeluwa
+Temidayo Adeluwa
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_133.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_134.png)
+Temidayo Adeluwa
+
+## To date, we have ENPACT models for 700 TF/tissue pairs
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_135.png)
+
+## Number of TF by tissue
+
+## TFXcan framework
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_136.png)
+Temidayo Adeluwa
+
+## TFXcan of Prostate Cancer
+
+## Tenerife plot  from Prostate Cancer Risk GWAS
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_137.png)
+Temidayo Adeluwa
+
+## Matrix factorization of Tenerife plot
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_138.png)
+Temidayo Adeluwa
+
+## Identify programs disrupted by the GWAS variant
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_139.png)
+Temidayo Adeluwa
+
+## AR & hormone receptor program
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_140.png)
+Androgen signaling is a central driver of prostate cancer initiation and progression
+Other TFs are known to interact with AR
+Temidayo Adeluwa
+
+## CTCF program
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_141.png)
+Temidayo Adeluwa
+MYC, known oncogene,  reshapes CTCF-mediated chromatin architecture in prostate cancer
+
+## Identify programs disrupted by GWAS variants
+Temidayo Adeluwa
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_142.png)
+
+## PrCa TF programs
+| __Hormone Receptor__ |  |
+| :-: | :-: |
+| __CTCF__ |  |
+| __REST__ |  |
+| __Liver__ |  |
+| __Bone Marrow__ |  |
+| __Blood__ |  |
+| __Colon__ |  |
+| __Program 8__ |  |
+| __Program 9__ |  |
+
+## Summary of TFXcan
+Large scale deep learning model enabled us to develop TFXcan
+TFXcan is an extension of TWAS that seeks to identify TFs disrupted by GWAS loci
+Application to prostate cancer yielded TF programs such as hormone receptor program, CTCF driven program, tissue specific programs, among others informing the biology of the disease
+
+## Single Cell PrediXcan
+
+## scPrediXcan has three stages
+Train deep learning predictors (Enformer)
+Linearize the predictors ()
+Apply usual TWAS framework
+
+## 1. Train ctPred: deep learning predictors of cell type expression
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_143.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_144.png)
+5313 epigenomic tracks
+
+## Step 1: ctPred predicts cell type specific gene expression from pseudo bulk
+DNase-Seq
+ATAC-Seq
+(684)
+histone
+modif.
+(1,860)
+TF
+ChIP-Seq
+(2,131)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_145.png)
+…AGTTC…TAGTTCC… (896*128 bp)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_146.png)
+Cell type specific
+gene expression
+
+## Step 2: Train SNP predictors of cell type specific expression
+ctpred in-silico expression
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_148.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_149.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_150.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_151.png)
+
+## Step 3: Apply TWAS with existing methods
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_152.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_153.png)
+
+## Performance across the genome is good
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_155.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_156.png)
+
+## Performance across individuals is good
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_157.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_158.png)
+
+## ctPred predict more than 10fold more genes than traditional methods
+Traditional method
+can predict well
+ctPred can predict well
+
+## linear-ctPred approximates ctPred well
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_159.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_160.png)
+
+## scPrediXcan outperforms traditional TWAS
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_161.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_162.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_163.png)
+
+## scPrediXcan identifies more known diabetes genes
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_164.png)
+
+## scPrediXcan outperforms traditional TWAS
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_165.png)
+Systemic Lupus
+Erythematosus
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_166.png)
+
+## scPrediXcan integrates deep learning methods and single-cell data into a cell-type-specific transcriptome-wide association study framework
+
+## Summary scPrediXcan
+scPrediXcan uses ctPred (Enformer\+MLP) to train cell type specific expression
+Incorporating large scale deep learning representation of DNA enabled us to predict more than 10 fold more genes than using traditional approaches.
+scPrediXcan can discover many more causal genes because of the increased prediction performance
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_167.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_168.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_169.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_170.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_171.png)
+
+## Thank you!
+Tiffany Amariuta
+Temidayo Adeluwa
+R01 AA029688
+R01 MH131610
+P30 DK020595
+R01 CA242929
+R01 CA211574
+Computing resources provided by
+Argonne Leadership Computing Facility
+UChicago’s RCC, Beagle, CRI
+
+## developmental GTEx models
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_172.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_173.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_174.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_175.png)
+
+## Thank you!
+Temidayo Adeluwa
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_176.png)
+dGTEx donors and families
+Alexis Battle lab
+Winona Oliveros Diez
+Tuuli Lappalainen lab
+R01 AA029688
+P30 DK020595
+U01 HG013843
+R01 HL173613
+Computing resources provided by
+Argonne Leadership Computing Facility
+UChicago’s RCC, Beagle, CRI
+
+## dGTEx will sample NHPs and humans at key developmental stages
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_177.png)
+Coorens, T.H.H., Guillaumet-Adkins, A., Kovner, R.  _et al._  The human and non-human primate developmental GTEx projects.  _Nature_   __(__ 2025)
+Perform TWAS on multiple phenotypes
+Find developmental-specific genes
+
+## Goal: To leverage dGTEx resources to inform the biology of complex traits
+Train gene expression models
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_178.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_179.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_180.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_181.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_182.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_183.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_184.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_185.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_186.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_187.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_188.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_189.jpg)
+
+## Sample size in dGTEx too small for traditional prediction
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_190.png)
+dGTEx consortium
+
+## Training expression predictors require large samples
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_191.png)
+
+## Step 1: ctPred predicts gene expression in development
+DNase-Seq
+ATAC-Seq
+(684)
+histone
+modif.
+(1,860)
+TF
+ChIP-Seq
+(2,131)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_192.png)
+…AGTTC…TAGTTCC… (896*128 bp)
+gene expression in development
+
+## Step 2: Train SNP predictors of cell type specific expression
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_194.png)
+
+## Step 3: Apply TWAS with existing methods
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_195.png)
+TWAS Manhattan plot
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_196.png)
+
+## How well does it work?
+
+## Predicted expression correlate very well with observed expression
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_197.png)
+Muscle, 12 – 18 years
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_198.jpg)
+
+## scPrediXcan does predict observed expression better than chance
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_199.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_200.png)
+
+## We decided to compare with the genetically regulated expression
+
+## dGTEx predicts accurately the genetic component of gene expression
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_202.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_203.png)
+Using genetically predicted expression based on GTEx elastic net models
+
+## Performed TWAS on 114 traits
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_204.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_205.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_206.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_207.png)
+elastic net aGTEx
+(traditional)
+
+## To test this, we use likely causal genes from open targets
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_208.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_209.png)
+Winona Oliveros Diez
+
+## Performed TWAS on 114 traits
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_210.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_211.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_212.png)
+elastic net aGTEx
+(traditional)
+
+## Summary and next steps
+We trained dGTEx genetic predictors for 72 tissue/age pairs
+We find significant concordance between ctPred and observed expression
+We find high concordance with the genetically regulated component
+We will share SNP predictors with the community who can run TWAS with no extra investment in deep learning infrastructure
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_213.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_214.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_215.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_216.png)
+
+## Thank you!
+Temidayo Adeluwa
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_217.png)
+dGTEx donors and families
+Alexis Battle lab
+Winona Oliveros Diez
+Tuuli Lappalainen lab
+R01 AA029688
+P30 DK020595
+U01 HG013843
+R01 HL173613
+Computing resources provided by
+Argonne Leadership Computing Facility
+UChicago’s RCC, Beagle, CRI
+
+## Summary
+* We leverage DNA-sequence to epigenome models to build genetic predictors
+  * Transcription factor binding
+  * Cell type specific gene expression
+  * Gene expression in development
+* DNA-sequence to epigenome provide orthogonal ways to train predictors
+  * They can be applied to very limited sample size settings
+* TFXcan, scPrediXcan, and dGTEx models would not be possible without these new deep learning tools
+

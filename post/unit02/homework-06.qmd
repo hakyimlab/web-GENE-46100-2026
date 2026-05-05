@@ -1,6 +1,6 @@
 ---
 title: homework 6
-date: 2025-05-02
+date: 2026-05-08
 categories:
   - homework
 format:
@@ -14,7 +14,37 @@ date-modified: last-modified
 draft: true
 ---
 
-# Homework 6: Comparing Human and Neanderthal Epigenomes using Enformer
+
+# Homework 6: Haky's proposal 2026?
+
+Choose a few promoter and non promoter sequences used in Henry's notebook, extract the attention matrices at different blocks, you should have 16 in total, and see whether you notice any differences. 
+
+Do the same with enhancers.
+
+try introducing the promoter and enhancer sequences from the previous point to the Puffin webpage (https://puffin.zhoulab.io/) and see whether you notice any difference.
+
+Discuss your results.
+
+
+
+
+# Homework 6 Ran's proposal 2026
+
+Improving the Genomic Language Model
+
+Task
+
+In class we pretrained a small character-level GPT on the human reference genome and subsequently fine-tuned it for two downstream classification tasks: a binary promoter prediction task and a three-class enhancer prediction task. The objective of this assignment is to identify a plausible source of the gap between expected and observed performance, propose a modification motivated by that hypothesis, implement it, and evaluate whether the resulting model behaves as predicted. Either task is acceptable as the basis for the assignment, though the enhancer model is recommended because it leaves more room for improvement.
+
+There are many directions one might pursue, and we expect you to identify them yourselves rather than work from a list. As a starting point, consider that tokenization was performed at the character level: as we discussed in class, a k-mer scheme may be better suited to motif detection, and comparing the two is a self-contained experiment with a clear hypothesis. Other productive lines of inquiry can be found by examining how the classifier head reads from the base model, how the pretrained weights are or are not updated during fine-tuning, how the strand symmetry of DNA is or is not reflected in the training procedure, and where in the input space the current model fails most often. Hyperparameters were chosen for demonstration rather than for optimization, and there is likely room for improvement there as well. You are welcome to pursue a direction not suggested here, provided the motivation is clearly articulated.
+
+Submission
+
+Submit a writeup of around 1-2 pages, together with your modified notebook. The writeup should state the hypothesis you set out to test before presenting the result, describe the modification precisely, and report training and validation loss curves alongside the appropriate test metric (F1 for promoters, MCC for enhancers). The interpretation should address whether the observed outcome is consistent with the original hypothesis, and if not, what alternative explanation the evidence supports. We are evaluating the quality of the reasoning rather than the magnitude of any improvement in test performance, and a well-diagnosed negative result is more valuable than an unexplained positive one.
+
+
+
+# Homework 6: Comparing Human and Neanderthal Epigenomes using Enformer from 2025
 
 If you run the analysis locally, make sure you clone the gene46100 conda environment and install the python packages as needed. See this [jupyter notebook](https://github.com/hakyimlab/web-GENE-46100/blob/main/post/2025-05-01-unit03/enformer-minimal-neanderthal.ipynb) for an example. Rendered [here](enformer-minimal-neanderthal.ipynb) for your convenience.
 

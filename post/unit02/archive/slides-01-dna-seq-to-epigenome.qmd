@@ -1,0 +1,623 @@
+---
+title: "01 · From DNA Sequence to Epigenome Prediction"
+subtitle: "GENE 46100 — Unit 02"
+author: "Haky Im"
+date: 2026-05-05
+draft: false
+engine: knitr
+format:
+  revealjs:
+    theme: default
+    slide-number: true
+    transition: none
+    width: 1280
+    height: 720
+    chalkboard: true
+    css: ../../custom.css
+    footer: "GENE 46100 · Deep Learning in Genomics"
+eval: false
+---
+
+## Where we are
+
+- **slides-01** *(this deck)* — Enformer architecture deep dive: the 3-part design, receptive fields, and how predictions emerge
+- **slides-02** — Borzoi, AlphaGenome, and the next generation of sequence-to-function models
+
+---
+
+## The promise of the Human Genome
+
+In 2000, President Clinton announced the completion of the human genome draft:
+
+> *"This will revolutionize the diagnosis, prevention, and treatment of most, if not all, human diseases."*
+
+::: {.source-credit-linked}
+Francis Collins, 2000
+:::
+
+The promise was bold — and partially fulfilled. But there was a surprise:
+
+---
+
+## The surprise: knowing the sequence wasn't enough
+
+We sequenced the genome. We found the genes. But:
+
+::: {.columns}
+
+::: {.column width="50%"}
+**What we learned:**
+
+- ~20,000 protein-coding genes
+- The sequence varies between individuals
+- GWAS found hundreds of thousands of disease-associated loci
+:::
+
+::: {.column width="50%"}
+**What we still didn't know:**
+
+- Which gene a GWAS variant actually affects
+- Why most disease variants sit in **non-coding** regions
+- How the same DNA sequence produces different cell types
+:::
+:::
+
+---
+
+## Most disease variants are in non-coding DNA
+
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_0.png)
+![](img/2026-05-04-DNA-seq-to-epigenome-applications_1.png)
+
+::: {.source-credit-linked}
+[EBI GWAS Training Course](https://www.ebi.ac.uk/training/online/courses/gwas-catalogue-exploring-snp-trait-associations/)
+:::
+
+---
+
+## Why non-coding variants matter
+
+GWAS loci are thought to act by altering **transcription factor binding**:
+
+> Albert, F., Kruglyak, L. The role of regulatory variation in complex traits and disease. Nat Rev Genet 16, 197–212 (2015).
+
+::: {.source-credit-linked}
+Albert & Kruglyak, 2015
+:::
+
+::: {.columns}
+
+::: {.column width="50%"}
+**The problem:**
+
+- A SNP in a non-coding region changes a TF binding motif
+- This alters gene expression
+- This changes disease risk
+:::
+
+::: {.column width="50%"}
+**The challenge:**
+
+- We can't easily measure TF binding for every variant in every cell type
+- ChIP-Seq costs thousands of dollars per sample
+- We need ~100+ samples for population-level studies
+:::
+:::
+
+---
+
+## The TWAS approach — "PrediXcan 1.0"
+
+Instead of measuring expression directly, **predict** it from genotype:
+
+::: {.columns}
+
+::: {.column width="50%"}
+**Step 1:** Train a model to predict gene expression from DNA sequence using reference panels (GTEx)
+
+**Step 2:** Apply the model to GWAS data to find which genes' predicted expression associates with disease
+:::
+
+::: {.column width="50%"}
+**Advantages:**
+
+- Reduced multiple testing (10⁶ SNPs → 20K genes)
+- Direction of effect (up or down regulation)
+- Identifies candidate causal genes
+:::
+:::
+
+---
+
+## But TWAS has limitations
+
+::: {.columns}
+
+::: {.column width="50%"}
+**What works well:**
+
+- Highly heritable genes
+- Well-annotated tissues with large sample sizes
+:::
+
+::: {.column width="50%"}
+**What doesn't:**
+
+- Low heritability genes (often the most disease-relevant)
+- Tissues that are hard to sample (brain, pancreas)
+- Cross-ancestry prediction (poor transfer)
+- Rare variation (missed by linear models)
+:::
+:::
+
+---
+
+## Can deep learning help?
+
+Traditional TWAS uses **linear models** (elastic net) to predict expression from SNPs.
+
+**What if we replace the predictor with a deep learning model?**
+
+::: {.columns}
+
+::: {.column width="50%"}
+**Deep learning advantages:**
+
+- Learns complex sequence patterns (motifs, combinatorial rules)
+- Can predict from raw DNA sequence — no SNP preprocessing needed
+- One model → predictions for thousands of outputs
+:::
+
+::: {.column width="50%"}
+**The key question:**
+
+> Can we predict **any** epigenomic signal — not just gene expression — from raw DNA sequence?
+:::
+:::
+
+---
+
+# Part 1: The Enformer Model {background-color="#1e3a5f" style="color:white;"}
+
+---
+
+## Enter Enformer
+
+Enformer (Avsec et al., Nat Methods 2021) predicts **thousands of epigenomic tracks** from DNA sequence alone:
+
+::: {.columns}
+
+::: {.column width="50%"}
+**Predicts:**
+
+- DNase-Seq (684 tracks)
+- Histone modifications (1,860 tracks)
+- TF ChIP-Seq (2,131 tracks)
+- CAGE / gene expression
+:::
+
+::: {.column width="50%"}
+**Total:** ~5,300 epigenomic outputs from a single model
+:::
+:::
+
+::: {.source-credit-linked}
+Avsek, Z. et al. Nat Methods (2021). doi:10.1038/s41592-021-01252-x
+:::
+
+---
+
+## The input: 200 kilobases of DNA
+
+Enformer takes a **200 kb** DNA sequence as input:
+
+::: {.columns}
+
+::: {.column width="50%"}
+```
+...AGTTC...TAGTTCC... (200,000 bp)
+          |
+     prediction target
+     (center of window)
+```
+:::
+
+::: {.column width="50%"}
+**Why 200 kb?**
+
+- Regulatory elements (enhancers) can be **hundreds of kb** away from the genes they control
+- A model with a large **receptive field** can capture long-range dependencies
+:::
+:::
+
+---
+
+## Step 1: One-hot encoding
+
+Just like in Unit 00, DNA is converted to a numeric matrix:
+
+::: {.columns}
+
+::: {.column width="50%"}
+```
+A → [1, 0, 0, 0]
+C → [0, 1, 0, 0]
+G → [0, 0, 1, 0]
+T → [0, 0, 0, 1]
+```
+
+Input shape: **4 × 196,608**
+:::
+
+::: {.column width="50%"}
+- 4 channels (one per nucleotide)
+- ~197K positions (padded to 196,608)
+- Same encoding you learned in Unit 00!
+:::
+:::
+
+---
+
+## Step 2: The CNN backbone — 17 convolutional layers
+
+::: {.columns}
+
+::: {.column width="50%"}
+The sequence passes through a **deep 1D CNN**:
+
+| Layer | Filters | Kernel |
+|-------|---------|--------|
+| 1–2 | 512 | 8 |
+| 3–17 | 512 | varies (3–13) |
+:::
+
+::: {.column width="50%"}
+**Key design:**
+
+- **Dilated convolutions** expand the receptive field exponentially
+- Final receptive field: **131,072 bp** (~131 kb)
+- Captures motifs and long-range dependencies
+:::
+:::
+
+::: {.source-credit-linked}
+Avsek et al. Nat Methods (2021)
+:::
+
+---
+
+## Receptive field: why it matters
+
+::: {.columns}
+
+::: {.column width="50%"}
+The **receptive field** determines how much of the input sequence each output position can "see":
+
+- A shallow CNN might see only 1 kb
+- Enformer sees **~131 kb**
+- This is critical for capturing enhancer → promoter interactions
+:::
+
+::: {.column width="50%"}
+```
+Input (200 kb):    ACGT...[131 kb window]...ACGT
+                              |
+                    CNN layers
+                              |
+                    Output:   [prediction]
+```
+:::
+:::
+
+::: {.source-credit-linked}
+Avsek et al. Nat Methods (2021)
+:::
+
+---
+
+## Step 3: The dense (attention-like) layer
+
+After the CNN, Enformer adds a **dense layer that models interactions between all output positions**:
+
+::: {.columns}
+
+::: {.column width="50%"}
+This is the **most computationally expensive** part:
+
+- 4,096 bins × 4,096 bins
+- Captures **long-range relationships** between distant genomic positions
+:::
+
+::: {.column width="50%"}
+Think of it as:
+
+> "Which parts of the sequence, even far apart, jointly determine the output?"
+:::
+:::
+
+::: {.source-credit-linked}
+Avsek et al. Nat Methods (2021)
+:::
+
+---
+
+## Step 4: Output heads
+
+The model produces predictions for each epigenomic track:
+
+::: {.columns}
+
+::: {.column width="50%"}
+**Output shape:** 4,096 bins × N tracks
+
+- 4,096 = number of output positions (downsampled from 196,608)
+- N = number of tracks (up to 5,313)
+:::
+
+::: {.column width="50%"}
+Each bin covers ~48 bp of the genome.
+
+Predictions are compared to **observed** epigenomic signal (e.g., from ENCODE, Roadmap Epigenomics).
+:::
+:::
+
+::: {.source-credit-linked}
+Avsek et al. Nat Methods (2021)
+:::
+
+---
+
+## Enformer in one picture
+
+::: {.columns}
+
+::: {.column width="60%"}
+```
+DNA Sequence (200 kb)
+       |
+       v
++-------------+
+| One-hot     |  4 x 196,608
+| encoding    |
++-----+-------+
+      |
+      v
++-------------+
+| 17x 1D CNN  |  dilated convolutions
+| backbone    |  receptive field ~131 kb
++-----+-------+
+      |
+      v
++-------------+
+| Dense layer |  position interactions
++-----+-------+
+      |
+      v
++-------------+
+| Output      |  4,096 bins x N tracks
+| heads       |  DNase, histone, TF, CAGE
++-------------+
+```
+:::
+
+::: {.column width="40%"}
+**Key numbers:**
+
+- Input: 200 kb
+- Receptive field: 131 kb
+- Outputs: ~5,300 tracks
+- Parameters: ~336 million
+:::
+:::
+
+::: {.source-credit-linked}
+Avsek et al. Nat Methods (2021)
+:::
+
+---
+
+## How well does Enformer work?
+
+::: {.columns}
+
+::: {.column width="50%"}
+**Genome-wide prediction:**
+
+- Strong correlation between predicted and observed epigenomic signals
+- Works across cell types and tissues
+- Predicts gene expression (CAGE) well
+:::
+
+::: {.column width="50%"}
+**Variant effect prediction:**
+
+- Can compare reference vs. alternative allele predictions
+- Identifies functional non-coding variants
+- But: **population-level** prediction is more challenging
+:::
+:::
+
+::: {.source-credit-linked}
+Avsek et al. Nat Methods (2021)
+:::
+
+---
+
+## A key limitation: cross-individual prediction
+
+::: {.columns}
+
+::: {.column width="50%"}
+Enformer was trained to perform well **across the genome** for a reference individual.
+
+**But we often want to know:**
+
+> "How does this variant change the epigenome in *this person* vs. *that person*?"
+:::
+
+::: {.column width="50%"}
+This requires:
+
+- Predicting for **many different genomes** (not just one)
+- Each prediction is computationally expensive
+- The model doesn't explicitly model genetic variation
+:::
+:::
+
+---
+
+# Part 2: Beyond Enformer — Borzoi, AlphaGenome & More {background-color="#1e3a5f" style="color:white;"}
+
+---
+
+## Borzoi: a faster, larger model
+
+::: {.columns}
+
+::: {.column width="50%"}
+**Borzoi** (Inoue et al., 2022):
+
+- Uses **Transformer** architecture instead of CNN
+- Trained on 5,500+ chromatin profiles
+- Can predict **cell-type-specific** effects
+:::
+
+::: {.column width="50%"}
+**Key difference:**
+
+- Transformer attention captures global context
+- More interpretable (attention maps show which regions matter)
+:::
+:::
+
+::: {.source-credit-linked}
+Inoue, A. et al. Nat Genet (2022)
+:::
+
+---
+
+## AlphaGenome: the next generation
+
+::: {.columns}
+
+::: {.column width="50%"}
+**AlphaGenome** (Avsek et al., 2025):
+
+- Successor to Enformer
+- Built on the **AlphaFold** architecture philosophy
+- Unified model for regulatory variant effect prediction
+:::
+
+::: {.column width="50%"}
+**Improvements:**
+
+- Better variant effect prediction
+- More accurate across diverse populations
+- Larger receptive field
+:::
+:::
+
+::: {.source-credit-linked}
+Avsek, Z. et al. bioRxiv (2025)
+:::
+
+---
+
+## The landscape of DNA-sequence-to-function models
+
+::: {.columns}
+
+::: {.column width="50%"}
+| Model | Year | Architecture | Output |
+|-------|------|-------------|--------|
+| **Enformer** | 2021 | CNN + dense | 5,300 epigenomic tracks |
+| **Borzoi** | 2022 | Transformer | Chromatin profiles |
+| **AlphaGenome** | 2025 | AlphaFold-style | Regulatory variants |
+| **Nucleosome** | 2022 | CNN | Nucleosome positioning |
+| **Basset** | 2016 | CNN | Chromatin accessibility |
+:::
+
+::: {.column width="50%"}
+**Common thread:**
+
+All take raw DNA sequence as input and predict some functional output — no experiment needed.
+:::
+:::
+
+---
+
+## Why this matters for genomics
+
+::: {.columns}
+
+::: {.column width="50%"}
+**Before these models:**
+
+- Functional annotation required expensive experiments
+- Each assay = one cell type, one condition
+- Population studies required thousands of samples
+:::
+
+::: {.column width="50%"}
+**With these models:**
+
+- Predict any epigenomic signal from sequence alone
+- In silico mutagenesis: test every possible variant
+- Scale to population-level studies without new experiments
+:::
+:::
+
+---
+
+## Connecting to what you know
+
+::: {.columns}
+
+::: {.column width="50%"}
+**Unit 00:** You trained a CNN to recognize DNA motifs
+
+**Unit 01:** You trained a Transformer on DNA sequences
+:::
+
+::: {.column width="50%"}
+**Unit 02:** These models take that idea further — predicting **functional outputs** (epigenome, gene expression) from sequence, at genome scale.
+:::
+:::
+
+::: {.source-credit-linked}
+The thread: sequence → numbers → neural network → biological insight
+:::
+
+---
+
+## What's next
+
+- **slides-02** — Borzoi, AlphaGenome, and the next generation of sequence-to-function models
+- **Notebook** — Run Enformer predictions on real sequences, compare human vs. Neanderthal genomes
+- **Homework** — Explore attention patterns in DNA language models, and use Enformer for epigenome comparison
+
+---
+
+## Summary
+
+::: {.columns}
+
+::: {.column width="50%"}
+- Most disease variants are in **non-coding** DNA
+- They likely act by altering **regulatory elements** (TF binding, chromatin)
+:::
+
+::: {.column width="50%"}
+- **Enformer** predicts thousands of epigenomic signals from 200 kb of DNA sequence
+- **Borzoi, AlphaGenome** and others extend this idea
+- These models enable **in silico** functional genomics at scale
+:::
+:::
+
+---
+
+## Questions?
+
+::: {.takehome}
+**Next up:** We'll dive into the Enformer architecture in detail — how the CNN backbone works, why dilated convolutions matter, and how the model learns to predict epigenomic signals.
+:::

@@ -1,0 +1,10 @@
+---
+title: "03 · Enformer: Sequence-to-Epigenome with CNNs + Transformers"
+date: '2026-05-05'
+author: "Haky Im"
+description: "GENE 46100 — Unit 02"
+categories: [slides]
+draft: false
+---
+
+[Open slide deck](slides-enformer.html){.btn .btn-primary .btn-lg}

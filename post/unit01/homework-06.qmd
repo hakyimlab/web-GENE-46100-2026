@@ -1,0 +1,122 @@
+---
+title: "What does attention look like for promoters and enhancers?"
+date: 2026-05-05
+categories:
+  - homework
+format:
+  html:
+    toc: true
+    code-fold: false
+    code-summary: "Show the code"
+    code-tools: true
+    code-overflow: wrap
+date-modified: last-modified
+draft: false
+---
+
+# What does attention look like for promoters and enhancers?
+
+**GENE 46100 — Deep Learning in Genomics**
+
+## Background
+
+In [DNA language model notebook-02](notebook-02-dna-lm.qmd) (or the [jupyter notebook](https://colab.research.google.com/drive/1PqAiUlpu1_DJWC3AzeZ-T0w_vBsBlDlg?usp=sharing)) we pretrained a character-level GPT on the human reference genome and fine-tuned it to classify promoters and enhancers. The model has **4 transformer blocks**, each with **4 attention heads**, producing **16 attention matrices per input sequence** (4 blocks × 4 heads). Each matrix is a position × position map: entry (i, j) encodes how strongly position i attends to position j when the model processes the sequence.
+
+These matrices are already computed and returned during the forward pass — notebook-02 shows how to extract and visualize them. In this homework you will use them to ask a concrete question: *does the model attend differently to promoters versus non-promoters, and to enhancers versus non-enhancers?* You will then cross-check your intuition with [Puffin](https://puffin.zhoulab.io/), an interpretable model of transcription initiation that we explored in a previous notebook.
+
+---
+
+## Part 1: Attention Patterns — Promoters vs. Non-Promoters
+
+### 1a. Choose your sequences
+
+From the promoter dataset loaded in notebook-02 (`promoter_all_train.parquet`), select:
+
+- **3 promoter sequences** (label = 1)
+- **3 non-promoter sequences** (label = 0)
+
+Pick sequences that classified **correctly** by the fine-tuned model (i.e., the model's predicted label matches the true label). This ensures you are examining sequences the model has actually learned something about.
+
+> **Tip:** You can retrieve correctly classified examples from the test loop in notebook-02: collect `(sequence, true_label, predicted_label)` tuples and filter for `true_label == predicted_label`.
+
+### 1b. Extract the 16 attention matrices
+
+For each of your 6 sequences, pass it through the fine-tuned **promoter classifier** and collect all attention weights. The model's `forward()` already returns a list of per-block attention tensors; notebook-02 shows how to index into them.
+
+You should end up with a structure like:
+
+```
+attention[sequence][block][head]  →  shape (seq_len, seq_len)
+```
+
+That is 4 blocks × 4 heads = **16 matrices per sequence**.
+
+### 1c. Visualize and compare
+
+For each sequence, produce two figures (as in notebook-02):
+
+1. **Per-head heatmaps** — a 2×2 grid of the 4 heads for each block (so 4 grids per sequence).
+2. **Per-block averaged heatmaps** — average across heads within each block, then show all 4 blocks in one 2×2 grid.
+
+Do this for both the promoter and non-promoter sequences. Arrange the figures so you can compare them side by side.
+
+> **Discuss:** Do you see consistent differences in attention pattern between promoter and non-promoter sequences? For example:
+>
+> - Are there specific sequence positions that attract high attention in promoters but not in non-promoters (or vice versa)?
+> - Do early blocks (1–2) and later blocks (3–4) attend to different things?
+> - Are some heads more "focused" (sparse attention) while others are diffuse?
+
+---
+
+## Part 2: Attention Patterns — Enhancers
+
+Repeat Part 1 with the enhancer dataset (`enhancers_types_train.parquet`). This time, select:
+
+- **3 strong enhancer sequences** (label = 1)
+- **3 non-enhancer sequences** (label = 0)
+
+Use the fine-tuned **enhancer classifier** (not the promoter classifier) to extract attention weights.
+
+> **Discuss:** Notebook-02 notes that the enhancer model produces "cloudier" attention heatmaps compared to the promoter model. Do you see this in your examples? What might explain it, both in terms of the biology (enhancers are structurally more variable than promoters) and in terms of the model (the enhancer task is 3-class and the dataset is smaller)?
+
+---
+
+## Part 3: Cross-Check with Puffin
+
+Puffin ([puffin.zhoulab.io](https://puffin.zhoulab.io/)) is a sequence-based model that predicts transcription initiation strength and identifies which motifs drive it. Unlike our nanoGPT, Puffin was explicitly trained on CAGE transcription data and uses a small set of interpretable motif kernels.
+
+### 3a. Submit your sequences
+
+Take the **same 6 promoter/non-promoter sequences** from Part 1 and submit each to Puffin using the **Sequence** input box (paste the raw DNA string, no FASTA header needed). Use the default genome track (FANTOM CAGE).
+
+Do the same for your **6 enhancer/non-enhancer sequences** from Part 2.
+
+> **Note on sequence length:** Puffin is designed around 1000 bp windows centered on a TSS. The promoter sequences in our dataset are 300 bp and may not be precisely TSS-centered. Puffin will still process them, but the prediction may be weaker or differently positioned than for a full genomic window. Keep this in mind when interpreting the output.
+
+### 3b. Compare Puffin's output to the attention maps
+
+For each sequence, take a screenshot of Puffin's:
+
+- Motif activation track
+- Motif effects track
+- Predicted transcription initiation signal
+
+Then compare these to the attention heatmaps you produced in Parts 1 and 2.
+
+> **Discuss:**
+>
+> - For promoter sequences: does Puffin predict a strong initiation signal? Do the positions where Puffin shows strong motif activation overlap with positions that had high attention in your nanoGPT heatmaps?
+> - For non-promoter sequences: does Puffin predict low or no initiation? Does the nanoGPT model also show weaker or more diffuse attention?
+> - For enhancer sequences: Puffin is a TSS model — it predicts transcription *initiation*, not enhancer activity. Do enhancer sequences trigger any Puffin signal at all? What does this tell you about what the two models have learned?
+
+---
+
+## What to Turn In
+
+A single document (PDF or markdown, a few pages including figures) with:
+
+- The 6 promoter/non-promoter sequences you chose (just the first 20 bp + label is sufficient for identification).
+- Attention heatmaps (per-head and per-block averaged) for at least 1 promoter and 1 non-promoter, side by side.
+- The 6 enhancer/non-enhancer sequences you chose and their heatmaps (same format).
+- Screenshots of Puffin output for at least 2 sequences (one promoter, one enhancer or non-enhancer).
+- Your answers to the Discuss questions in Parts 1, 2, and 3.

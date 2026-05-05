@@ -1,0 +1,10 @@
+---
+title: "02 · Leveraging DNA Sequence to Epigenome Prediction Models to Inform the Biology of Complex Traits"
+date: '2026-05-05'
+author: "Haky Im"
+description: "GENE 46100 — Unit 02"
+categories: [slides]
+draft: true
+---
+
+[Open slide deck](slides-02-dna-seq-epigenome-seminar.html){.btn .btn-primary .btn-lg}

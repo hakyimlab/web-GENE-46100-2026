@@ -14,7 +14,7 @@ date-modified: last-modified
 draft: true
 ---
 
-# Homework 5
+# Homework 5 from 2025
 
 1. Calculate expected cross entropy loss for an untrained classification model, i.e. random guess, as a function of the number of classes
 
@@ -25,3 +25,73 @@ draft: true
 
 3. Re-train DNA based nano GPT keeping only ACGT characters. how does removing the lower case characters change performance, loss function values? how much of the training set is in lower case?
 
+# Homework 5 from 2026
+Homework 5: Designing Synthetic Promoters with Puffin
+
+GENE46100 - Deep Learning in Genomics
+Background
+
+In Roxana's lecture we looked at Puffin, a sequence-based deep learning model that predicts transcription initiation from promoter DNA. One of the nice things about Puffin is that it's interpretable: the model learns a small set of motif "kernels" (think of them as the filters we've been building in our CNN notebooks), and its prediction at any position is essentially a sum of motif contributions along the sequence.
+
+This homework is an opportunity to poke at that model directly. You'll pick a promoter you care about, try to boost its predicted transcription by inserting motifs, and then think carefully about whether what the model predicts actually makes biological sense.
+
+This homework does not require any coding, and everything runs in the browser at https://puffin.zhoulab.io/ Links to an external site..
+What to do
+1. Pick a promoter of interest
+
+Choose one promoter from a gene you find interesting. Any gene would work, just pick one and note why you chose it (one sentence is fine).
+
+On the Puffin Home page, you can enter it by Gene Name (easiest), by Genomic Region, or by pasting in a Sequence. Entering the gene name will auto-fill the coordinates for you.
+
+Run the prediction with the default target (FANTOM CAGE is a reasonable starting point, but feel free to try others) and take a screenshot of:
+
+    the predicted transcription initiation signal
+    the motif activations shown along the sequence
+    the experimental ground truth track (Puffin shows this alongside the prediction when you query a real genomic region)
+
+2. Design a synthetic promoter that should boost transcription
+
+Now modify the sequence to try to increase predicted initiation. The idea is to insert one or more of the motif kernels Puffin has learned (e.g. TATA). You can see the full list of learned motifs on the Motif page of the website.
+
+Some things to think about when you design:
+
+    Where do you insert the motif? Right at the TSS? Upstream? Does position matter for Puffin's prediction?
+    How many do you add?
+    Which motif? Try a motif that is not already strongly activated in your original promoter.
+
+You can edit the sequence directly in the Sequence input box on the Home page. Keep the total length the same by replacing bases rather than inserting new ones, so positions line up cleanly when you compare. (If you prefer to insert, that's fine too, just note what you did.)
+
+You're encouraged to make a few synthetic variants so you can see how the prediction responds to different design choices. 
+3. Visualize the synthetic promoter in Puffin
+
+Run the prediction on each synthetic promoter. Take screenshots of the same three things as before: motif activations, predicted initiation signal, and (where applicable) ground truth. The Compare page is useful here: you can paste multiple sequences separated by line breaks or in FASTA format and see them side by side.
+4. Compare and interpret
+
+Write a short comparison (a paragraph or two, plus your screenshots) addressing:
+
+    How did the predicted transcription initiation change between the original and the synthetic promoter?
+    Which motif activations lit up in your synthetic version that weren't there before?
+    Does the model's prediction match what you expected based on your design?
+
+Discussion question
+
+Biologically, would inserting more motifs always increase transcription initiation? Is Puffin's prediction consistent with this expectation? If not, can you propose a way the model could be improved?
+
+A general conceptual answer is fine (no implementation needed). Multiple answers can be correct as long as you give a reasonable biological or modeling argument. The goal is for you to think about where the model's assumptions line up with biology and where they don't.
+
+A few things that might help you think about this:
+
+    What does Puffin actually do when it combines motif contributions? (Hint: it's additive.)
+    What does biology actually do when multiple TFs try to bind nearby? (Hint: proteins take up space.)
+    Are there other constraints real promoters have (like spacing, orientation, chromatin context) that a sequence-only model can't see?
+
+What to turn in
+
+A single document (PDF or markdown) containing the following. Please keep it short - a couple of pages including text and figures.
+
+    The gene/promoter you chose and one sentence on why.
+    Screenshots of Puffin's output on the original promoter (motif activations, predicted signal, ground truth).
+    The sequence(s) of your synthetic promoter(s) and a short description of what you changed.
+    Screenshots of Puffin's output on your synthetic promoter(s).
+    Your paragraph comparing original vs. synthetic.
+    Your answer to the discussion question.
